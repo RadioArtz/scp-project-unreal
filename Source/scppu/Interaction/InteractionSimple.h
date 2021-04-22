@@ -34,6 +34,7 @@ public:
 	FInteractDeleg InteractDelegate;
 	
 protected:
-	
+
+	UPROPERTY(BlueprintReadWrite, EditDefaultsOnly)
 	EInteractionType InteractionType = EInteractionType::TriggerOnStart;
 };

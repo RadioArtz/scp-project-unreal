@@ -6,7 +6,6 @@
 
 #include "AIConfig.h"
 #include "Engine/World.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "scppu/Interaction/InteractionGrab.h"
 #include "scppu/Interaction/InteractionSimple.h"
 
@@ -36,7 +35,6 @@ UPlayerInteractionBase::UPlayerInteractionBase()
 	SecondaryComponentTick.bCanEverTick = true;
 	SecondaryComponentTick.TickInterval = 0;
 	SecondaryComponentTick.TickGroup = TG_DuringPhysics;
-	SecondaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UPlayerInteractionBase::BeginPlay()
@@ -44,6 +42,7 @@ void UPlayerInteractionBase::BeginPlay()
 	Super::BeginPlay();
 
 	SecondaryComponentTick.RegisterTickFunction(GetComponentLevel());
+	SecondaryComponentTick.SetTickFunctionEnable(false);
 	
 	const auto GameState = GetWorld()->GetGameState<AScpPuGameStateBase>();
 
@@ -57,74 +56,40 @@ void UPlayerInteractionBase::TickComponent(float DeltaTime, ELevelTick TickType,
                                            FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	if(ScpPuGameState->ActiveInteractables.Num() <= 0)
-	{
-		return;
-	}
 
-	const FVector& OwnerLoc =  GetOwner()->GetActorLocation();
-	
-	UInteractionBase* ClosestIObject = ScpPuGameState->ActiveInteractables[0];
-	float ClosestIObjectDistance = FVector::Dist(ClosestIObject->GetOwner()->GetActorLocation(), OwnerLoc);
-	
-	for(int i = 1; i < ScpPuGameState->ActiveInteractables.Num(); i++)
+	if(!bInteractionSearchLocked)
 	{
-		const auto& IObj = ScpPuGameState->ActiveInteractables[i];
-		const auto& IObjLoc = IObj->GetOwner()->GetActorLocation();
-		const auto& IObjDist = FVector::Dist(IObjLoc, OwnerLoc);
-		
-		if(IObj == CurrentlyGrabbedObject)
-		{
-			continue;
-		}
-		
-		if(IObjDist < ClosestIObjectDistance)
-		{
-			ClosestIObject = IObj;
-			ClosestIObjectDistance = IObjDist;
-		}
-	}
-
-	if(ClosestIObjectDistance <= InteractionRange)
-	{
-		ClosestInteractiveObject = ClosestIObject;
-		ClosestInteractiveObjectInfo.bIsValid = true;
-		ClosestInteractiveObjectInfo.Class = ClosestInteractiveObject->GetClass();
-		ClosestInteractiveObjectInfo.Location = ClosestIObject->GetOwner()->GetActorLocation();
-
-		if(ClosestInteractiveObjectInfo.Class->IsChildOf(UInteractionGrab::StaticClass()))
-		{
-			const auto& ClosestGrabbableObject = Cast<UInteractionGrab>(ClosestInteractiveObject);
-
-			ClosestInteractiveObjectInfo.PreCalculatedGrabRange = CalculateObjectGrabRange(ClosestGrabbableObject);
-		}
-		else
-		{
-			ClosestInteractiveObjectInfo.PreCalculatedGrabRange = -1;
-		}
-	}
-	else
-	{
-		ClosestInteractiveObject = nullptr;
-		ClosestInteractiveObjectInfo = FInteractiveObjectInfo();
+		InternalSearchForNearestInteractiveObject();
 	}
 }
 
 void UPlayerInteractionBase::SecondaryTickComponent(float DeltaTime, ELevelTick TickType,
     FActorComponentTickFunction* ThisTickFunction)
 {
-	if(!CurrentlyGrabbedObject)
+	if(CurrentlyGrabbedObject)
 	{
-		return;
+		const auto& GObjLoc = CurrentlyGrabbedObject->GetOwner()->GetActorLocation();
+		const auto& GObjDist = FVector::Dist(GetOwner()->GetActorLocation(), GObjLoc);
+	
+		if(GrabRange < GObjDist)
+		{
+			InteractionDrop();
+		}
 	}
-	
-	const auto& GrabbedObjLoc = CurrentlyGrabbedObject->GetOwner()->GetActorLocation();
-	const auto& GrabbedObjDist = FVector::Dist(GetOwner()->GetActorLocation(), GrabbedObjLoc);
-	
-	if(GrabRange < GrabbedObjDist)
+	else if(bInteractionSearchLocked)
 	{
-		InteractDrop();
+		const auto& IObjDist = FVector::Dist(GetOwner()->GetActorLocation(), ClosestInteractiveObjectInfo.Location);
+
+		if(InteractionRange < IObjDist)
+		{
+			// interaction has to end when player leaves interaction range, but searching for new objects should be disabled
+			// until player releases their mouse button.
+			InteractionEnd();
+			bInteractionSearchLocked = true;
+
+			ClosestInteractiveObject = nullptr;
+			ClosestInteractiveObjectInfo = FInteractiveObjectInfo();
+		}
 	}
 }
 
@@ -218,48 +183,53 @@ bool UPlayerInteractionBase::InteractionStart()
 	case EInteractionType::InteractionGrab:
 		{
 			const auto IGrabObj = Cast<UInteractionGrab>(IObj);
-			InteractGrab(IGrabObj);
+			InteractionGrab(IGrabObj);
 		}
 		break;
 	
 
 	default: ;
 	}
+
+	SecondaryComponentTick.SetTickFunctionEnable(true);
+	bInteractionSearchLocked = true;
 	
 	return true;
 }
 
 bool UPlayerInteractionBase::InteractionEnd()
 {
-	if(InteractDrop())
-	{
-		return true;
-	}
+	bInteractionSearchLocked = false;
 	
-	const auto& IObj = GetClosestInteractiveObject();
+	const auto& IObj = ClosestInteractiveObject.Get();
 
-	if(!CanInteractWithObject(IObj))
+	if(!IObj)
 	{
 		return false;
 	}
 
-	switch (IObj->GetInteractionType())
+	if(!InteractionDrop())
 	{
-	case EInteractionType::TriggerOnEnd:
-    case EInteractionType::TriggerEverytime:
+		switch (IObj->GetInteractionType())
 		{
-			const auto ISimpleObj = Cast<UInteractionSimple>(IObj);
-			ISimpleObj->Interact(this);
-		}	
-		break;
+		case EInteractionType::TriggerOnEnd:
+        case EInteractionType::TriggerEverytime:
+			{
+				const auto ISimpleObj = Cast<UInteractionSimple>(IObj);
+				ISimpleObj->Interact(this);
+			}	
+			break;
 		
-	default: ;
+		default: ;
+		}
 	}
+
+	SecondaryComponentTick.SetTickFunctionEnable(false);
 	
 	return true;
 }
 
-bool UPlayerInteractionBase::InteractGrab(UInteractionGrab* ObjectToGrab)
+bool UPlayerInteractionBase::InteractionGrab(UInteractionGrab* ObjectToGrab)
 {
 	if(!CanGrabObject(ObjectToGrab))
 	{
@@ -277,15 +247,11 @@ bool UPlayerInteractionBase::InteractGrab(UInteractionGrab* ObjectToGrab)
 	
 	ObjectToGrab->InteractGrab(this);
 	CurrentlyGrabbedObject = ObjectToGrab;
-	ClosestInteractiveObjectInfo = FInteractiveObjectInfo();
-	ClosestInteractiveObject = nullptr;
-	
-	SecondaryComponentTick.SetTickFunctionEnable(true);
 
 	return true;
 }
 
-bool UPlayerInteractionBase::InteractDrop()
+bool UPlayerInteractionBase::InteractionDrop()
 {
 	if(!CurrentlyGrabbedObject)
 	{
@@ -296,9 +262,6 @@ bool UPlayerInteractionBase::InteractDrop()
 
 	CurrentlyGrabbedObject->InteractDrop(this);
 	CurrentlyGrabbedObject = nullptr;
-	ClosestInteractiveObject = nullptr;
-	
-	SecondaryComponentTick.SetTickFunctionEnable(false);
 
 	return true;
 }
@@ -317,5 +280,60 @@ float UPlayerInteractionBase::CalculateObjectGrabRange(const UInteractionGrab* O
 	}
 
 	return NewGrabRange;
+}
+
+void UPlayerInteractionBase::InternalSearchForNearestInteractiveObject()
+{	
+	if(ScpPuGameState->ActiveInteractables.Num() <= 0)
+	{
+		return;
+	}
+
+	const FVector& OwnerLoc =  GetOwner()->GetActorLocation();
+	
+	UInteractionBase* ClosestIObject = ScpPuGameState->ActiveInteractables[0];
+	float ClosestIObjectDistance = FVector::Dist(ClosestIObject->GetOwner()->GetActorLocation(), OwnerLoc);
+	
+	for(int i = 1; i < ScpPuGameState->ActiveInteractables.Num(); i++)
+	{
+		const auto& IObj = ScpPuGameState->ActiveInteractables[i];
+		const auto& IObjLoc = IObj->GetOwner()->GetActorLocation();
+		const auto& IObjDist = FVector::Dist(IObjLoc, OwnerLoc);
+		
+		if(IObj == CurrentlyGrabbedObject)
+		{
+			continue;
+		}
+		
+		if(IObjDist < ClosestIObjectDistance)
+		{
+			ClosestIObject = IObj;
+			ClosestIObjectDistance = IObjDist;
+		}
+	}
+
+	if(ClosestIObjectDistance <= InteractionRange)
+	{
+		ClosestInteractiveObject = ClosestIObject;
+		ClosestInteractiveObjectInfo.bIsValid = true;
+		ClosestInteractiveObjectInfo.Class = ClosestInteractiveObject->GetClass();
+		ClosestInteractiveObjectInfo.Location = ClosestIObject->GetOwner()->GetActorLocation();
+
+		if(ClosestInteractiveObjectInfo.Class->IsChildOf(UInteractionGrab::StaticClass()))
+		{
+			const auto& ClosestGrabbableObject = Cast<UInteractionGrab>(ClosestInteractiveObject);
+
+			ClosestInteractiveObjectInfo.PreCalculatedGrabRange = CalculateObjectGrabRange(ClosestGrabbableObject);
+		}
+		else
+		{
+			ClosestInteractiveObjectInfo.PreCalculatedGrabRange = -1;
+		}
+	}
+	else
+	{
+		ClosestInteractiveObject = nullptr;
+		ClosestInteractiveObjectInfo = FInteractiveObjectInfo();
+	}
 }
 

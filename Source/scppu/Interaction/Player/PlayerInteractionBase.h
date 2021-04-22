@@ -105,13 +105,16 @@ public:
 protected:
 
 	UFUNCTION(BlueprintCallable)
-	bool InteractGrab(UInteractionGrab* ObjectToGrab);
+	bool InteractionGrab(UInteractionGrab* ObjectToGrab);
 
 	UFUNCTION(BlueprintCallable)
-	bool InteractDrop();
+	bool InteractionDrop();
 
 	UFUNCTION(BlueprintCallable)
 	float CalculateObjectGrabRange(const UInteractionGrab* ObjectToGrab) const;
+
+	UFUNCTION()
+	void InternalSearchForNearestInteractiveObject();
 	
 public:
 	
@@ -124,6 +127,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 	float GrabRange = DefaultGrabRange;
 
+	// Interaction search is locked after call to InteractionStart(), and has to be
+	// unlocked by InteractionEnd(). While interaction search is locked, ClosestInteractiveObject
+	// cannot be changed to prevent situation, where player clicks on one object, and then moves
+	// to another activating InteractionEnd() on it.
+	// If Player leaves InteractionRange, while interaction search is locked, InteractionEnd() is
+	// called automatically. 
+	UPROPERTY(BlueprintReadWrite)
+	uint8 bInteractionSearchLocked = false;
+
+	
 public:
 
 	UPROPERTY(EditDefaultsOnly, Category="ComponentTick")
