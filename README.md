@@ -9,6 +9,7 @@ The original version of this project was not set up with source control from the
 
 #### Projectfile and contribution informations:
 - this project uses Unreal Engine 4.24.3
+- when working on some major system, create an issue to inform others that you are working on it and keep it updated if you stop working on it. This is to avoid two people spending a lot of time just to find out that someone else has been working on the same thing. You can of course still work on things that others are already working on if you want to.
 - it was created without c++ enabled. I am open for c++ utilization, however I do not have the experience where i would feel comfortable enabling it by myself.
 - **no external marketplace assets** are to be used!
 - do NOT contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/d0a3f758f9d75258092dbfb309da14a6c6b8ec47/License.txt)
