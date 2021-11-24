@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{2397AC79-4C52-24D8-0F59-1F97F9CF33B4}",
+	"EngineAssociation": "4.27",
 	"Category": "",
 	"Description": "",
 	"Plugins": [
@@ -153,6 +153,10 @@
 		{
 			"Name": "MatineeToLevelSequence",
 			"Enabled": false
+		},
+		{
+			"Name": "FSR",
+			"Enabled": true
 		}
 	]
 }
