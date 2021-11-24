@@ -8,7 +8,7 @@ This is the open-source restart of development for SCP: Project Unreal.
 The original version of this project was not set up with source control from the beginning and its codebase was too cluttered and lots of things had to be redone constantly which is why i decided to restart development from scratch.
 
 #### Projectfile and contribution informations:
-- this project uses a custom build of Unreal Engine 4.26, avaliable at https://github.com/IAAndrei/Unreal-Engine-Patched (you might need to reselect the custom engine build when trying to open the projectfile!)
+- this project uses Unreal Engine 4.27 with the AMD FSR plugin. [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/Plugins/FSR/license.txt)
 - when working on some major system, create an issue to inform others that you are working on it and keep it updated if you stop working on it. This is to avoid two people spending a lot of time just to find out that someone else has been working on the same thing. You can of course still work on things that others are already working on if you want to.
 - it was created without c++ enabled. I am open for c++ utilization, however I do not have the experience where i would feel comfortable enabling it by myself.
 - **no external marketplace assets** are to be used!
