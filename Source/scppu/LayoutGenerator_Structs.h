@@ -6,9 +6,8 @@
 #include "Engine/DataTable.h"
 #include "LayoutGenerator_Structs.generated.h"
 
-class ULevelStreaming;
+class ULevelStreamingDynamic;
 class ULayoutGenerator_SpawnValidator;
-class ALayoutGenerator_RoomSpawner;
 class ABaseRoom;
 
 USTRUCT(BlueprintType)
@@ -33,7 +32,7 @@ public:
 		Y = NewY;
 	}
 
-	// Needed to use this struct as key inside a map
+	// Needed to be able to use this struct as key inside a map
 	friend bool operator== (const FIntVector2D& Self, const FIntVector2D& Other)
 	{
 		return Self.X == Other.X && Self.Y == Other.Y;
@@ -48,38 +47,22 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FGridEntry
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-		ALayoutGenerator_RoomSpawner* RoomSpawner;
-
-	UPROPERTY()
-		ULevelStreaming* LevelStreaming;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		ABaseRoom* Room;
-};
-
-USTRUCT(BlueprintType)
-struct FRoomSides
+struct FCellSides
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool PositiveX;
+		bool bPositiveX;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool PositiveY;
+		bool bPositiveY;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool NegativeX;
+		bool bNegativeX;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool NegativeY;
+		bool bNegativeY;
 };
 
 USTRUCT(BlueprintType)
@@ -88,27 +71,68 @@ struct FRoomGenerationSettings : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	/** Levels of the room (if > 1: will choose one randomly per cell, should be only used for minor visual variations).*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TSoftObjectPtr<UWorld> Level;
+		TArray< TSoftObjectPtr<UWorld> > Level;
 
+	/** Minimum instances that will be generated. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+		int32 MinimumInstances = 0;
+
+	/** Maximum instances that can generate. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+		int32 MaximumInstances = 1000;
+
+	/** Amount of entries inside the spawn pool. Higher values => Higher probability to generate. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
+		int32 SpawnPoolAmount = 10;
+
+	/** The directions of the door location. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 MinimumInstances;
+		FCellSides DoorLocation;
 
+	/** The directions of which neighbour to disable. Usefull when having a room that exceeds the cell size. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 MaximumInstances;
+		FCellSides DisableNeighbour;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		int32 SpawnPoolAmount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FRoomSides DoorLocation;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FRoomSides DisableNeighbour;
-
+	/** Validates a spawn location before spawning the room (NOTE: Not all rooms have been spawned yet!). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PreSpawnValidator;
-
+	
+	/** Validates a spawn location after spawning all rooms. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PostSpawnValidator;
+};
+
+USTRUCT(BlueprintType)
+struct FGridCell
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		FName RoomRowName;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bIsGenerated = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bIsEnabled = true;
+
+	// Will rotate
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		FCellSides DoorLocation;
+
+	// Will rotate
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		FCellSides DisableNeighbour;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		FCellSides DoorRequired;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		FCellSides DoorBlocked;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (ClampMin = "0", ClampMax = "3"))
+		int32 Rotation;
 };

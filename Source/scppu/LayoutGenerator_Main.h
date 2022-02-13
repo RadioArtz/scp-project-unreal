@@ -4,11 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Components/StaticMeshComponent.h"
+#include "Engine/DataTable.h"
 #include "LayoutGenerator_Structs.h"
+#include "Kismet/GameplayStatics.h"
 #include "LayoutGenerator_Main.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FLayoutGenerationDone, bool, bSuccess, FString, ErrorReason);
+UDELEGATE()
+DECLARE_DYNAMIC_DELEGATE_TwoParams(FLayoutGenerationDelegate, bool, bSuccess, FString, ErrorMessage);
+
+DECLARE_LOG_CATEGORY_EXTERN(LogLayoutGenerator, Log, All);
 
 UCLASS()
 class SCPPU_API ALayoutGenerator_Main : public AActor
@@ -19,76 +23,146 @@ public:
 	// Sets default values for this actor's properties
 	ALayoutGenerator_Main();
 
-protected:
-	// Called in editor on value change
-	virtual void OnConstruction(const FTransform& Transform) override;
+	//// FUNCTIONS ////
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	/** Generates a new layout. Use the seed variable to set the seed. Ignores calls if a layout is already present. */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
+		void AsyncGenerateLayout(const FLayoutGenerationDelegate& OnDone);
 
-	// Called when the actor gets destroyed
-	virtual void BeginDestroy() override;
-	
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	/** Clears the layout. Ignores calls if no layout is present. */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
+		void AsyncClearLayout(const FLayoutGenerationDelegate& OnDone);
 
-	UPROPERTY()
-		UStaticMeshComponent* DefaultSceneRoot;
+	/**
+	*Tries to set a room at a given grid location.
+	*@param GridLocation		Grid location where to set the room.
+	*@param RowName				Row name of the room inside the datatable.
+	*@param bForce				Wether to force set the room or not.
+	*@param bUpdateNeighbours	Update neigbours accordingly. Will only have an effect when forcing. THIS IS HIGHLY RECOMMENDED. NOT YET IMPLEMENTED.
+	*@retruns					Returns if a room was spawned or not.
+	*/
+	UFUNCTION(BlueprintCallable)
+		bool SetRoom(const FIntVector2D CellLocation, const FName RoomRowName, const bool bForce, const bool bUpdateNeighbours = true);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generation")
-		bool bHasLayoutGenerated = false;
+	UFUNCTION(BlueprintCallable)
+		TArray<FIntVector2D> FindCellLocationsWithRoomRowName(const FName RoomRowName);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation")
-		FIntVector2D GridSize = FIntVector2D(5, 5);
+	UFUNCTION(BlueprintCallable)
+		FGridCell GetCellAtCellLocation(const FIntVector2D CellLocation);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation")
-		float RoomSize = 1024;
+	UFUNCTION(BlueprintCallable)
+		bool DoesPathExist(const FIntVector2D Start, const FIntVector2D End);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation")
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FVector CellLocationToWorldLocation(const FIntVector2D CellLocation);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FRotator CellRotationToWorldRotation(const int32 CellRotation);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FString GetUniqueLevelName(const FIntVector2D CellLocation);
+
+	//// PROPERTIES ////
+
+	/** Seed used for layout generation. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+		int32 Seed;
+
+	/** Size of the grid. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+		FIntVector2D GridSize =  FIntVector2D(5, 5);
+
+	/** Size of an individuel cell (in uu). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta = (ClampMin = "1"))
+		float CellSize = 1024;
+
+	/** Datatable that specifies which rooms to generate. Has to be of type FRoomGenerationSettings. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 		UDataTable* DataTable;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation")
-		FRandomStream SeedStream;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generation")
+	/** Used to prevent a infinte loop */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (ClampMin = "1"))
 		int32 MaximumIterations = 1000000;
 
-	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FIntVector2D, FGridEntry> Grid;
+	/** Returns if a layout is already present. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Runtime")
+		bool bIsLayoutPresent;
+
+	/** Returns if a layout is currently generated. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Runtime")
+		bool bIsCurrentlyGeneratingLayout;
+
+protected:
+	/** Called when the game starts or when spawned */
+	virtual void BeginPlay() override;
+
+	/** Called every frame */
+	virtual void Tick(float DeltaTime) override;
+
+	//// FUNCTIONS ////
+
+	UFUNCTION()
+		void InitRuntimeProperties();
+
+	UFUNCTION()
+		void OnAssetsLoaded();
+
+	UFUNCTION()
+		void GenLayout();
+
+	UFUNCTION()
+		void LoadRoomLevels();
+
+	UFUNCTION()
+		void OnLevelInstanceLoaded();
+
+	/** Clears all runtime properties used to generate the layout. */
+	UFUNCTION()
+		void ClearRuntimeProperties();
+
+	/** Draws a preview of the grid. */
+	UFUNCTION()
+		void DrawGridPreview();
+
+	//// PROPERTIES ////
 
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FName, FRoomGenerationSettings> CachedDataTable;
+		FLayoutGenerationDelegate OnTaskDone;
 
+	/** Cached random stream to ensure thread saftey. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FName, int32> RoomInstances;
+		FRandomStream RStream;
 
+	/** Cached datatable to ensure thread saftey and for ease of use. */
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		TMap<FName, FRoomGenerationSettings> DataTableCached;
+
+	/** Contains row names and how many instances of it are still required. Coresponse to MinimumInstances inside FRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> RequiredRooms;
 
+	/** Contains row names and how many instances of it are still available. Coresponse to MaximumInstances inside FRoomGenerationSettings. */
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		TArray<FName> AvailableRooms;
+
+	/** Contains row names. Coresponse to SpawnPoolAmount inside FRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> SpawnPool;
 
+	/** Cells that will be generated next. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FIntVector2D> Queue;
 
+	/** Current iteration */
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		int32 CurrentInteration;
 
-	UFUNCTION(BlueprintCallable)
-		void GenerateLayout(FLayoutGenerationDone OnDone);
+	/** Number of Level Instances currently loading*/
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		int32 LoadingLevelInstances;
 
-	UFUNCTION(BlueprintCallable)
-		bool ClearLayout();
+	/** Contains the actual grid. */
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		TMap<FIntVector2D, FGridCell> Grid;
 
-	UFUNCTION()
-		void ClampVariables();
-
-	UFUNCTION()
-		void GenerateGrid();
-
-	// HELPER FUNCTIONS
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FVector GridLocationToWorldLocation(FIntVector2D GridLocation);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool GetGridEntry(FGridEntry &OutGridEntry, FIntVector2D GridLocation);
 };

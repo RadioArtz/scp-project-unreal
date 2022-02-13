@@ -1,10 +1,14 @@
 
 
-
 #include "LayoutGenerator_Main.h"
-#include "LayoutGenerator_RoomSpawner.h"
-#include "BaseRoom.h"
+#include "Components/StaticMeshComponent.h" 
+#include "Engine/LevelStreamingDynamic.h" 
+#include "Engine/AssetManager.h" 
+#include "Engine/StreamableManager.h" 
 #include "DrawDebugHelpers.h" 
+#include "LayoutGenerator_SpawnValidator.h"
+
+DEFINE_LOG_CATEGORY(LogLayoutGenerator);
 
 // Sets default values
 ALayoutGenerator_Main::ALayoutGenerator_Main()
@@ -12,19 +16,190 @@ ALayoutGenerator_Main::ALayoutGenerator_Main()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> BasicSphere(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'"));
+	// Add a mesh component and set it as scene root for easier in editor use.
+	UStaticMesh* MeshAsset;
+	UMaterialInterface* MeshMaterial;
+	UStaticMeshComponent* MeshComponent;
 
-	DefaultSceneRoot = CreateDefaultSubobject<UStaticMeshComponent>("Default Scene Root");
-	DefaultSceneRoot->SetupAttachment(RootComponent);
-	DefaultSceneRoot->SetStaticMesh(BasicSphere.Object);
+	MeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'")).Object;
+	MeshMaterial = ConstructorHelpers::FObjectFinder<UMaterialInterface>(TEXT("Material'/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial'")).Object;
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("Debug Mesh", false);
+
+	MeshComponent->SetStaticMesh(MeshAsset);
+	MeshComponent->SetMaterial(0, MeshMaterial);
+	MeshComponent->bHiddenInGame = true;
+	SetRootComponent(MeshComponent);
+
 }
 
-// Called in editor on values change
-void ALayoutGenerator_Main::OnConstruction(const FTransform& Transform)
+void ALayoutGenerator_Main::AsyncGenerateLayout(const FLayoutGenerationDelegate& OnDone)
 {
-	Super::OnConstruction(Transform);
-	ClampVariables();
-	GenerateGrid();
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Starting layout generation..."), *GetName());
+
+	if (bIsCurrentlyGeneratingLayout || bIsLayoutPresent)
+	{
+		OnDone.ExecuteIfBound(false, "Layout already present");
+		UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Layout already present"), *GetName());
+		return;
+	}
+
+	bIsCurrentlyGeneratingLayout = true;
+	OnTaskDone = OnDone;
+
+	// Init runtime properties on game thread//
+	AsyncTask(ENamedThreads::GameThread, [this]()
+	{
+		InitRuntimeProperties();
+	});
+	////
+}
+
+void ALayoutGenerator_Main::AsyncClearLayout(const FLayoutGenerationDelegate& OnDone)
+{
+}
+
+bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName RoomRowName, const bool bForce, const bool bUpdateNeighbours)
+{
+	FGridCell* ThisCell;
+	FGridCell* PosXCell;
+	FGridCell* PosYCell;
+	FGridCell* NegXCell;
+	FGridCell* NegYCell;
+	FGridCell ThisCellPrevious;
+	FRoomGenerationSettings SourceSettings;
+	bool bSuccess;
+
+	ThisCell = &Grid[CellLocation];
+	ThisCellPrevious = *ThisCell;
+	ThisCell->RoomRowName = RoomRowName;
+	SourceSettings = DataTableCached[ThisCell->RoomRowName];
+	ThisCell->DoorLocation = SourceSettings.DoorLocation;
+	ThisCell->DisableNeighbour = SourceSettings.DisableNeighbour;
+
+	// Abort cell generation if (cell is disabled OR already generated) AND we don't force it
+	if ((!ThisCell->bIsEnabled || ThisCell->bIsGenerated) && !bForce)
+	{
+		return false;
+	}
+
+	// Fetch info from neighbouring cells //
+	PosXCell = Grid.Find(FIntVector2D(CellLocation.X + 1, CellLocation.Y));
+	PosYCell = Grid.Find(FIntVector2D(CellLocation.X, CellLocation.Y + 1));
+	NegXCell = Grid.Find(FIntVector2D(CellLocation.X - 1, CellLocation.Y));
+	NegYCell = Grid.Find(FIntVector2D(CellLocation.X, CellLocation.Y - 1));
+
+	// Positive X
+	ThisCell->DoorRequired.bPositiveX = (PosXCell != nullptr && PosXCell->DoorLocation.bNegativeX);
+	ThisCell->DoorBlocked.bPositiveX = (PosXCell == nullptr || !PosXCell->bIsEnabled) || (PosXCell->bIsGenerated && !PosXCell->DoorLocation.bNegativeX);
+
+	// Positive Y
+	ThisCell->DoorRequired.bPositiveY = (PosYCell != nullptr && PosYCell->DoorLocation.bNegativeY);
+	ThisCell->DoorBlocked.bPositiveY = (PosYCell == nullptr || !PosYCell->bIsEnabled) || (PosYCell->bIsGenerated && !PosYCell->DoorLocation.bNegativeY);
+
+	// Negative X
+	ThisCell->DoorRequired.bNegativeX = (NegXCell != nullptr && NegXCell->DoorLocation.bPositiveX);
+	ThisCell->DoorBlocked.bNegativeX = (NegXCell == nullptr || !NegXCell->bIsEnabled) || (NegXCell->bIsGenerated && !NegXCell->DoorLocation.bPositiveX);
+
+	// Negative Y
+	ThisCell->DoorRequired.bNegativeY = (NegYCell != nullptr && NegYCell->DoorLocation.bPositiveY);
+	ThisCell->DoorBlocked.bNegativeY = (NegYCell == nullptr || !NegYCell->bIsEnabled) || (NegYCell->bIsGenerated && !NegYCell->DoorLocation.bPositiveY);
+
+	// Check if the room fits and when not rotate it
+	for (int i = 0; i < 4; i++)
+	{
+		bSuccess = true;
+
+		// Positive X
+		bSuccess = bSuccess && ((ThisCell->DoorRequired.bPositiveX && ThisCell->DoorLocation.bPositiveX) || !ThisCell->DoorRequired.bPositiveX);
+		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bPositiveX && !ThisCell->DoorLocation.bPositiveX) || !ThisCell->DoorBlocked.bPositiveX);
+
+		// Positive Y
+		bSuccess = bSuccess && ((ThisCell->DoorRequired.bPositiveY && ThisCell->DoorLocation.bPositiveY) || !ThisCell->DoorRequired.bPositiveY);
+		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bPositiveY && !ThisCell->DoorLocation.bPositiveY) || !ThisCell->DoorBlocked.bPositiveY);
+
+		// Negative X
+		bSuccess = bSuccess && ((ThisCell->DoorRequired.bNegativeX && ThisCell->DoorLocation.bNegativeX) || !ThisCell->DoorRequired.bNegativeX);
+		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bNegativeX && !ThisCell->DoorLocation.bNegativeX) || !ThisCell->DoorBlocked.bNegativeX);
+
+		// Negative Y
+		bSuccess = bSuccess && ((ThisCell->DoorRequired.bNegativeY && ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorRequired.bNegativeY);
+		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bNegativeY && !ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorBlocked.bNegativeY);
+
+		if (bSuccess)
+		{
+			break;
+		}
+		else
+		{
+			// Rotate the room right
+			FCellSides PreviousDoorLocation = ThisCell->DoorLocation;
+
+			ThisCell->DoorLocation.bPositiveX = PreviousDoorLocation.bNegativeY;
+			ThisCell->DoorLocation.bPositiveY = PreviousDoorLocation.bPositiveX;
+			ThisCell->DoorLocation.bNegativeX = PreviousDoorLocation.bPositiveY;
+			ThisCell->DoorLocation.bNegativeY = PreviousDoorLocation.bNegativeX;
+			
+			ThisCell->Rotation += 1;
+		}
+	}
+
+	if (bSuccess)
+	{
+		ThisCell->bIsGenerated = true;
+		return true;
+	}
+	else
+	{
+		*ThisCell = ThisCellPrevious;
+		return false;
+	}
+}
+
+TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(const FName RoomRowName)
+{
+	TArray<FIntVector2D> FoundCellLocations;
+
+	for (auto Kvp : Grid)
+	{
+		if (Kvp.Value.RoomRowName == RoomRowName)
+		{
+			FoundCellLocations.AddUnique(Kvp.Key);
+		}
+	}
+
+	return FoundCellLocations;
+}
+
+FGridCell ALayoutGenerator_Main::GetCellAtCellLocation(const FIntVector2D CellLocation)
+{
+	return *Grid.Find(CellLocation);
+}
+
+bool ALayoutGenerator_Main::DoesPathExist(const FIntVector2D Start, const FIntVector2D End)
+{
+	return false;
+}
+
+FVector ALayoutGenerator_Main::CellLocationToWorldLocation(const FIntVector2D CellLocation)
+{
+	return FVector(CellLocation.X * CellSize + GetActorLocation().X, CellLocation.Y * CellSize + GetActorLocation().Y, GetActorLocation().Z);
+}
+
+FRotator ALayoutGenerator_Main::CellRotationToWorldRotation(const int32 CellRotation)
+{
+	return FRotator(0, CellRotation * 90, 0);
+}
+
+FString ALayoutGenerator_Main::GetUniqueLevelName(const FIntVector2D CellLocation)
+{
+	FString UniqueLevelName;
+
+	UniqueLevelName = GetName();
+	UniqueLevelName.Append("__X");
+	UniqueLevelName.AppendInt(CellLocation.X);
+	UniqueLevelName.Append("_Y");
+	UniqueLevelName.AppendInt(CellLocation.Y);
+	return UniqueLevelName;
 }
 
 // Called when the game starts or when spawned
@@ -34,13 +209,6 @@ void ALayoutGenerator_Main::BeginPlay()
 	
 }
 
-// Called when the actor gets destroyed
-void ALayoutGenerator_Main::BeginDestroy()
-{
-	Super::BeginDestroy();
-	FlushPersistentDebugLines(GetWorld());
-}
-
 // Called every frame
 void ALayoutGenerator_Main::Tick(float DeltaTime)
 {
@@ -48,226 +216,297 @@ void ALayoutGenerator_Main::Tick(float DeltaTime)
 
 }
 
-void ALayoutGenerator_Main::GenerateLayout(FLayoutGenerationDone OnDone)
+void ALayoutGenerator_Main::InitRuntimeProperties()
 {
-	if (bHasLayoutGenerated)
-	{
-		OnDone.ExecuteIfBound(false, "layout already generated");
-		return;
-	}
-
-	// Cache datatable so we don't need to cast our struct every time
-	CachedDataTable.Empty();
+	// DataTable initialisation //
 	if (DataTable == nullptr)
 	{
-		OnDone.ExecuteIfBound(false, "no datatable found");
+		bIsCurrentlyGeneratingLayout = false;
+		OnTaskDone.ExecuteIfBound(false, "No datatable present");
+		UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: No datatable present"), *GetName());
 		return;
 	}
 
-	for (auto Row : DataTable->GetRowMap())
+	if (DataTable->RowStruct != FRoomGenerationSettings::StaticStruct())
 	{
-		CachedDataTable[Row.Key] = *(FRoomGenerationSettings*)(Row.Value);
-	}
-
-	if (CachedDataTable.Num() == 0)
-	{
-		OnDone.ExecuteIfBound(false, "datatable returned nothing");
+		bIsCurrentlyGeneratingLayout = false;
+		OnTaskDone.ExecuteIfBound(false, "Datatable has wrong sturct type");
+		UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Datatable has wrong sturct type"), *GetName());
 		return;
 	}
 
-	// Prepare variables based on the datatable
-	for (auto Row : CachedDataTable)
+	for (auto Kvp : DataTable->GetRowMap())
 	{
-		RoomInstances[Row.Key] = 0;
+		DataTableCached.Add(Kvp.Key, *(FRoomGenerationSettings*)Kvp.Value);
+	}
+	////
 
-		RequiredRooms.Empty();
-		for (int32 i = 0; i < Row.Value.MinimumInstances; i++)
+	// Properties initialisation //
+	RStream = FRandomStream(Seed);
+
+	for (auto Kvp : DataTableCached)
+	{
+		// Required rooms
+		for (int i = 0; i < Kvp.Value.MinimumInstances; i++)
 		{
-			RequiredRooms.Add(Row.Key);
+			RequiredRooms.Add(Kvp.Key);
 		}
 
-		SpawnPool.Empty();
-		for (int32 i = 0; i < Row.Value.SpawnPoolAmount; i++)
+		// Available rooms
+		for (int i = 0; i < Kvp.Value.MaximumInstances; i++)
 		{
-			SpawnPool.Add(Row.Key);
+			AvailableRooms.Add(Kvp.Key);
+		}
+
+		// Spawn pool
+		for (int i = 0; i < Kvp.Value.SpawnPoolAmount; i++)
+		{
+			SpawnPool.Add(Kvp.Key);
 		}
 	}
 
-	ClampVariables();
-	GenerateGrid();
+	// Grid
+	Grid.Empty(GridSize.X * GridSize.Y);
 
-	// Spawn room spawner for every grid entry
-	for (auto GridElement : Grid)
+	for (int x = 0; x < GridSize.X; x++)
 	{
-		ALayoutGenerator_RoomSpawner* RoomSpawner = GetWorld()->SpawnActor<ALayoutGenerator_RoomSpawner>(GridLocationToWorldLocation(GridElement.Key), FRotator());
-		RoomSpawner->LayoutGenerator = this;
-		RoomSpawner->GridLocation = GridElement.Key;
-		GridElement.Value.RoomSpawner = RoomSpawner;
+		for (int y = 0; y < GridSize.Y; y++)
+		{
+			Grid.Add(FIntVector2D(x, y), FGridCell());
+		}
 	}
 
-	// Generate required rooms first
-	for (auto RowName : RequiredRooms)
+	// Queue (changing this will change layout generation)
+	for (auto Kvp : Grid)
 	{
-		// Try 100 random grid entries and break if we find an entry where the room can spawn
-		for (int32 i = 0; i < 100; i++)
-		{
-			int32 RandomX = SeedStream.RandRange(0, GridSize.X - 1);
-			int32 RandomY = SeedStream.RandRange(0, GridSize.Y - 1);
-			FGridEntry RandomGridEntry = Grid[FIntVector2D(RandomX, RandomY)];
+		Queue.Add(Kvp.Key);
+	}
+	////
 
-			FRoomGenerationSettings RoomGenSettings = CachedDataTable[RowName];
-			FRandomStream RoomSeedStream = FRandomStream(SeedStream.GetUnsignedInt());
-			
-			bool bSuccess = RandomGridEntry.RoomSpawner->SpawnRoom(RoomGenSettings, RoomSeedStream);
+	// Load Assets //
+	FStreamableManager* StreamManager;
+	FStreamableDelegate OnDoneCallback;
+	TArray<FSoftObjectPath> LevelAssets;
+	FString DebugName;
+
+	StreamManager = &GEngine->AssetManager->GetStreamableManager();
+	DebugName = GetName();
+	DebugName.Append("_LevelAssets");
+	OnDoneCallback.BindUFunction(this, "OnAssetsLoaded");
+
+	for (auto Kvp : DataTableCached)
+	{
+		for (int i = 0; i < Kvp.Value.Level.Num(); i++)
+		{
+			LevelAssets.AddUnique(Kvp.Value.Level[i].ToSoftObjectPath());
+		}
+	}
+
+	StreamManager->RequestAsyncLoad(LevelAssets, OnDoneCallback, 1, false, false, DebugName);
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Loading assets..."), *GetName());
+	////
+
+	/** OnAssetsLoaded continues generation */
+}
+
+void ALayoutGenerator_Main::OnAssetsLoaded()
+{
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Loading assets done"), *GetName());
+
+	// Generate layout on another thread //
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this]()
+	{
+		GenLayout();
+	});
+	////
+}
+
+void ALayoutGenerator_Main::GenLayout()
+{
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Generating rooms..."), *GetName());
+
+	// Generate required rooms //
+	while (RequiredRooms.Num() > 0)
+	{
+		if (CurrentInteration > MaximumIterations)
+		{
+			bIsCurrentlyGeneratingLayout = false;
+			ClearRuntimeProperties();
+			OnTaskDone.ExecuteIfBound(false, "Maximum iteration reached");
+			UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Maximum iteration reached"), *GetName());
+			return;
+		}
+
+		CurrentInteration++;
+
+		FIntVector2D CellLocation;
+		FName RoomRowName;
+		bool bRoomSpawned;
+
+		CellLocation = Queue[RStream.RandHelper(Queue.Num() - 1)];
+		RoomRowName = RequiredRooms[0];
+		bRoomSpawned = SetRoom(CellLocation, RoomRowName, false, false);
+
+		if (bRoomSpawned)
+		{
+			Queue.RemoveSingle(CellLocation);
+			RequiredRooms.RemoveSingle(RoomRowName);
+			AvailableRooms.RemoveSingle(RoomRowName);
+
+			if (AvailableRooms.Find(RoomRowName) == INDEX_NONE)
+			{
+				SpawnPool.Remove(RoomRowName);
+			}
+		}
+	}
+	/////
+
+	// Generate all cells still in queue //
+	while (Queue.Num() > 0)
+	{
+		TArray<FName> LocalSpawnPool;
+
+		LocalSpawnPool = SpawnPool;
+
+		// Loop as long as there are still entires left in the local spawn pool 
+		while (LocalSpawnPool.Num() > 0)
+		{
+			if (CurrentInteration > MaximumIterations)
+			{
+				bIsCurrentlyGeneratingLayout = false;
+				ClearRuntimeProperties();
+				OnTaskDone.ExecuteIfBound(false, "Maximum iteration reached");
+				UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Maximum iteration reached"), *GetName());
+				return;
+			}
+
+			CurrentInteration++;
+
+			FIntVector2D CellLocation;
+			FName RoomRowName;
+			bool bRoomSpawned;
+
+			CellLocation = Queue[0];
+			RoomRowName = SpawnPool[RStream.RandHelper(SpawnPool.Num() - 1)];
+
+			if (!Grid[CellLocation].bIsEnabled || Grid[CellLocation].bIsGenerated)
+			{
+				bRoomSpawned = true;
+			}
+			else
+			{
+				bRoomSpawned = SetRoom(CellLocation, RoomRowName, false, false);
+			}
+
+			if (bRoomSpawned)
+			{
+				Queue.RemoveSingle(CellLocation);
+				AvailableRooms.RemoveSingle(RoomRowName);
+
+				if (AvailableRooms.Find(RoomRowName) == INDEX_NONE)
+				{
+					SpawnPool.Remove(RoomRowName);
+				}
+				break;
+			}
+			else 
+			{
+				// Remove from local spawn pool so room can't be selected anymore for this cell
+				LocalSpawnPool.Remove(RoomRowName);
+			}
+		}
+
+		// If local spawn pool is empty then we did not found a valid room for this cell, so we abort generation
+		if (LocalSpawnPool.Num() <= 0)
+		{
+			bIsCurrentlyGeneratingLayout = false;
+			ClearRuntimeProperties();
+			OnTaskDone.ExecuteIfBound(false, "Cell found no valid room to generate");
+			UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Cell found no valid room to generate"), *GetName());
+			return;
+		}
+	}
+	////
+
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Generating rooms done"), *GetName());
+
+	// Run post spawn validation //
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Running post spawn validation..."), *GetName());
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Running post spawn validation done"), *GetName());
+	////
+
+	// Load level instances on game thread //
+	AsyncTask(ENamedThreads::GameThread, [this]()
+	{
+		LoadRoomLevels();
+	});
+	////
+}
+
+void ALayoutGenerator_Main::LoadRoomLevels()
+{
+	// Load room level instances //
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Spawning level instances..."), *GetName());
+
+	for (auto Kvp : Grid)
+	{
+		FVector LevelWorldLocation;
+		FRotator LevelWorldRotation;
+		FString LevelOverrideName;
+		ULevelStreamingDynamic* LStreamingDyn;
+		TArray<TSoftObjectPtr<UWorld> > LevelAssets;
+		bool bSuccess;
+
+		LevelWorldLocation = CellLocationToWorldLocation(Kvp.Key);
+		LevelWorldRotation = CellRotationToWorldRotation(Kvp.Value.Rotation);
+		LevelOverrideName = GetUniqueLevelName(Kvp.Key);
+		LevelAssets = DataTableCached[Kvp.Value.RoomRowName].Level;
+
+		if (LevelAssets.Num() > 0 && Kvp.Value.bIsEnabled && Kvp.Value.bIsGenerated)
+		{
+			LStreamingDyn = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(GetWorld(), LevelAssets[RStream.RandHelper(LevelAssets.Num() - 1)], LevelWorldLocation, LevelWorldRotation, bSuccess, LevelOverrideName);
 
 			if (bSuccess)
 			{
-				RoomInstances[RowName] += 1;
-
-				// Remove room from spawn pool if it reached its max instance value
-				if (RoomInstances[RowName] >= RoomGenSettings.MaximumInstances)
-				{
-					SpawnPool.RemoveSwap(RowName, true);
-				}
-
-				break;
-			}
-			else if (i == 99)
-			{
-				// Required room could not be spawned
-				OnDone.ExecuteIfBound(false, "required room not generated");
-				return;
+				LStreamingDyn->OnLevelShown.AddDynamic(this, &ALayoutGenerator_Main::OnLevelInstanceLoaded);
+				LoadingLevelInstances++;
 			}
 		}
 	}
+	////
 
-	// Fill the queue with random entries until we have 10% of the grid added to the queue
-	while (Queue.Num() < (GridSize.X * GridSize.Y * 0.1))
-	{
-		int32 RandomX = SeedStream.RandRange(0, GridSize.X - 1);
-		int32 RandomY = SeedStream.RandRange(0, GridSize.Y - 1);
-
-		Queue.Add(FIntVector2D(RandomX, RandomY));
-	}
-
-	// Work off the queue and spawn a room at every entry
-	// Note that every spawned room will most likey add other entries to the queue
-	TArray<FName> LocalSpawnPool = SpawnPool;
-	for (int32 i = 0; Queue.Num() > 0; i++)
-	{
-		FGridEntry QueuedGridEntry = Grid[Queue[0]];
-		FName RandomRowName = LocalSpawnPool[SeedStream.RandRange(0, SpawnPool.Num() - 1)];
-
-		FRoomGenerationSettings RoomGenSettings = CachedDataTable[RandomRowName];
-		FRandomStream RoomSeedStream = FRandomStream(SeedStream.GetUnsignedInt());
-
-		bool bSuccess = QueuedGridEntry.RoomSpawner->SpawnRoom(RoomGenSettings, RoomSeedStream);
-
-		if (bSuccess)
-		{
-			RoomInstances[RandomRowName] += 1;
-
-			// Remove room from spawn pool if it reached its max instance value
-			if (RoomInstances[RandomRowName] >= RoomGenSettings.MaximumInstances)
-			{
-				SpawnPool.RemoveSwap(RandomRowName, true);
-			}
-
-			LocalSpawnPool = SpawnPool;
-			Queue.RemoveAt(0);
-		}
-		else if (i >= MaximumIterations) // Max iterations so we don't get stuck in an infine loop
-		{
-			OnDone.ExecuteIfBound(false, "maximum iterations reached");
-			return;
-		}
-		else
-		{
-			// Remove room from local spawn pool so it doesn't get selected in the next run
-			LocalSpawnPool.RemoveSwap(RandomRowName, true);
-		}
-	}
-
-	// Run post spawn validation
-	for (auto GridElement : Grid)
-	{
-		bool bSuccess = GridElement.Value.RoomSpawner->HasPassedPostSpawnValidation();
-
-		if (!bSuccess)
-		{
-			OnDone.ExecuteIfBound(false, "post spawn validation failed");
-			return;
-		}
-	}
-
-	// Load level instances
-	int32 LoadingLevels = 0;
-
-	auto OnLoadingLevelDone = [](int32 &LoadingLevels, FLayoutGenerationDone &OnDone)
-	{
-		LoadingLevels -= 1;
-		if (&LoadingLevels == 0)
-		{
-			OnDone.ExecuteIfBound(true, "");
-		}
-	};
-
-	for (auto GridElement : Grid)
-	{
-		LoadingLevels += 1;
-
-		FLoadingLevelDone CallbackDelegate = FLoadingLevelDone();
-		CallbackDelegate.BindLambda(this, &OnLoadingLevelDone, &LoadingLevels, &OnDone);
-
-		GridElement.Value.RoomSpawner->LoadLevel(CallbackDelegate);
-	}
-
-	bHasLayoutGenerated = true;
-	return;
+	/** OnLevelInstanceLoaded continues generation */
 }
 
-bool ALayoutGenerator_Main::ClearLayout()
+void ALayoutGenerator_Main::OnLevelInstanceLoaded()
 {
-	bHasLayoutGenerated = false;
-	return true;
-}
+	LoadingLevelInstances--;
 
-void ALayoutGenerator_Main::ClampVariables()
-{
-	GridSize.X = FMath::Clamp(GridSize.X, 1, 100);
-	GridSize.Y = FMath::Clamp(GridSize.Y, 1, 100);
-	RoomSize = FMath::Clamp(RoomSize, 1.f, 100000.f);
-	MaximumIterations = FMath::Clamp(MaximumIterations, 1, 2147483647);
-}
-
-void ALayoutGenerator_Main::GenerateGrid()
-{
-	Grid.Empty(GridSize.X * GridSize.Y);
-	FlushPersistentDebugLines(GetWorld());
-	
-	for (int32 x = 0; x < GridSize.X; x++)
+	if (LoadingLevelInstances <= 0)
 	{
-		for (int32 y = 0; y < GridSize.Y; y++)
-		{
-			Grid.Add(FIntVector2D(x, y), FGridEntry());
-			DrawDebugBox(GetWorld(), GridLocationToWorldLocation(FIntVector2D(x, y)), FVector(RoomSize / 2, RoomSize / 2, 0), FColor(255, 0, 0), true);
-		}
+		UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Spawning level instances done"), *GetName());
+
+		bIsLayoutPresent = true;
+		bIsCurrentlyGeneratingLayout = false;
+		ClearRuntimeProperties();
+		OnTaskDone.ExecuteIfBound(true, "");
+		UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Finished layout generation"), *GetName());
+		return;
 	}
 }
 
-FVector ALayoutGenerator_Main::GridLocationToWorldLocation(FIntVector2D GridLocation)
+void ALayoutGenerator_Main::ClearRuntimeProperties()
 {
-	return FVector(GridLocation.X * RoomSize + (GetActorLocation().X + RoomSize), GridLocation.Y * RoomSize + (GetActorLocation().Y + RoomSize), GetActorLocation().Z);
+	RStream = FRandomStream(0);
+	DataTableCached.Empty();
+	RequiredRooms.Empty();
+	AvailableRooms.Empty();
+	SpawnPool.Empty();
+	Queue.Empty();
+	CurrentInteration = 0;
+	LoadingLevelInstances = 0;
 }
 
-bool ALayoutGenerator_Main::GetGridEntry(FGridEntry &OutGridEntry, FIntVector2D GridLocation)
+void ALayoutGenerator_Main::DrawGridPreview()
 {
-	if (!Grid.Contains(GridLocation))
-	{
-		return false;
-	}
-
-	OutGridEntry = Grid[GridLocation];
-	return true;
 }
-

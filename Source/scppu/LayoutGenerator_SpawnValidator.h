@@ -15,11 +15,9 @@ class SCPPU_API ULayoutGenerator_SpawnValidator : public UObject
 
 public:
 	UFUNCTION(BlueprintImplementableEvent)
-		bool IsValidSpawn();
+		bool IsSpawnValid(ALayoutGenerator_Main* LayoutGenerator, FIntVector2D CellLocation);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		ALayoutGenerator_Main* LayoutGenerator;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	//	ALayoutGenerator_Main* LayoutGenerator;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		FIntVector2D GridLocation;
 };
