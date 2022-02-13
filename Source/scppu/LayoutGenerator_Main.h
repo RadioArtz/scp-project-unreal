@@ -34,8 +34,8 @@ public:
 		void AsyncClearLayout(const FLayoutGenerationDelegate& OnDone);
 
 	/**
-	*Tries to set a room at a given grid location.
-	*@param GridLocation		Grid location where to set the room.
+	*Tries to set a room at a given cell location.
+	*@param CellLocation		Cell location where to set the room.
 	*@param RowName				Row name of the room inside the datatable.
 	*@param bForce				Wether to force set the room or not.
 	*@param bUpdateNeighbours	Update neigbours accordingly. Will only have an effect when forcing. THIS IS HIGHLY RECOMMENDED. NOT YET IMPLEMENTED.

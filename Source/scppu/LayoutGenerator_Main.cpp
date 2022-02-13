@@ -52,6 +52,8 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(const FLayoutGenerationDelegate&
 		InitRuntimeProperties();
 	});
 	////
+
+	/** InitRuntimeProperties continues generation */
 }
 
 void ALayoutGenerator_Main::AsyncClearLayout(const FLayoutGenerationDelegate& OnDone)
@@ -146,6 +148,28 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 	if (bSuccess)
 	{
 		ThisCell->bIsGenerated = true;
+
+		// Disable neighbouring cells if needed
+		if (PosXCell != nullptr)
+		{
+			PosXCell->bIsEnabled = PosXCell->bIsEnabled && !ThisCell->DisableNeighbour.bPositiveX;
+		}
+
+		if (PosYCell != nullptr)
+		{
+			PosYCell->bIsEnabled = PosYCell->bIsEnabled && !ThisCell->DisableNeighbour.bPositiveY;
+		}
+
+		if (NegXCell != nullptr)
+		{
+			NegXCell->bIsEnabled = NegXCell->bIsEnabled && !ThisCell->DisableNeighbour.bNegativeX;
+		}
+
+		if (NegYCell != nullptr)
+		{
+			NegYCell->bIsEnabled = NegYCell->bIsEnabled && !ThisCell->DisableNeighbour.bNegativeY;
+		}
+
 		return true;
 	}
 	else
@@ -319,6 +343,8 @@ void ALayoutGenerator_Main::OnAssetsLoaded()
 		GenLayout();
 	});
 	////
+
+	/** GenLayout continues generation */
 }
 
 void ALayoutGenerator_Main::GenLayout()
@@ -361,7 +387,7 @@ void ALayoutGenerator_Main::GenLayout()
 	}
 	/////
 
-	// Generate all cells still in queue //
+	// Generate all cells that are in queue //
 	while (Queue.Num() > 0)
 	{
 		TArray<FName> LocalSpawnPool;
@@ -441,6 +467,8 @@ void ALayoutGenerator_Main::GenLayout()
 		LoadRoomLevels();
 	});
 	////
+
+	/** LoadRoomLevels continues generation */
 }
 
 void ALayoutGenerator_Main::LoadRoomLevels()
@@ -491,8 +519,10 @@ void ALayoutGenerator_Main::OnLevelInstanceLoaded()
 		ClearRuntimeProperties();
 		OnTaskDone.ExecuteIfBound(true, "");
 		UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Finished layout generation"), *GetName());
+		/** Generation finished */
 		return;
 	}
+
 }
 
 void ALayoutGenerator_Main::ClearRuntimeProperties()
