@@ -14,6 +14,8 @@ DECLARE_DYNAMIC_DELEGATE_TwoParams(FLayoutGenerationDelegate, bool, bSuccess, FS
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayoutGenerator, Log, All);
 
+class ULayoutGenerator_SpawnValidator;
+
 UCLASS()
 class SCPPU_API ALayoutGenerator_Main : public AActor
 {
@@ -39,9 +41,9 @@ public:
 	*@param RowName				Row name of the room inside the datatable.
 	*@param bForce				Wether to force set the room or not.
 	*@param bUpdateNeighbours	Update neigbours accordingly. Will only have an effect when forcing. THIS IS HIGHLY RECOMMENDED. NOT YET IMPLEMENTED.
-	*@retruns					Returns if a room was spawned or not.
+	*@return					Returns if a room was spawned or not.
 	*/
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Room (Do not use in current state!)"))
 		bool SetRoom(const FIntVector2D CellLocation, const FName RoomRowName, const bool bForce, const bool bUpdateNeighbours = true);
 
 	UFUNCTION(BlueprintCallable)
@@ -50,7 +52,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		FGridCell GetCellAtCellLocation(const FIntVector2D CellLocation);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Does Path Exists (Currently always returns false!)"))
 		bool DoesPathExist(const FIntVector2D Start, const FIntVector2D End);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -129,13 +131,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		FLayoutGenerationDelegate OnTaskDone;
 
-	/** Cached random stream to ensure thread saftey. */
+	/** Random stream created from seed variable. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		FRandomStream RStream;
 
 	/** Cached datatable to ensure thread saftey and for ease of use. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FName, FRoomGenerationSettings> DataTableCached;
+		TMap<FName, FRoomGenerationSettings> RoomGenerationData;
 
 	/** Contains row names and how many instances of it are still required. Coresponse to MinimumInstances inside FRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
@@ -149,7 +151,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> SpawnPool;
 
-	/** Cells that will be generated next. */
+	/** Cell generation order. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FIntVector2D> Queue;
 
@@ -157,9 +159,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		int32 CurrentInteration;
 
+	/** Cached spawn validator objects*/
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		TMap<TSubclassOf<ULayoutGenerator_SpawnValidator>, ULayoutGenerator_SpawnValidator*> SpawnValidators;
+
 	/** Number of Level Instances currently loading*/
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		int32 LoadingLevelInstances;
+		int32 CurrentLoadingLevelInstances;
 
 	/** Contains the actual grid. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")

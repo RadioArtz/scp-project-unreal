@@ -6,9 +6,7 @@
 #include "Engine/DataTable.h"
 #include "LayoutGenerator_Structs.generated.h"
 
-class ULevelStreamingDynamic;
 class ULayoutGenerator_SpawnValidator;
-class ABaseRoom;
 
 USTRUCT(BlueprintType)
 struct FIntVector2D
@@ -95,11 +93,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FCellSides DisableNeighbour;
 
-	/** Validates a spawn location before spawning the room (NOTE: Not all rooms have been spawned yet!). */
+	/** 
+	*Validates a spawn location before spawning the room (NOTE: Not all rooms have been spawned yet!).
+	*Return value gets AND gated.
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PreSpawnValidator;
 	
-	/** Validates a spawn location after spawning all rooms. */
+	/** 
+	*Validates a spawn location after spawning all rooms.
+	*Return value gets AND gated.
+	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PostSpawnValidator;
 };

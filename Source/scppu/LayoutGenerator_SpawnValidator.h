@@ -8,7 +8,7 @@
 #include "LayoutGenerator_Main.h"
 #include "LayoutGenerator_SpawnValidator.generated.h"
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, Abstract)
 class SCPPU_API ULayoutGenerator_SpawnValidator : public UObject
 {
 	GENERATED_BODY()

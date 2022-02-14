@@ -49,6 +49,7 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(const FLayoutGenerationDelegate&
 	// Init runtime properties on game thread//
 	AsyncTask(ENamedThreads::GameThread, [this]()
 	{
+		ClearRuntimeProperties();
 		InitRuntimeProperties();
 	});
 	////
@@ -74,7 +75,7 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 	ThisCell = &Grid[CellLocation];
 	ThisCellPrevious = *ThisCell;
 	ThisCell->RoomRowName = RoomRowName;
-	SourceSettings = DataTableCached[ThisCell->RoomRowName];
+	SourceSettings = RoomGenerationData[ThisCell->RoomRowName];
 	ThisCell->DoorLocation = SourceSettings.DoorLocation;
 	ThisCell->DisableNeighbour = SourceSettings.DisableNeighbour;
 
@@ -126,6 +127,12 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 		// Negative Y
 		bSuccess = bSuccess && ((ThisCell->DoorRequired.bNegativeY && ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorRequired.bNegativeY);
 		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bNegativeY && !ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorBlocked.bNegativeY);
+
+		// Check pre spawn validators
+		for (auto Elem : SourceSettings.PreSpawnValidator)
+		{
+			bSuccess = bSuccess && Elem != nullptr && SpawnValidators[Elem]->IsSpawnValid(this, CellLocation);
+		}
 
 		if (bSuccess)
 		{
@@ -261,14 +268,14 @@ void ALayoutGenerator_Main::InitRuntimeProperties()
 
 	for (auto Kvp : DataTable->GetRowMap())
 	{
-		DataTableCached.Add(Kvp.Key, *(FRoomGenerationSettings*)Kvp.Value);
+		RoomGenerationData.Add(Kvp.Key, *(FRoomGenerationSettings*)Kvp.Value);
 	}
 	////
 
 	// Properties initialisation //
 	RStream = FRandomStream(Seed);
 
-	for (auto Kvp : DataTableCached)
+	for (auto Kvp : RoomGenerationData)
 	{
 		// Required rooms
 		for (int i = 0; i < Kvp.Value.MinimumInstances; i++)
@@ -286,6 +293,36 @@ void ALayoutGenerator_Main::InitRuntimeProperties()
 		for (int i = 0; i < Kvp.Value.SpawnPoolAmount; i++)
 		{
 			SpawnPool.Add(Kvp.Key);
+		}
+
+		// Pre spawn validators
+		for (int i = 0; i < Kvp.Value.PreSpawnValidator.Num(); i++)
+		{
+			TSubclassOf<ULayoutGenerator_SpawnValidator> ValidatorClass;
+			ULayoutGenerator_SpawnValidator* Validator;
+
+			ValidatorClass = Kvp.Value.PreSpawnValidator[i];
+
+			if (!SpawnValidators.Contains(ValidatorClass) && ValidatorClass != nullptr)
+			{
+				Validator = NewObject<ULayoutGenerator_SpawnValidator>(this, ValidatorClass);
+				SpawnValidators.Add(ValidatorClass, Validator);
+			}
+		}
+
+		// Post spawn validators
+		for (int i = 0; i < Kvp.Value.PostSpawnValidator.Num(); i++)
+		{
+			TSubclassOf<ULayoutGenerator_SpawnValidator> ValidatorClass;
+			ULayoutGenerator_SpawnValidator* Validator;
+
+			ValidatorClass = Kvp.Value.PostSpawnValidator[i];
+
+			if (!SpawnValidators.Contains(ValidatorClass) && ValidatorClass != nullptr)
+			{
+				Validator = NewObject<ULayoutGenerator_SpawnValidator>(this, ValidatorClass);
+				SpawnValidators.Add(ValidatorClass, Validator);
+			}
 		}
 	}
 
@@ -318,7 +355,7 @@ void ALayoutGenerator_Main::InitRuntimeProperties()
 	DebugName.Append("_LevelAssets");
 	OnDoneCallback.BindUFunction(this, "OnAssetsLoaded");
 
-	for (auto Kvp : DataTableCached)
+	for (auto Kvp : RoomGenerationData)
 	{
 		for (int i = 0; i < Kvp.Value.Level.Num(); i++)
 		{
@@ -458,6 +495,30 @@ void ALayoutGenerator_Main::GenLayout()
 
 	// Run post spawn validation //
 	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Running post spawn validation..."), *GetName());
+
+	for (auto Kvp : Grid)
+	{
+		bool bIsValid;
+		FRoomGenerationSettings SourceSettings;
+
+		bIsValid = true;
+		SourceSettings = RoomGenerationData[Kvp.Value.RoomRowName];
+
+		for (auto Elem : SourceSettings.PostSpawnValidator)
+		{
+			bIsValid = bIsValid && Elem != nullptr && SpawnValidators[Elem]->IsSpawnValid(this, Kvp.Key);
+		}
+
+		if (!bIsValid)
+		{
+			bIsCurrentlyGeneratingLayout = false;
+			ClearRuntimeProperties();
+			OnTaskDone.ExecuteIfBound(false, "Post spawn validation failed");
+			UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout: Post spawn validation failed"), *GetName());
+			return;
+		}
+	}
+
 	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Running post spawn validation done"), *GetName());
 	////
 
@@ -488,7 +549,7 @@ void ALayoutGenerator_Main::LoadRoomLevels()
 		LevelWorldLocation = CellLocationToWorldLocation(Kvp.Key);
 		LevelWorldRotation = CellRotationToWorldRotation(Kvp.Value.Rotation);
 		LevelOverrideName = GetUniqueLevelName(Kvp.Key);
-		LevelAssets = DataTableCached[Kvp.Value.RoomRowName].Level;
+		LevelAssets = RoomGenerationData[Kvp.Value.RoomRowName].Level;
 
 		if (LevelAssets.Num() > 0 && Kvp.Value.bIsEnabled && Kvp.Value.bIsGenerated)
 		{
@@ -497,7 +558,7 @@ void ALayoutGenerator_Main::LoadRoomLevels()
 			if (bSuccess)
 			{
 				LStreamingDyn->OnLevelShown.AddDynamic(this, &ALayoutGenerator_Main::OnLevelInstanceLoaded);
-				LoadingLevelInstances++;
+				CurrentLoadingLevelInstances++;
 			}
 		}
 	}
@@ -508,9 +569,9 @@ void ALayoutGenerator_Main::LoadRoomLevels()
 
 void ALayoutGenerator_Main::OnLevelInstanceLoaded()
 {
-	LoadingLevelInstances--;
+	CurrentLoadingLevelInstances--;
 
-	if (LoadingLevelInstances <= 0)
+	if (CurrentLoadingLevelInstances <= 0)
 	{
 		UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Spawning level instances done"), *GetName());
 
@@ -528,13 +589,14 @@ void ALayoutGenerator_Main::OnLevelInstanceLoaded()
 void ALayoutGenerator_Main::ClearRuntimeProperties()
 {
 	RStream = FRandomStream(0);
-	DataTableCached.Empty();
+	RoomGenerationData.Empty();
 	RequiredRooms.Empty();
 	AvailableRooms.Empty();
 	SpawnPool.Empty();
 	Queue.Empty();
+	SpawnValidators.Empty();
 	CurrentInteration = 0;
-	LoadingLevelInstances = 0;
+	CurrentLoadingLevelInstances = 0;
 }
 
 void ALayoutGenerator_Main::DrawGridPreview()
