@@ -32,7 +32,7 @@ ALayoutGenerator_Main::ALayoutGenerator_Main()
 
 }
 
-void ALayoutGenerator_Main::AsyncGenerateLayout(const FLayoutGenerationDelegate& OnDone)
+void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 Seed_, const FLayoutGenerationDelegate& OnDone)
 {
 	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Starting layout generation..."), *GetName());
 
@@ -45,6 +45,7 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(const FLayoutGenerationDelegate&
 
 	bIsCurrentlyGeneratingLayout = true;
 	OnTaskDone = OnDone;
+	this->Seed = Seed_;
 
 	// Init runtime properties on game thread//
 	AsyncTask(ENamedThreads::GameThread, [this]()
@@ -357,9 +358,9 @@ void ALayoutGenerator_Main::InitRuntimeProperties()
 
 	for (auto Kvp : RoomGenerationData)
 	{
-		for (int i = 0; i < Kvp.Value.Level.Num(); i++)
+		for (int i = 0; i < Kvp.Value.Maps.Num(); i++)
 		{
-			LevelAssets.AddUnique(Kvp.Value.Level[i].ToSoftObjectPath());
+			LevelAssets.AddUnique(Kvp.Value.Maps[i].ToSoftObjectPath());
 		}
 	}
 
@@ -549,7 +550,7 @@ void ALayoutGenerator_Main::LoadRoomLevels()
 		LevelWorldLocation = CellLocationToWorldLocation(Kvp.Key);
 		LevelWorldRotation = CellRotationToWorldRotation(Kvp.Value.Rotation);
 		LevelOverrideName = GetUniqueLevelName(Kvp.Key);
-		LevelAssets = RoomGenerationData[Kvp.Value.RoomRowName].Level;
+		LevelAssets = RoomGenerationData[Kvp.Value.RoomRowName].Maps;
 
 		if (LevelAssets.Num() > 0 && Kvp.Value.bIsEnabled && Kvp.Value.bIsGenerated)
 		{

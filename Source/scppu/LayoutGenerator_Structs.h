@@ -69,9 +69,9 @@ struct FRoomGenerationSettings : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	/** Levels of the room (if > 1: will choose one randomly per cell, should be only used for minor visual variations).*/
+	/** Maps of the room (if > 1: will choose one randomly per cell, should be only used for minor visual variations).*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSoftObjectPtr<UWorld> > Level;
+		TArray< TSoftObjectPtr<UWorld> > Maps;
 
 	/** Minimum instances that will be generated. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))

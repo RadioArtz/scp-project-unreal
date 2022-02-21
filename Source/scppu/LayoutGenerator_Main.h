@@ -29,7 +29,7 @@ public:
 
 	/** Generates a new layout. Use the seed variable to set the seed. Ignores calls if a layout is already present. */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
-		void AsyncGenerateLayout(const FLayoutGenerationDelegate& OnDone);
+		void AsyncGenerateLayout(const int32 Seed, const FLayoutGenerationDelegate& OnDone);
 
 	/** Clears the layout. Ignores calls if no layout is present. */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
@@ -66,10 +66,6 @@ public:
 
 	//// PROPERTIES ////
 
-	/** Seed used for layout generation. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
-		int32 Seed;
-
 	/** Size of the grid. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 		FIntVector2D GridSize =  FIntVector2D(5, 5);
@@ -85,6 +81,10 @@ public:
 	/** Used to prevent a infinte loop */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Settings", meta = (ClampMin = "1"))
 		int32 MaximumIterations = 1000000;
+
+	/** Seed used for layout generation. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Runtime")
+		int32 Seed;
 
 	/** Returns if a layout is already present. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Runtime")
@@ -163,7 +163,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TMap<TSubclassOf<ULayoutGenerator_SpawnValidator>, ULayoutGenerator_SpawnValidator*> SpawnValidators;
 
-	/** Number of Level Instances currently loading*/
+	/** Number of Maps Instances currently loading*/
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		int32 CurrentLoadingLevelInstances;
 
