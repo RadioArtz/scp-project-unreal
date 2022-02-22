@@ -139,7 +139,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TMap<FName, FRoomGenerationSettings> RoomGenerationData;
 
-	/** Contains row names and how many instances of it are still required. Coresponse to MinimumInstances inside FRoomGenerationSettings. */
+	/** Contains row names and how many instances of it are still required. Coresponse to RequiredInstances inside FRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> RequiredRooms;
 

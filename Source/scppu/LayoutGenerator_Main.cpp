@@ -71,14 +71,16 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 	FGridCell* NegYCell;
 	FGridCell ThisCellPrevious;
 	FRoomGenerationSettings SourceSettings;
+	FCellSides IsDoorRequired;
+	FCellSides IsDoorBlocked;
 	bool bSuccess;
 
 	ThisCell = &Grid[CellLocation];
 	ThisCellPrevious = *ThisCell;
 	ThisCell->RoomRowName = RoomRowName;
 	SourceSettings = RoomGenerationData[ThisCell->RoomRowName];
-	ThisCell->DoorLocation = SourceSettings.DoorLocation;
-	ThisCell->DisableNeighbour = SourceSettings.DisableNeighbour;
+	ThisCell->HasDoor = SourceSettings.HasDoor;
+	ThisCell->ShouldDisableNeighbour = SourceSettings.ShouldDisableNeighbour;
 
 	// Abort cell generation if (cell is disabled OR already generated) AND we don't force it
 	if ((!ThisCell->bIsEnabled || ThisCell->bIsGenerated) && !bForce)
@@ -93,20 +95,20 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 	NegYCell = Grid.Find(FIntVector2D(CellLocation.X, CellLocation.Y - 1));
 
 	// Positive X
-	ThisCell->DoorRequired.bPositiveX = (PosXCell != nullptr && PosXCell->DoorLocation.bNegativeX);
-	ThisCell->DoorBlocked.bPositiveX = (PosXCell == nullptr || !PosXCell->bIsEnabled) || (PosXCell->bIsGenerated && !PosXCell->DoorLocation.bNegativeX);
+	IsDoorRequired.bPositiveX = (PosXCell != nullptr && PosXCell->HasDoor.bNegativeX);
+	IsDoorBlocked.bPositiveX = (PosXCell == nullptr || !PosXCell->bIsEnabled) || (PosXCell->bIsGenerated && !PosXCell->HasDoor.bNegativeX);
 
 	// Positive Y
-	ThisCell->DoorRequired.bPositiveY = (PosYCell != nullptr && PosYCell->DoorLocation.bNegativeY);
-	ThisCell->DoorBlocked.bPositiveY = (PosYCell == nullptr || !PosYCell->bIsEnabled) || (PosYCell->bIsGenerated && !PosYCell->DoorLocation.bNegativeY);
+	IsDoorRequired.bPositiveY = (PosYCell != nullptr && PosYCell->HasDoor.bNegativeY);
+	IsDoorBlocked.bPositiveY = (PosYCell == nullptr || !PosYCell->bIsEnabled) || (PosYCell->bIsGenerated && !PosYCell->HasDoor.bNegativeY);
 
 	// Negative X
-	ThisCell->DoorRequired.bNegativeX = (NegXCell != nullptr && NegXCell->DoorLocation.bPositiveX);
-	ThisCell->DoorBlocked.bNegativeX = (NegXCell == nullptr || !NegXCell->bIsEnabled) || (NegXCell->bIsGenerated && !NegXCell->DoorLocation.bPositiveX);
+	IsDoorRequired.bNegativeX = (NegXCell != nullptr && NegXCell->HasDoor.bPositiveX);
+	IsDoorBlocked.bNegativeX = (NegXCell == nullptr || !NegXCell->bIsEnabled) || (NegXCell->bIsGenerated && !NegXCell->HasDoor.bPositiveX);
 
 	// Negative Y
-	ThisCell->DoorRequired.bNegativeY = (NegYCell != nullptr && NegYCell->DoorLocation.bPositiveY);
-	ThisCell->DoorBlocked.bNegativeY = (NegYCell == nullptr || !NegYCell->bIsEnabled) || (NegYCell->bIsGenerated && !NegYCell->DoorLocation.bPositiveY);
+	IsDoorRequired.bNegativeY = (NegYCell != nullptr && NegYCell->HasDoor.bPositiveY);
+	IsDoorBlocked.bNegativeY = (NegYCell == nullptr || !NegYCell->bIsEnabled) || (NegYCell->bIsGenerated && !NegYCell->HasDoor.bPositiveY);
 
 	// Check if the room fits and when not rotate it
 	for (int i = 0; i < 4; i++)
@@ -114,20 +116,20 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 		bSuccess = true;
 
 		// Positive X
-		bSuccess = bSuccess && ((ThisCell->DoorRequired.bPositiveX && ThisCell->DoorLocation.bPositiveX) || !ThisCell->DoorRequired.bPositiveX);
-		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bPositiveX && !ThisCell->DoorLocation.bPositiveX) || !ThisCell->DoorBlocked.bPositiveX);
+		bSuccess = bSuccess && ((IsDoorRequired.bPositiveX && ThisCell->HasDoor.bPositiveX) || !IsDoorRequired.bPositiveX);
+		bSuccess = bSuccess && ((IsDoorBlocked.bPositiveX && !ThisCell->HasDoor.bPositiveX) || !IsDoorBlocked.bPositiveX);
 
 		// Positive Y
-		bSuccess = bSuccess && ((ThisCell->DoorRequired.bPositiveY && ThisCell->DoorLocation.bPositiveY) || !ThisCell->DoorRequired.bPositiveY);
-		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bPositiveY && !ThisCell->DoorLocation.bPositiveY) || !ThisCell->DoorBlocked.bPositiveY);
+		bSuccess = bSuccess && ((IsDoorRequired.bPositiveY && ThisCell->HasDoor.bPositiveY) || !IsDoorRequired.bPositiveY);
+		bSuccess = bSuccess && ((IsDoorBlocked.bPositiveY && !ThisCell->HasDoor.bPositiveY) || !IsDoorBlocked.bPositiveY);
 
 		// Negative X
-		bSuccess = bSuccess && ((ThisCell->DoorRequired.bNegativeX && ThisCell->DoorLocation.bNegativeX) || !ThisCell->DoorRequired.bNegativeX);
-		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bNegativeX && !ThisCell->DoorLocation.bNegativeX) || !ThisCell->DoorBlocked.bNegativeX);
+		bSuccess = bSuccess && ((IsDoorRequired.bNegativeX && ThisCell->HasDoor.bNegativeX) || !IsDoorRequired.bNegativeX);
+		bSuccess = bSuccess && ((IsDoorBlocked.bNegativeX && !ThisCell->HasDoor.bNegativeX) || !IsDoorBlocked.bNegativeX);
 
 		// Negative Y
-		bSuccess = bSuccess && ((ThisCell->DoorRequired.bNegativeY && ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorRequired.bNegativeY);
-		bSuccess = bSuccess && ((ThisCell->DoorBlocked.bNegativeY && !ThisCell->DoorLocation.bNegativeY) || !ThisCell->DoorBlocked.bNegativeY);
+		bSuccess = bSuccess && ((IsDoorRequired.bNegativeY && ThisCell->HasDoor.bNegativeY) || !IsDoorRequired.bNegativeY);
+		bSuccess = bSuccess && ((IsDoorBlocked.bNegativeY && !ThisCell->HasDoor.bNegativeY) || !IsDoorBlocked.bNegativeY);
 
 		// Check pre spawn validators
 		for (auto Elem : SourceSettings.PreSpawnValidator)
@@ -142,12 +144,12 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 		else
 		{
 			// Rotate the room right
-			FCellSides PreviousDoorLocation = ThisCell->DoorLocation;
+			FCellSides PreviousDoorLocation = ThisCell->HasDoor;
 
-			ThisCell->DoorLocation.bPositiveX = PreviousDoorLocation.bNegativeY;
-			ThisCell->DoorLocation.bPositiveY = PreviousDoorLocation.bPositiveX;
-			ThisCell->DoorLocation.bNegativeX = PreviousDoorLocation.bPositiveY;
-			ThisCell->DoorLocation.bNegativeY = PreviousDoorLocation.bNegativeX;
+			ThisCell->HasDoor.bPositiveX = PreviousDoorLocation.bNegativeY;
+			ThisCell->HasDoor.bPositiveY = PreviousDoorLocation.bPositiveX;
+			ThisCell->HasDoor.bNegativeX = PreviousDoorLocation.bPositiveY;
+			ThisCell->HasDoor.bNegativeY = PreviousDoorLocation.bNegativeX;
 			
 			ThisCell->Rotation += 1;
 		}
@@ -160,22 +162,22 @@ bool ALayoutGenerator_Main::SetRoom(const FIntVector2D CellLocation, const FName
 		// Disable neighbouring cells if needed
 		if (PosXCell != nullptr)
 		{
-			PosXCell->bIsEnabled = PosXCell->bIsEnabled && !ThisCell->DisableNeighbour.bPositiveX;
+			PosXCell->bIsEnabled = PosXCell->bIsEnabled && !ThisCell->ShouldDisableNeighbour.bPositiveX;
 		}
 
 		if (PosYCell != nullptr)
 		{
-			PosYCell->bIsEnabled = PosYCell->bIsEnabled && !ThisCell->DisableNeighbour.bPositiveY;
+			PosYCell->bIsEnabled = PosYCell->bIsEnabled && !ThisCell->ShouldDisableNeighbour.bPositiveY;
 		}
 
 		if (NegXCell != nullptr)
 		{
-			NegXCell->bIsEnabled = NegXCell->bIsEnabled && !ThisCell->DisableNeighbour.bNegativeX;
+			NegXCell->bIsEnabled = NegXCell->bIsEnabled && !ThisCell->ShouldDisableNeighbour.bNegativeX;
 		}
 
 		if (NegYCell != nullptr)
 		{
-			NegYCell->bIsEnabled = NegYCell->bIsEnabled && !ThisCell->DisableNeighbour.bNegativeY;
+			NegYCell->bIsEnabled = NegYCell->bIsEnabled && !ThisCell->ShouldDisableNeighbour.bNegativeY;
 		}
 
 		return true;
@@ -279,7 +281,7 @@ void ALayoutGenerator_Main::InitRuntimeProperties()
 	for (auto Kvp : RoomGenerationData)
 	{
 		// Required rooms
-		for (int i = 0; i < Kvp.Value.MinimumInstances; i++)
+		for (int i = 0; i < Kvp.Value.RequiredInstances; i++)
 		{
 			RequiredRooms.Add(Kvp.Key);
 		}
