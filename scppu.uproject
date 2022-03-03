@@ -191,5 +191,13 @@
 				"HoloLens"
 			]
 		}
+	],
+	"TargetPlatforms": [
+		"AllDesktop",
+		"IOS",
+		"LinuxNoEditor",
+		"LinuxAArch64NoEditor",
+		"MacNoEditor",
+		"WindowsNoEditor"
 	]
 }
