@@ -29,7 +29,7 @@ public:
 
 	/** Generates a new layout. Use the seed variable to set the seed. Ignores calls if a layout is already present. */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
-		void AsyncGenerateLayout(const int32 Seed, const FLayoutGenerationDelegate& OnDone);
+		void AsyncGenerateLayout(const int32 NewSeed, const FLayoutGenerationDelegate& OnDone);
 
 	/** Clears the layout. Ignores calls if no layout is present. */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))

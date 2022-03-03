@@ -32,7 +32,7 @@ ALayoutGenerator_Main::ALayoutGenerator_Main()
 
 }
 
-void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 Seed_, const FLayoutGenerationDelegate& OnDone)
+void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 NewSeed, const FLayoutGenerationDelegate& OnDone)
 {
 	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Starting layout generation..."), *GetName());
 
@@ -45,7 +45,7 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 Seed_, const FLayout
 
 	bIsCurrentlyGeneratingLayout = true;
 	OnTaskDone = OnDone;
-	this->Seed = Seed_;
+	this->Seed = NewSeed;
 
 	// Init runtime properties on game thread//
 	AsyncTask(ENamedThreads::GameThread, [this]()
