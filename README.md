@@ -10,7 +10,7 @@ The original version of this project was not set up with source control from the
 #### Projectfile and contribution information:
 - this project uses Unreal Engine 4.27 with the AMD FSR plugin. [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/Plugins/FSR/license.txt)
 - when working on some major system, create an issue to inform others that you are working on it and keep it updated if you stop working on it. This is to avoid two people spending a lot of time just to find out that someone else has been working on the same thing. You can of course still work on things that others are already working on if you want to.
-- it was created without c++ enabled. I am open for c++ utilization, however I do not have the experience where i would feel comfortable enabling it by myself.
+- it has c++ enabled.
 - **no external marketplace assets** are to be used!
 - do NOT contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/d0a3f758f9d75258092dbfb309da14a6c6b8ec47/License.txt)
 - forks of the project are to follow the same License terms as this Project.
@@ -24,7 +24,7 @@ Of course it’s not, welcome to C++. But here’s how to fix it:
 4.    Open the solution file
 5.    Right-click “scppu” inside the solution-explorer
 6.    Click on “Set as start-up project”
-7.    Select “DevelopmentEditor” in the combo box located at the top beneath the “Build” menu
+7.    Select “Development Editor” in the combo box located at the top beneath the “Build” menu
 8.    Start local debug (sometimes needs multiple tries until it actually works because C++ stuff) 
 This should generally fix it. If it doesn't, join the Discord and we'll try to help you out.
 
