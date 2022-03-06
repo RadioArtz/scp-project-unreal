@@ -30,6 +30,96 @@ FString ULayoutGenerator_Cell::GetUniqueName()
 	return UniqueName;
 }
 
+bool ULayoutGenerator_Cell::LoadStreamingLevel()
+{
+	if (bIsEnabled && bIsGenerated && !LevelAsset.IsNull() && LevelStreamingDynamic == nullptr)
+	{
+		bool bSuccess;
+
+		LevelStreamingDynamic = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(LayoutGenerator->GetWorld(), LevelAsset, GetWorldLocation(), GetWorldRotation(), bSuccess, GetUniqueName());
+
+		if (bSuccess)
+		{
+			LevelStreamingDynamic->bShouldBlockOnLoad = false;
+			LevelStreamingDynamic->bShouldBlockOnUnload = false;
+			LevelStreamingDynamic->SetShouldBeVisible(false);
+			LevelStreamingDynamic->bDisableDistanceStreaming = false;
+			LevelStreamingDynamic->LevelColor = FLinearColor::MakeRandomColor();
+			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGenerator_Cell::OnLevelLoaded);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool ULayoutGenerator_Cell::UnloadStreamingLevel()
+{
+	if (LevelStreamingDynamic != nullptr)
+	{
+		LevelStreamingDynamic->SetIsRequestingUnloadAndRemoval(true);
+		LevelStreamingDynamic = nullptr;
+		return true;
+
+	} 
+	else
+	{
+		return false;
+	}
+}
+
+void ULayoutGenerator_Cell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
+{
+	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
+	{
+		OutActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;	
+	}
+}
+
+bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
+{
+	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
+	{
+		bool bInBounds;
+		TArray<AActor*> LevelActors;
+
+		bInBounds = false;
+		LevelActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;
+
+		for (int i = 0; i < LevelActors.Num(); i++)
+		{
+			FVector ActorOrigin;
+			FVector ActorExtent;
+
+			LevelActors[i]->GetActorBounds(false, ActorOrigin, ActorExtent, false);
+			bInBounds = bInBounds && UKismetMathLibrary::IsPointInBox(Point, ActorOrigin, ActorExtent);
+		}
+
+		return bInBounds;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void ULayoutGenerator_Cell::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	UnloadStreamingLevel();
+}
+
+void ULayoutGenerator_Cell::DrawCellDebug()
+{
+}
+
 bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForce)
 {
 	// Abort cell generation if (cell is disabled OR already generated) AND we don't force it
@@ -161,96 +251,6 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 		LevelAsset = nullptr;
 		return false;
 	}
-}
-
-bool ULayoutGenerator_Cell::LoadStreamingLevel()
-{
-	if (bIsEnabled && bIsGenerated && !LevelAsset.IsNull() && LevelStreamingDynamic == nullptr)
-	{
-		bool bSuccess;
-
-		LevelStreamingDynamic = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(LayoutGenerator->GetWorld(), LevelAsset, GetWorldLocation(), GetWorldRotation(), bSuccess, GetUniqueName());
-
-		if (bSuccess)
-		{
-			LevelStreamingDynamic->bShouldBlockOnLoad = false;
-			LevelStreamingDynamic->bShouldBlockOnUnload = false;
-			LevelStreamingDynamic->SetShouldBeVisible(false);
-			LevelStreamingDynamic->bDisableDistanceStreaming = false;
-			LevelStreamingDynamic->LevelColor = FLinearColor::MakeRandomColor();
-			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGenerator_Cell::OnLevelLoaded);
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return false;
-	}
-}
-
-bool ULayoutGenerator_Cell::UnloadStreamingLevel()
-{
-	if (LevelStreamingDynamic != nullptr)
-	{
-		LevelStreamingDynamic->SetIsRequestingUnloadAndRemoval(true);
-		LevelStreamingDynamic = nullptr;
-		return true;
-
-	} 
-	else
-	{
-		return false;
-	}
-}
-
-void ULayoutGenerator_Cell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
-{
-	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
-	{
-		OutActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;	
-	}
-}
-
-bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
-{
-	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
-	{
-		bool bInBounds;
-		TArray<AActor*> LevelActors;
-
-		bInBounds = false;
-		LevelActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;
-
-		for (int i = 0; i < LevelActors.Num(); i++)
-		{
-			FVector ActorOrigin;
-			FVector ActorExtent;
-
-			LevelActors[i]->GetActorBounds(false, ActorOrigin, ActorExtent, false);
-			bInBounds = bInBounds && UKismetMathLibrary::IsPointInBox(Point, ActorOrigin, ActorExtent);
-		}
-
-		return bInBounds;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void ULayoutGenerator_Cell::BeginDestroy()
-{
-	Super::BeginDestroy();
-
-	UnloadStreamingLevel();
-}
-
-void ULayoutGenerator_Cell::DrawCellDebug()
-{
 }
 
 void ULayoutGenerator_Cell::OnLevelLoaded()

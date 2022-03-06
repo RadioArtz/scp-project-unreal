@@ -46,19 +46,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FString GetUniqueName();
 
-	/**
-	*Tries to set a room at a given cell location.
-	*@param CellLocation		Cell location where to set the room.
-	*@param RowName				Row name of the room inside the datatable.
-	*@param bForce				Wether to force set the room or not.
-	*@param bUpdateNeighbours	Update neigbours accordingly. Will only have an effect when forcing. THIS IS HIGHLY RECOMMENDED. NOT YET IMPLEMENTED.
-	*@return					Returns if a room was spawned or not.
-	*/
-
-	/**/
-	UFUNCTION()
-		bool SetRoom(const FName NewRoomRowName, const bool bForce);
-
 	UFUNCTION(BlueprintCallable)
 		bool LoadStreamingLevel();
 
@@ -109,10 +96,13 @@ public:
 protected:
 	virtual void BeginDestroy() override;
 
+	//// FUNCTIONS ////
+
 	void DrawCellDebug();
 
 	UFUNCTION()
+		bool SetRoom(const FName NewRoomRowName, const bool bForce);
+
+	UFUNCTION()
 		void OnLevelLoaded();
-
-
 };
