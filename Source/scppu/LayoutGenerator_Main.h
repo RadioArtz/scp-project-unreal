@@ -6,15 +6,43 @@
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
 #include "LayoutGenerator_Structs.h"
-#include "Kismet/GameplayStatics.h"
 #include "LayoutGenerator_Main.generated.h"
-
-UDELEGATE()
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FLayoutGenerationDelegate, bool, bSuccess, FString, ErrorMessage);
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayoutGenerator, Log, All);
 
 class ULayoutGenerator_SpawnValidator;
+class ULayoutGenerator_Cell;
+
+UENUM(BlueprintType)
+enum class ELayoutGeneratorErrors : uint8
+{
+	LGE_None						= 0		UMETA(DisplayName = "None"),
+	LGE_LayoutAlreadyPresent		= 1		UMETA(DisplayName = "Layout already present"),
+	LGE_NoDatatable					= 2		UMETA(DisplayName = "No Datatable"),
+	LGE_WrongDatatableStruct		= 3		UMETA(DisplayName = "Wrong Datatable Struct"),
+	LGE_MaximumIterationReached		= 4		UMETA(DisplayName = "Maximum iteration reached"),
+	LGE_CellFoundNoValidRoom		= 5		UMETA(DisplayName = "Cell found no valid room"),
+	LGE_PostSpawnValidationFailed	= 6		UMETA(DisplayName = "Post Spawn Validation failed"),
+	LGE_NoLayoutPresent				= 7		UMETA(DisplayName = "No layout present"),
+	LGE_Unknown						= 255	UMETA(DisplayName = "Unknown"),
+};
+
+UENUM(BlueprintType)
+enum class ELayoutGeneratorTasks : uint8
+{
+	LGT_None						= 0		UMETA(DisplayName = "None"),
+	LGT_InitProperties				= 1		UMETA(DisplayName = "Initializing Properties"),
+	LGT_GeneratingRooms				= 2		UMETA(DisplayName = "Generating Rooms"),
+	LGT_RunningPostSpawnValidation	= 3		UMETA(DisplayName = "Running Post Spawn Validation"),
+	LGT_LoadingLevels				= 4		UMETA(DisplayName = "Loading Levels"),
+	LGT_Unknown						= 255	UMETA(DisplayName = "Unknown"),
+};
+
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLayoutGeneratorTaskDone, bool, bSuccess, ELayoutGeneratorErrors, Error);
+
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLayoutGeneratorTaskUpdate, float, PercentDone, ELayoutGeneratorTasks, CurrentTask);
 
 UCLASS()
 class SCPPU_API ALayoutGenerator_Main : public AActor
@@ -25,44 +53,26 @@ public:
 	// Sets default values for this actor's properties
 	ALayoutGenerator_Main();
 
+	friend class ULayoutGenerator_Cell;
+
 	//// FUNCTIONS ////
 
 	/** Generates a new layout. Use the seed variable to set the seed. Ignores calls if a layout is already present. */
-	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
-		void AsyncGenerateLayout(const int32 NewSeed, const FLayoutGenerationDelegate& OnDone);
+	UFUNCTION(BlueprintCallable)
+		void AsyncGenerateLayout(const int32 NewSeed, bool bShowAllLevelsWhenDone);
 
 	/** Clears the layout. Ignores calls if no layout is present. */
-	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
-		void AsyncClearLayout(const FLayoutGenerationDelegate& OnDone);
-
-	/**
-	*Tries to set a room at a given cell location.
-	*@param CellLocation		Cell location where to set the room.
-	*@param RowName				Row name of the room inside the datatable.
-	*@param bForce				Wether to force set the room or not.
-	*@param bUpdateNeighbours	Update neigbours accordingly. Will only have an effect when forcing. THIS IS HIGHLY RECOMMENDED. NOT YET IMPLEMENTED.
-	*@return					Returns if a room was spawned or not.
-	*/
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Set Room (Do not use in current state!)"))
-		bool SetRoom(const FIntVector2D CellLocation, const FName RoomRowName, const bool bForce, const bool bUpdateNeighbours = true);
+	UFUNCTION(BlueprintCallable)
+		bool ClearLayout();
 
 	UFUNCTION(BlueprintCallable)
 		TArray<FIntVector2D> FindCellLocationsWithRoomRowName(const FName RoomRowName);
 
-	UFUNCTION(BlueprintCallable)
-		FGridCell GetCellAtCellLocation(const FIntVector2D CellLocation);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		ULayoutGenerator_Cell* GetCell(const FIntVector2D CellLocation);
 
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Does Path Exists (Currently always returns false!)"))
 		bool DoesPathExist(const FIntVector2D Start, const FIntVector2D End);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FVector CellLocationToWorldLocation(const FIntVector2D CellLocation);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FRotator CellRotationToWorldRotation(const int32 CellRotation);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FString GetUniqueLevelName(const FIntVector2D CellLocation);
 
 	//// PROPERTIES ////
 
@@ -94,6 +104,15 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Runtime")
 		bool bIsCurrentlyGeneratingLayout;
 
+	UPROPERTY(VisibleAnywhere, BlueprintAssignable, Category = "Runtime")
+		FLayoutGeneratorTaskDone OnLayoutGenerated;
+
+	UPROPERTY(VisibleAnywhere, BlueprintAssignable, Category = "Runtime")
+		FLayoutGeneratorTaskUpdate OnLayoutGenerationStatusUpdate;
+
+	UPROPERTY(VisibleAnywhere, BlueprintAssignable, Category = "Runtime")
+		FLayoutGeneratorTaskDone OnLayoutCleared;
+
 protected:
 	/** Called when the game starts or when spawned */
 	virtual void BeginPlay() override;
@@ -101,39 +120,31 @@ protected:
 	/** Called every frame */
 	virtual void Tick(float DeltaTime) override;
 
+	/** Called whenever this actor is being removed from a level */
+	virtual void EndPlay();
+
 	//// FUNCTIONS ////
 
-	UFUNCTION()
-		void InitRuntimeProperties();
+	bool InitRuntimeProperties(ELayoutGeneratorErrors& OutError);
+
+	bool GenerateRequiredRooms(ELayoutGeneratorErrors& OutError);
+
+	bool GenerateFromQueue(ELayoutGeneratorErrors& OutError);
+
+	bool RunPostSpawnValidation(ELayoutGeneratorErrors& OutError);
+
+	void ResetRuntimeProperties();
+
+	void DrawGridDebug();
 
 	UFUNCTION()
-		void OnAssetsLoaded();
-
-	UFUNCTION()
-		void GenLayout();
-
-	UFUNCTION()
-		void LoadRoomLevels();
-
-	UFUNCTION()
-		void OnLevelInstanceLoaded();
-
-	/** Clears all runtime properties used to generate the layout. */
-	UFUNCTION()
-		void ClearRuntimeProperties();
-
-	/** Draws a preview of the grid. */
-	UFUNCTION()
-		void DrawGridPreview();
+		void OnLevelLoadedCallback();
 
 	//// PROPERTIES ////
 
-	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		FLayoutGenerationDelegate OnTaskDone;
-
 	/** Random stream created from seed variable. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		FRandomStream RStream;
+		FRandomStream RandomStream;
 
 	/** Cached datatable to ensure thread saftey and for ease of use. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
@@ -159,16 +170,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		int32 CurrentInteration;
 
+	/** Amount of levels that are currently loading */
+	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
+		int32 LevelsCurrentlyLoading;
+
 	/** Cached spawn validator objects*/
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TMap<TSubclassOf<ULayoutGenerator_SpawnValidator>, ULayoutGenerator_SpawnValidator*> SpawnValidators;
 
-	/** Number of Maps Instances currently loading*/
-	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		int32 CurrentLoadingLevelInstances;
-
 	/** Contains the actual grid. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FIntVector2D, FGridCell> Grid;
+		TMap<FIntVector2D, ULayoutGenerator_Cell*> Grid;
 
 };

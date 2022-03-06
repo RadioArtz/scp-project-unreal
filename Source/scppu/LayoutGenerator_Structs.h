@@ -22,6 +22,8 @@ public:
 
 	FIntVector2D()
 	{
+		X = 0;
+		Y = 0;
 	}
 
 	FIntVector2D(int32 NewX, int32 NewY)
@@ -70,9 +72,9 @@ struct FRoomGenerationSettings : public FTableRowBase
 	GENERATED_BODY()
 
 public:
-	/** Diffrent maps of the room (if > 1: chooses one map randomly per cell, should only be done for minor visual variations).*/
+	/** Diffrent levels of the room (if > 1: chooses one level randomly per cell, should only be done for minor visual variations).*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSoftObjectPtr<UWorld> > Maps;
+		TArray< TSoftObjectPtr<UWorld> > Levels;
 
 	/** How many instances are required to get generated. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
@@ -107,29 +109,4 @@ public:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PostSpawnValidator;
-};
-
-USTRUCT(BlueprintType)
-struct FGridCell
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FName RoomRowName;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsGenerated = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsEnabled = true;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FCellSides HasDoor;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FCellSides ShouldDisableNeighbour;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (ClampMin = "0", ClampMax = "3"))
-		int32 Rotation;
 };
