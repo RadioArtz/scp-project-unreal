@@ -47,10 +47,10 @@ public:
 		FString GetUniqueName();
 
 	UFUNCTION(BlueprintCallable)
-		bool LoadStreamingLevel();
+		bool LoadLevel();
 
 	UFUNCTION(BlueprintCallable)
-		bool UnloadStreamingLevel();
+		bool UnloadLevel();
 
 	UFUNCTION(BlueprintCallable)
 		void GetAllActorsInLevel(TArray<AActor*>& OutActors);
