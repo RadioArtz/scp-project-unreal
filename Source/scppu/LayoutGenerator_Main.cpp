@@ -85,7 +85,7 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 NewSeed, bool bShowA
 
 			for (auto Kvp : Grid)
 			{
-				Kvp.Value->LoadStreamingLevel();
+				Kvp.Value->LoadLevel();
 				if (Kvp.Value->LevelStreamingDynamic != nullptr)
 				{
 					Kvp.Value->LevelStreamingDynamic->SetShouldBeVisible(bShowAllLevelsWhenDone);
@@ -380,21 +380,24 @@ bool ALayoutGenerator_Main::RunPostSpawnValidation(ELayoutGeneratorErrors& OutEr
 	// Run post spawn validation //
 	for (auto Kvp : Grid)
 	{
-		bool bIsValid;
-		FRoomGenerationSettings SourceSettings;
-
-		bIsValid = true;
-		SourceSettings = RoomGenerationData[Kvp.Value->RoomRowName];
-
-		for (auto Elem : SourceSettings.PostSpawnValidator)
+		if (Kvp.Value->bIsGenerated)
 		{
-			bIsValid = bIsValid && Elem != nullptr && SpawnValidators[Elem]->IsSpawnValid(this, Kvp.Key);
-		}
+			bool bIsValid;
+			FRoomGenerationSettings SourceSettings;
 
-		if (!bIsValid)
-		{
-			OutError = ELayoutGeneratorErrors::LGE_PostSpawnValidationFailed;
-			return false;
+			bIsValid = true;
+			SourceSettings = RoomGenerationData[Kvp.Value->RoomRowName];
+
+			for (auto Elem : SourceSettings.PostSpawnValidator)
+			{
+				bIsValid = bIsValid && Elem != nullptr && SpawnValidators[Elem]->IsSpawnValid(this, Kvp.Key);
+			}
+
+			if (!bIsValid)
+			{
+				OutError = ELayoutGeneratorErrors::LGE_PostSpawnValidationFailed;
+				return false;
+			}
 		}
 	}
 	////
