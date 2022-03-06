@@ -135,21 +135,21 @@ void ULayoutGenerator_Cell::DrawCellDebug()
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(0, LayoutGenerator->CellSize * .4f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
 	}
 
 	if (HasDoor.bNegativeX)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(LayoutGenerator->CellSize * .4f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
 	}
 
 	if (HasDoor.bNegativeY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(0, LayoutGenerator->CellSize * .4f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
 	}
 	////
 
@@ -165,21 +165,21 @@ void ULayoutGenerator_Cell::DrawCellDebug()
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(0, LayoutGenerator->CellSize * .2f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
 	}
 
 	if (ShouldDisableNeighbour.bNegativeX)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(LayoutGenerator->CellSize * .2f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
 	}
 
 	if (ShouldDisableNeighbour.bNegativeY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(0, LayoutGenerator->CellSize * .2f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), GetWorldLocation(), EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
 	}
 	////
 
@@ -263,12 +263,17 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 		else
 		{
 			// Rotate the room right
-			FCellSides PreviousDoorLocation = HasDoor;
+			FCellSides PreviousHasDoor = HasDoor;
+			FCellSides PreviousShouldDisableNeighbour = ShouldDisableNeighbour;
 
-			HasDoor.bPositiveX = PreviousDoorLocation.bNegativeY;
-			HasDoor.bPositiveY = PreviousDoorLocation.bPositiveX;
-			HasDoor.bNegativeX = PreviousDoorLocation.bPositiveY;
-			HasDoor.bNegativeY = PreviousDoorLocation.bNegativeX;
+			HasDoor.bPositiveX = PreviousHasDoor.bNegativeY;
+			HasDoor.bPositiveY = PreviousHasDoor.bPositiveX;
+			HasDoor.bNegativeX = PreviousHasDoor.bPositiveY;
+			HasDoor.bNegativeY = PreviousHasDoor.bNegativeX;
+			ShouldDisableNeighbour.bPositiveX = PreviousShouldDisableNeighbour.bNegativeY;
+			ShouldDisableNeighbour.bPositiveY = PreviousShouldDisableNeighbour.bPositiveX;
+			ShouldDisableNeighbour.bNegativeX = PreviousShouldDisableNeighbour.bPositiveY;
+			ShouldDisableNeighbour.bNegativeY = PreviousShouldDisableNeighbour.bNegativeX;
 
 			Rotation += 1;
 		}
