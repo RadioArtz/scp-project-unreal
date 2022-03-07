@@ -169,7 +169,7 @@ void ULayoutGenerator_Cell::DrawDebug(float Duration)
 	////
 
 	// Draw properties //
-	TextToDraw.Appendf(TEXT("Location: X%i, Y%i\n"), Location.X, Location.Y);
+	TextToDraw.Appendf(TEXT("Location: X%i, Y%i, (Elem: %i)\n"), Location.X, Location.Y, Location.X * LayoutGenerator->GridSize.X + Location.Y);
 	TextToDraw.Appendf(TEXT("Rotation: %i\n"), Rotation);
 	TextToDraw.Appendf(TEXT("Room Row Name: %s\n"), *RoomRowName.ToString());
 	TextToDraw.Appendf(TEXT("Unique Seed: %i\n"), UniqueSeed);

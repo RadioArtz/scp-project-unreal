@@ -30,7 +30,7 @@ ALayoutGenerator_Main::ALayoutGenerator_Main()
 	SetRootComponent(MeshComponent);
 }
 
-void ALayoutGenerator_Main::AsyncGenerateLayout(const int32 NewSeed, bool bShowAllLevelsWhenDone)
+void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLevelsWhenDone)
 {
 	bool bSuccess;
 	ELayoutGeneratorErrors OutError;
@@ -116,7 +116,7 @@ bool ALayoutGenerator_Main::ClearLayout()
 	return true;
 }
 
-TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(const FName RoomRowName)
+TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(FName RoomRowName)
 {
 	TArray<FIntVector2D> FoundCellLocations;
 
@@ -131,11 +131,11 @@ TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(con
 	return FoundCellLocations;
 }
 
-ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(const FIntVector2D CellLocation)
+ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(FIntVector2D Location)
 {
-	if (Grid.Find(CellLocation) != nullptr)
+	if (Grid.Find(Location) != nullptr)
 	{
-		return Grid[CellLocation];
+		return Grid[Location];
 	}
 	else
 	{
@@ -143,9 +143,81 @@ ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(const FIntVector2D CellLoc
 	}
 }
 
-bool ALayoutGenerator_Main::DoesPathExist(const FIntVector2D Start, const FIntVector2D End)
+bool ALayoutGenerator_Main::DoesPathExist(ULayoutGenerator_Cell* StartingCell, ULayoutGenerator_Cell* EndingCell)
 {
-	return false;
+	if (StartingCell == nullptr || EndingCell == nullptr)
+	{
+		return false;
+	}
+
+	bool bSuccess;
+	int CurrentIteration;
+	int MaxIteration;
+	TArray<ULayoutGenerator_Cell*> CellQueue;
+	TArray<ULayoutGenerator_Cell*> CellsDone;
+
+	bSuccess = false;
+	CurrentIteration = 0;
+	MaxIteration = GridSize.X * GridSize.Y;
+	CellQueue.Add(StartingCell);
+
+	while (CellQueue.Num() > 0)
+	{
+		ULayoutGenerator_Cell* ThisCell;
+		ULayoutGenerator_Cell* PosXCell;
+		ULayoutGenerator_Cell* PosYCell;
+		ULayoutGenerator_Cell* NegXCell;
+		ULayoutGenerator_Cell* NegYCell;
+
+		ThisCell = CellQueue[0];
+		CellQueue.Remove(ThisCell);
+		CellsDone.Add(ThisCell);
+		CurrentIteration++;
+
+		// We've hit the max iteration limit
+		if (CurrentIteration > MaxIteration)
+		{
+			bSuccess = false;
+			break;
+		}
+
+		// We found the cell we are searching for
+		if (ThisCell == EndingCell)
+		{
+			bSuccess = true;
+			break;
+		}
+
+		bSuccess = false;
+		PosXCell = GetCell(FIntVector2D(ThisCell->Location.X + 1, ThisCell->Location.Y));
+		PosYCell = GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y + 1));
+		NegXCell = GetCell(FIntVector2D(ThisCell->Location.X - 1, ThisCell->Location.Y));
+		NegYCell = GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y - 1));
+
+		// Add connecting neighbours who were not already added prior to the queue //
+		if (PosXCell != nullptr && !CellsDone.Contains(PosXCell) && ThisCell->HasDoor.bPositiveX)
+		{
+			CellQueue.Add(PosXCell);
+		}
+
+		if (PosYCell != nullptr && !CellsDone.Contains(PosYCell) && ThisCell->HasDoor.bPositiveY)
+		{
+			CellQueue.Add(PosYCell);
+		}
+
+		if (NegXCell != nullptr && !CellsDone.Contains(NegXCell) && ThisCell->HasDoor.bNegativeX)
+		{
+			CellQueue.Add(NegXCell);
+		}
+
+		if (NegYCell != nullptr && !CellsDone.Contains(NegYCell) && ThisCell->HasDoor.bNegativeY)
+		{
+			CellQueue.Add(NegYCell);
+		}
+		////
+	};
+
+	return bSuccess;
 }
 
 void ALayoutGenerator_Main::DrawDebug(float Duration, bool bDrawCells)

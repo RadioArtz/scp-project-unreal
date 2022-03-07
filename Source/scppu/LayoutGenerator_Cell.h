@@ -82,7 +82,7 @@ public:
 		int32 UniqueSeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
-		FName RoomRowName;
+		FName RoomRowName = "None";
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
 		bool bIsGenerated = false;

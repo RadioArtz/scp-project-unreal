@@ -59,20 +59,20 @@ public:
 
 	/** Generates a new layout. Use the seed variable to set the seed. Ignores calls if a layout is already present. */
 	UFUNCTION(BlueprintCallable)
-		void AsyncGenerateLayout(const int32 NewSeed, bool bShowAllLevelsWhenDone);
+		void AsyncGenerateLayout(int32 NewSeed, bool bShowAllLevelsWhenDone);
 
 	/** Clears the layout. Ignores calls if no layout is present. */
 	UFUNCTION(BlueprintCallable)
 		bool ClearLayout();
 
 	UFUNCTION(BlueprintCallable)
-		TArray<FIntVector2D> FindCellLocationsWithRoomRowName(const FName RoomRowName);
+		TArray<FIntVector2D> FindCellLocationsWithRoomRowName(FName RoomRowName);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutGenerator_Cell* GetCell(const FIntVector2D CellLocation);
+		ULayoutGenerator_Cell* GetCell(FIntVector2D Location);
 
-	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Does Path Exists (Currently always returns false!)"))
-		bool DoesPathExist(const FIntVector2D Start, const FIntVector2D End);
+	UFUNCTION(BlueprintCallable)
+		bool DoesPathExist(ULayoutGenerator_Cell* StartingCell, ULayoutGenerator_Cell* EndingCell);
 
 	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 10000.f, bool bDrawCells = true);
