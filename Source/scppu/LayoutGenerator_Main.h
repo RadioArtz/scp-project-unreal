@@ -74,6 +74,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (DisplayName = "Does Path Exists (Currently always returns false!)"))
 		bool DoesPathExist(const FIntVector2D Start, const FIntVector2D End);
 
+	UFUNCTION(BlueprintCallable)
+		void DrawDebug(float Duration = 10000.f, bool bDrawCells = true);
+
 	//// PROPERTIES ////
 
 	/** Size of the grid. */
@@ -134,8 +137,6 @@ protected:
 	bool RunPostSpawnValidation(ELayoutGeneratorErrors& OutError);
 
 	void ResetRuntimeProperties();
-
-	void DrawGridDebug();
 
 	UFUNCTION()
 		void OnLevelLoadedCallback();

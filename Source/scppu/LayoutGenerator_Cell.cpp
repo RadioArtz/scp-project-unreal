@@ -19,15 +19,7 @@ FRotator ULayoutGenerator_Cell::GetWorldRotation()
 
 FString ULayoutGenerator_Cell::GetUniqueName()
 {
-	FString UniqueName;
-
-	UniqueName = LayoutGenerator->GetName();
-	UniqueName.Append("__X");
-	UniqueName.AppendInt(Location.X);
-	UniqueName.Append("_Y");
-	UniqueName.AppendInt(Location.Y);
-
-	return UniqueName;
+	return FString::Printf(TEXT("%s__X%i_Y%i"), *LayoutGenerator->GetName(), Location.X, Location.Y);
 }
 
 bool ULayoutGenerator_Cell::LoadLevel()
@@ -47,7 +39,6 @@ bool ULayoutGenerator_Cell::LoadLevel()
 			LevelStreamingDynamic->LevelColor = FLinearColor::MakeRandomColor();
 			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGenerator_Cell::OnLevelLoaded);
 
-			DrawCellDebug();
 			return true;
 		}
 		else
@@ -111,45 +102,39 @@ bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
 	}
 }
 
-void ULayoutGenerator_Cell::BeginDestroy()
-{
-	Super::BeginDestroy();
-
-	UnloadLevel();
-}
-
-void ULayoutGenerator_Cell::DrawCellDebug()
+void ULayoutGenerator_Cell::DrawDebug(float Duration)
 {
 	FVector StartLocation;
 	FVector EndLocation;
+	FString TextToDraw;
 
 	// Draw door paths //
 	if (HasDoor.bPositiveX)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(LayoutGenerator->CellSize * .4f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, false, Duration, 0, 20.f);
 	}
 
 	if (HasDoor.bPositiveY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(0, LayoutGenerator->CellSize * .4f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, false, Duration, 0, 20.f);
 	}
 
 	if (HasDoor.bNegativeX)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(LayoutGenerator->CellSize * .4f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, false, Duration, 0, 20.f);
 	}
 
 	if (HasDoor.bNegativeY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(0, LayoutGenerator->CellSize * .4f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Green, false, Duration, 0, 20.f);
 	}
 	////
 
@@ -158,31 +143,47 @@ void ULayoutGenerator_Cell::DrawCellDebug()
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(LayoutGenerator->CellSize * .2f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, false, Duration, 0, 20.f);
 	}
 
 	if (ShouldDisableNeighbour.bPositiveY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() + FVector(0, LayoutGenerator->CellSize * .2f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, false, Duration, 0, 20.f);
 	}
 
 	if (ShouldDisableNeighbour.bNegativeX)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(LayoutGenerator->CellSize * .2f, 0, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, false, Duration, 0, 20.f);
 	}
 
 	if (ShouldDisableNeighbour.bNegativeY)
 	{
 		StartLocation = GetWorldLocation();
 		EndLocation = GetWorldLocation() - FVector(0, LayoutGenerator->CellSize * .2f, 0);
-		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, true, 1.f, 0, 10.f);
+		DrawDebugLine(LayoutGenerator->GetWorld(), StartLocation, EndLocation, FColor::Red, false, Duration, 0, 20.f);
 	}
 	////
 
+	// Draw properties //
+	TextToDraw.Appendf(TEXT("Location: X%i, Y%i\n"), Location.X, Location.Y);
+	TextToDraw.Appendf(TEXT("Rotation: %i\n"), Rotation);
+	TextToDraw.Appendf(TEXT("Room Row Name: %s\n"), *RoomRowName.ToString());
+	TextToDraw.Appendf(TEXT("Unique Seed: %i\n"), UniqueSeed);
+	TextToDraw.Appendf(TEXT("Loaded Level: %s\n"), *LevelAsset.ToString());
+
+	DrawDebugString(LayoutGenerator->GetWorld(), GetWorldLocation() + FVector(0.f, 0.f, 200.f), TextToDraw, nullptr, FColor::White, Duration, true, .85f);
+	////
+}
+
+void ULayoutGenerator_Cell::BeginDestroy()
+{
+	Super::BeginDestroy();
+
+	UnloadLevel();
 }
 
 bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForce)
@@ -307,7 +308,7 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 		// Assing random level asset to use
 		if (SourceSettings.Levels.Num() > 0)
 		{
-			LevelAsset = SourceSettings.Levels[FRandomStream(CellSeed).RandHelper(SourceSettings.Levels.Num() - 1)];
+			LevelAsset = SourceSettings.Levels[FRandomStream(UniqueSeed).RandHelper(SourceSettings.Levels.Num() - 1)];
 		}
 
 		return true;
@@ -330,7 +331,7 @@ void ULayoutGenerator_Cell::OnLevelLoaded()
 	FRandomStream TempRStream;
 
 	LevelActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;
-	TempRStream = FRandomStream(CellSeed);
+	TempRStream = FRandomStream(UniqueSeed);
 
 	for (int i = 0; i < LevelActors.Num(); i++)
 	{

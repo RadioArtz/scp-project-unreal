@@ -58,6 +58,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool IsPointInLevelBounds(FVector Point);
 
+	UFUNCTION(BlueprintCallable)
+		void DrawDebug(float Duration = 10000.f);
+
 	//// PROPERTIES ////
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Transform")
@@ -76,7 +79,7 @@ public:
 		ULevelStreamingDynamic* LevelStreamingDynamic;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
-		FRandomStream CellSeed;
+		int32 UniqueSeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
 		FName RoomRowName;
@@ -97,8 +100,6 @@ protected:
 	virtual void BeginDestroy() override;
 
 	//// FUNCTIONS ////
-
-	void DrawCellDebug();
 
 	UFUNCTION()
 		bool SetRoom(const FName NewRoomRowName, const bool bForce);

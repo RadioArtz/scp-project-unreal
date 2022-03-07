@@ -148,6 +148,28 @@ bool ALayoutGenerator_Main::DoesPathExist(const FIntVector2D Start, const FIntVe
 	return false;
 }
 
+void ALayoutGenerator_Main::DrawDebug(float Duration, bool bDrawCells)
+{
+	// Draw grid //
+	for (auto Kvp : Grid)
+	{
+		DrawDebugBox(GetWorld(), Kvp.Value->GetWorldLocation(), FVector(CellSize * .5f, CellSize * .5f, 0.f), FColor::Blue, false, Duration, 0, 20.f);
+	}
+	////
+
+	// Draw cell //
+	if (bDrawCells)
+	{
+		GEngine->Exec(GetWorld(), TEXT("r.DebugSafeZone.MaxDebugTextStringsPerActor 0"));
+
+		for (auto Kvp : Grid)
+		{
+			Kvp.Value->DrawDebug(Duration);
+		}
+	}
+	////
+}
+
 // Called when the game starts or when spawned
 void ALayoutGenerator_Main::BeginPlay()
 {
@@ -256,7 +278,7 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 			Cell = NewObject<ULayoutGenerator_Cell>(this, ULayoutGenerator_Cell::StaticClass());
 			Cell->LayoutGenerator = this;
 			Cell->Location = FIntVector2D(x, y);
-			Cell->CellSeed = RandomStream.RandHelper(1000000);
+			Cell->UniqueSeed = RandomStream.RandHelper(1000000);
 			Grid.Add(FIntVector2D(x, y), Cell);
 		}
 	}
@@ -433,10 +455,6 @@ void ALayoutGenerator_Main::ResetRuntimeProperties()
 	Grid.Empty();
 
 	return;
-}
-
-void ALayoutGenerator_Main::DrawGridDebug()
-{
 }
 
 void ALayoutGenerator_Main::OnLevelLoadedCallback()
