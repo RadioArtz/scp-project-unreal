@@ -91,7 +91,7 @@ bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
 			FVector ActorExtent;
 
 			LevelActors[i]->GetActorBounds(false, ActorOrigin, ActorExtent, false);
-			bInBounds = bInBounds && UKismetMathLibrary::IsPointInBox(Point, ActorOrigin, ActorExtent);
+			bInBounds = bInBounds || UKismetMathLibrary::IsPointInBox(Point, ActorOrigin, ActorExtent);
 		}
 
 		return bInBounds;
@@ -100,6 +100,81 @@ bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
 	{
 		return false;
 	}
+}
+
+bool ULayoutGenerator_Cell::DoesPathExist(ULayoutGenerator_Cell* Goal)
+{
+	// Check if it even makes sense to look for a path
+	if (Goal == nullptr || Goal->HasDoor == FCellSides(false, false, false, false))
+	{
+		return false;
+	}
+
+	TArray<ULayoutGenerator_Cell*> CellQueue;
+	TArray<ULayoutGenerator_Cell*> CellsChecked;
+	int CurrentIteration;
+	int MaxIteration;
+
+	CellQueue.Add(this);
+	CurrentIteration = 0;
+	MaxIteration = LayoutGenerator->Grid.Num();
+
+	while (CellQueue.Num() > 0)
+	{
+		// We've somehow hit the max iteration limit
+		if (CurrentIteration > MaxIteration)
+		{
+			return false;
+		}
+
+		ULayoutGenerator_Cell* ThisCell;
+		ULayoutGenerator_Cell* PosXCell;
+		ULayoutGenerator_Cell* PosYCell;
+		ULayoutGenerator_Cell* NegXCell;
+		ULayoutGenerator_Cell* NegYCell;
+
+		ThisCell = CellQueue[0];
+		CellQueue.Remove(ThisCell);
+		CellsChecked.Add(ThisCell);
+		CurrentIteration++;
+
+		// We found a valid path for our goal
+		if (ThisCell == Goal)
+		{
+			return true;
+		}
+
+		PosXCell = LayoutGenerator->GetCell(FIntVector2D(ThisCell->Location.X + 1, ThisCell->Location.Y));
+		PosYCell = LayoutGenerator->GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y + 1));
+		NegXCell = LayoutGenerator->GetCell(FIntVector2D(ThisCell->Location.X - 1, ThisCell->Location.Y));
+		NegYCell = LayoutGenerator->GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y - 1));
+
+		// Add connected neighbours which were not already added prior to the queue //
+		if (PosXCell != nullptr && !CellsChecked.Contains(PosXCell) && ThisCell->HasDoor.bPositiveX)
+		{
+			CellQueue.Add(PosXCell);
+		}
+
+		if (PosYCell != nullptr && !CellsChecked.Contains(PosYCell) && ThisCell->HasDoor.bPositiveY)
+		{
+			CellQueue.Add(PosYCell);
+		}
+
+		if (NegXCell != nullptr && !CellsChecked.Contains(NegXCell) && ThisCell->HasDoor.bNegativeX)
+		{
+			CellQueue.Add(NegXCell);
+		}
+
+		if (NegYCell != nullptr && !CellsChecked.Contains(NegYCell) && ThisCell->HasDoor.bNegativeY)
+		{
+			CellQueue.Add(NegYCell);
+		}
+		////
+	}
+
+	// Our search found nothing, so no path found :(
+	return false;
+
 }
 
 void ULayoutGenerator_Cell::DrawDebug(float Duration)
@@ -168,7 +243,7 @@ void ULayoutGenerator_Cell::DrawDebug(float Duration)
 	}
 	////
 
-	// Draw properties //
+	// Draw properties as text //
 	TextToDraw.Appendf(TEXT("Location: X%i, Y%i, (Elem: %i)\n"), Location.X, Location.Y, Location.X * LayoutGenerator->GridSize.X + Location.Y);
 	TextToDraw.Appendf(TEXT("Rotation: %i\n"), Rotation);
 	TextToDraw.Appendf(TEXT("Room Row Name: %s\n"), *RoomRowName.ToString());
@@ -230,7 +305,7 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 	IsDoorRequired.bNegativeY = (NegYCell != nullptr && NegYCell->HasDoor.bPositiveY);
 	IsDoorBlocked.bNegativeY = (NegYCell == nullptr || !NegYCell->bIsEnabled) || (NegYCell->bIsGenerated && !NegYCell->HasDoor.bPositiveY);
 
-	// Check if the room fits and when not rotate it
+	// Check if the room fits and if not, rotate it
 	for (int i = 0; i < 4; i++)
 	{
 		bSuccess = true;
@@ -259,11 +334,12 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 
 		if (bSuccess)
 		{
+			// Room fits, we don't need to rotate it
 			break;
 		}
 		else
 		{
-			// Rotate the room right
+			// Rotate the room to the right
 			FCellSides PreviousHasDoor = HasDoor;
 			FCellSides PreviousShouldDisableNeighbour = ShouldDisableNeighbour;
 

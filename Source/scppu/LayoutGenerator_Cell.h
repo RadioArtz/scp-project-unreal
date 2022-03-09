@@ -59,6 +59,9 @@ public:
 		bool IsPointInLevelBounds(FVector Point);
 
 	UFUNCTION(BlueprintCallable)
+		bool ULayoutGenerator_Cell::DoesPathExist(ULayoutGenerator_Cell* Goal);
+
+	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 10000.f);
 
 	//// PROPERTIES ////

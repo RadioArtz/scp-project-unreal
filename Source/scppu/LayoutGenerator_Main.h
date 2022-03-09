@@ -72,9 +72,6 @@ public:
 		ULayoutGenerator_Cell* GetCell(FIntVector2D Location);
 
 	UFUNCTION(BlueprintCallable)
-		bool DoesPathExist(ULayoutGenerator_Cell* StartingCell, ULayoutGenerator_Cell* EndingCell);
-
-	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 10000.f, bool bDrawCells = true);
 
 	//// PROPERTIES ////
@@ -124,7 +121,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	/** Called whenever this actor is being removed from a level */
-	virtual void EndPlay();
+	void EndPlay();
 
 	//// FUNCTIONS ////
 

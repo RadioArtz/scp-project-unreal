@@ -64,6 +64,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool bNegativeY;
+
+	FCellSides()
+	{
+		bPositiveX = false;
+		bPositiveY = false;
+		bNegativeX = false;
+		bNegativeY = false;
+	}
+
+	FCellSides(bool bNewPosX, bool bNewPosY, bool bNewNegX, bool bNewNegY)
+	{
+		bPositiveX = bNewPosX;
+		bPositiveY = bNewPosY;
+		bNegativeX = bNewNegX;
+		bNegativeY = bNewNegY;
+	}
+
+	friend bool operator== (const FCellSides& Self, const FCellSides& Other)
+	{
+		return (Self.bPositiveX == Other.bPositiveX) && (Self.bPositiveY == Other.bPositiveY) && (Self.bNegativeX == Other.bNegativeX) && (Self.bNegativeY == Other.bNegativeY);
+	}
 };
 
 USTRUCT(BlueprintType)

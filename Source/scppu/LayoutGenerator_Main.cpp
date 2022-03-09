@@ -66,23 +66,23 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLeve
 		OnLayoutGenerationStatusUpdate.Broadcast(.6f, ELayoutGeneratorTasks::LGT_RunningPostSpawnValidation);
 		bSuccess = bSuccess && RunPostSpawnValidation(OutError);
 
-		if (!bSuccess)
+		// Check result and load levels on game thread, because ue4 wants us to
+		AsyncTask(ENamedThreads::GameThread, [this, bShowAllLevelsWhenDone, bSuccess, OutError]()
 		{
-			ResetRuntimeProperties();
-			bIsCurrentlyGeneratingLayout = false;
-			bIsLayoutPresent = false;
+			if (!bSuccess)
+			{
+				ResetRuntimeProperties();
+				bIsCurrentlyGeneratingLayout = false;
+				bIsLayoutPresent = false;
 
-			OnLayoutGenerated.Broadcast(false, OutError);
-			UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout. Error code: %i (%s)"), *GetName(), (uint8)OutError, *UEnum::GetValueAsName(OutError).ToString());
-			return;
-		}
+				OnLayoutGenerated.Broadcast(false, OutError);
+				UE_LOG(LogLayoutGenerator, Error, TEXT("%s: Failed to generate layout. Error code: %i (%s)"), *GetName(), (uint8)OutError, *UEnum::GetValueAsName(OutError).ToString());
+				
+				return;
+			}
 
-		// Load levels on the game thread, because ue4 wants us to do that
-		// From here on, nothing can fail anymore
-		AsyncTask(ENamedThreads::GameThread, [this, bShowAllLevelsWhenDone]()
-		{
+			// Load all levels. From here on, nothing can fail anymore
 			OnLayoutGenerationStatusUpdate.Broadcast(.7f, ELayoutGeneratorTasks::LGT_LoadingLevels);
-
 			for (auto Kvp : Grid)
 			{
 				Kvp.Value->LoadLevel();
@@ -93,6 +93,9 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLeve
 					LevelsCurrentlyLoading++;
 				};
 
+				// Add one "dummy" level to ensure the function gets called at least once
+				LevelsCurrentlyLoading++;
+				OnLevelLoadedCallback();
 				/** ALayoutGenerator_Main::OnLevelLoadedCallback completes generation */
 			}
 		});
@@ -141,83 +144,6 @@ ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(FIntVector2D Location)
 	{
 		return nullptr;
 	}
-}
-
-bool ALayoutGenerator_Main::DoesPathExist(ULayoutGenerator_Cell* StartingCell, ULayoutGenerator_Cell* EndingCell)
-{
-	if (StartingCell == nullptr || EndingCell == nullptr)
-	{
-		return false;
-	}
-
-	bool bSuccess;
-	int CurrentIteration;
-	int MaxIteration;
-	TArray<ULayoutGenerator_Cell*> CellQueue;
-	TArray<ULayoutGenerator_Cell*> CellsDone;
-
-	bSuccess = false;
-	CurrentIteration = 0;
-	MaxIteration = GridSize.X * GridSize.Y;
-	CellQueue.Add(StartingCell);
-
-	while (CellQueue.Num() > 0)
-	{
-		ULayoutGenerator_Cell* ThisCell;
-		ULayoutGenerator_Cell* PosXCell;
-		ULayoutGenerator_Cell* PosYCell;
-		ULayoutGenerator_Cell* NegXCell;
-		ULayoutGenerator_Cell* NegYCell;
-
-		ThisCell = CellQueue[0];
-		CellQueue.Remove(ThisCell);
-		CellsDone.Add(ThisCell);
-		CurrentIteration++;
-
-		// We've hit the max iteration limit
-		if (CurrentIteration > MaxIteration)
-		{
-			bSuccess = false;
-			break;
-		}
-
-		// We found the cell we are searching for
-		if (ThisCell == EndingCell)
-		{
-			bSuccess = true;
-			break;
-		}
-
-		bSuccess = false;
-		PosXCell = GetCell(FIntVector2D(ThisCell->Location.X + 1, ThisCell->Location.Y));
-		PosYCell = GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y + 1));
-		NegXCell = GetCell(FIntVector2D(ThisCell->Location.X - 1, ThisCell->Location.Y));
-		NegYCell = GetCell(FIntVector2D(ThisCell->Location.X, ThisCell->Location.Y - 1));
-
-		// Add connecting neighbours who were not already added prior to the queue //
-		if (PosXCell != nullptr && !CellsDone.Contains(PosXCell) && ThisCell->HasDoor.bPositiveX)
-		{
-			CellQueue.Add(PosXCell);
-		}
-
-		if (PosYCell != nullptr && !CellsDone.Contains(PosYCell) && ThisCell->HasDoor.bPositiveY)
-		{
-			CellQueue.Add(PosYCell);
-		}
-
-		if (NegXCell != nullptr && !CellsDone.Contains(NegXCell) && ThisCell->HasDoor.bNegativeX)
-		{
-			CellQueue.Add(NegXCell);
-		}
-
-		if (NegYCell != nullptr && !CellsDone.Contains(NegYCell) && ThisCell->HasDoor.bNegativeY)
-		{
-			CellQueue.Add(NegYCell);
-		}
-		////
-	};
-
-	return bSuccess;
 }
 
 void ALayoutGenerator_Main::DrawDebug(float Duration, bool bDrawCells)
