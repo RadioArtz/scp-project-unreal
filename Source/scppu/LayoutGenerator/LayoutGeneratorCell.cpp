@@ -1,28 +1,28 @@
 
 
-#include "LayoutGenerator_Cell.h"
+#include "LayoutGeneratorCell.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "Kismet/KismetMathLibrary.h" 
 #include "DrawDebugHelpers.h"
-#include "LayoutGenerator_SpawnValidator.h"
-#include "LayoutGenerator_Main.h"
+#include "LayoutGeneratorSpawnValidator.h"
+#include "LayoutGeneratorMain.h"
 
-FVector ULayoutGenerator_Cell::GetWorldLocation()
+FVector ULayoutGeneratorCell::GetWorldLocation()
 {
 	return FVector(Location.X * LayoutGenerator->CellSize, Location.Y * LayoutGenerator->CellSize, 0) + LayoutGenerator->GetActorLocation();
 }
 
-FRotator ULayoutGenerator_Cell::GetWorldRotation()
+FRotator ULayoutGeneratorCell::GetWorldRotation()
 {
 	return FRotator(0, Rotation * 90, 0);
 }
 
-FString ULayoutGenerator_Cell::GetUniqueName()
+FString ULayoutGeneratorCell::GetUniqueName()
 {
 	return FString::Printf(TEXT("%s__X%i_Y%i"), *LayoutGenerator->GetName(), Location.X, Location.Y);
 }
 
-bool ULayoutGenerator_Cell::LoadLevel()
+bool ULayoutGeneratorCell::LoadLevel()
 {
 	if (bIsEnabled && bIsGenerated && !LevelAsset.IsNull() && LevelStreamingDynamic == nullptr)
 	{
@@ -37,7 +37,7 @@ bool ULayoutGenerator_Cell::LoadLevel()
 			LevelStreamingDynamic->SetShouldBeVisible(false);
 			LevelStreamingDynamic->bDisableDistanceStreaming = false;
 			LevelStreamingDynamic->LevelColor = FLinearColor::MakeRandomColor();
-			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGenerator_Cell::OnLevelLoaded);
+			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGeneratorCell::OnLevelLoaded);
 
 			return true;
 		}
@@ -52,7 +52,7 @@ bool ULayoutGenerator_Cell::LoadLevel()
 	}
 }
 
-bool ULayoutGenerator_Cell::UnloadLevel()
+bool ULayoutGeneratorCell::UnloadLevel()
 {
 	if (LevelStreamingDynamic != nullptr)
 	{
@@ -67,7 +67,7 @@ bool ULayoutGenerator_Cell::UnloadLevel()
 	}
 }
 
-void ULayoutGenerator_Cell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
+void ULayoutGeneratorCell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
 {
 	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
 	{
@@ -75,7 +75,7 @@ void ULayoutGenerator_Cell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
 	}
 }
 
-bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
+bool ULayoutGeneratorCell::IsPointInLevelBounds(FVector Point)
 {
 	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
 	{
@@ -102,16 +102,16 @@ bool ULayoutGenerator_Cell::IsPointInLevelBounds(FVector Point)
 	}
 }
 
-bool ULayoutGenerator_Cell::DoesPathExist(ULayoutGenerator_Cell* Goal)
+bool ULayoutGeneratorCell::DoesPathExist(ULayoutGeneratorCell* Goal)
 {
 	// Check if it even makes sense to look for a path
-	if (Goal == nullptr || Goal->HasDoor == FCellSides(false, false, false, false))
+	if (Goal == nullptr || Goal->HasDoor == FLayoutGeneratorCellSides(false, false, false, false))
 	{
 		return false;
 	}
 
-	TArray<ULayoutGenerator_Cell*> CellQueue;
-	TArray<ULayoutGenerator_Cell*> CellsChecked;
+	TArray<ULayoutGeneratorCell*> CellQueue;
+	TArray<ULayoutGeneratorCell*> CellsChecked;
 	int CurrentIteration;
 	int MaxIteration;
 
@@ -127,11 +127,11 @@ bool ULayoutGenerator_Cell::DoesPathExist(ULayoutGenerator_Cell* Goal)
 			return false;
 		}
 
-		ULayoutGenerator_Cell* ThisCell;
-		ULayoutGenerator_Cell* PosXCell;
-		ULayoutGenerator_Cell* PosYCell;
-		ULayoutGenerator_Cell* NegXCell;
-		ULayoutGenerator_Cell* NegYCell;
+		ULayoutGeneratorCell* ThisCell;
+		ULayoutGeneratorCell* PosXCell;
+		ULayoutGeneratorCell* PosYCell;
+		ULayoutGeneratorCell* NegXCell;
+		ULayoutGeneratorCell* NegYCell;
 
 		ThisCell = CellQueue[0];
 		CellQueue.Remove(ThisCell);
@@ -177,7 +177,7 @@ bool ULayoutGenerator_Cell::DoesPathExist(ULayoutGenerator_Cell* Goal)
 
 }
 
-void ULayoutGenerator_Cell::DrawDebug(float Duration)
+void ULayoutGeneratorCell::DrawDebug(float Duration)
 {
 	FVector StartLocation;
 	FVector EndLocation;
@@ -254,14 +254,14 @@ void ULayoutGenerator_Cell::DrawDebug(float Duration)
 	////
 }
 
-void ULayoutGenerator_Cell::BeginDestroy()
+void ULayoutGeneratorCell::BeginDestroy()
 {
 	Super::BeginDestroy();
 
 	UnloadLevel();
 }
 
-bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForce)
+bool ULayoutGeneratorCell::SetRoom(const FName NewRoomRowName, const bool bForce)
 {
 	// Abort cell generation if (cell is disabled OR already generated) AND we don't force it
 	if ((!bIsEnabled || bIsGenerated) && !bForce)
@@ -270,13 +270,13 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 	}
 
 	bool bSuccess;
-	FRoomGenerationSettings SourceSettings;
-	ULayoutGenerator_Cell* PosXCell;
-	ULayoutGenerator_Cell* PosYCell;
-	ULayoutGenerator_Cell* NegXCell;
-	ULayoutGenerator_Cell* NegYCell;
-	FCellSides IsDoorRequired;
-	FCellSides IsDoorBlocked;
+	FLayoutGeneratorRoomGenerationSettings SourceSettings;
+	ULayoutGeneratorCell* PosXCell;
+	ULayoutGeneratorCell* PosYCell;
+	ULayoutGeneratorCell* NegXCell;
+	ULayoutGeneratorCell* NegYCell;
+	FLayoutGeneratorCellSides IsDoorRequired;
+	FLayoutGeneratorCellSides IsDoorBlocked;
 
 	RoomRowName = NewRoomRowName;
 	SourceSettings = LayoutGenerator->RoomGenerationData[RoomRowName];
@@ -340,8 +340,8 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 		else
 		{
 			// Rotate the room to the right
-			FCellSides PreviousHasDoor = HasDoor;
-			FCellSides PreviousShouldDisableNeighbour = ShouldDisableNeighbour;
+			FLayoutGeneratorCellSides PreviousHasDoor = HasDoor;
+			FLayoutGeneratorCellSides PreviousShouldDisableNeighbour = ShouldDisableNeighbour;
 
 			HasDoor.bPositiveX = PreviousHasDoor.bNegativeY;
 			HasDoor.bPositiveY = PreviousHasDoor.bPositiveX;
@@ -392,15 +392,15 @@ bool ULayoutGenerator_Cell::SetRoom(const FName NewRoomRowName, const bool bForc
 	else
 	{
 		RoomRowName = "None";
-		HasDoor = FCellSides();
-		ShouldDisableNeighbour = FCellSides();
+		HasDoor = FLayoutGeneratorCellSides();
+		ShouldDisableNeighbour = FLayoutGeneratorCellSides();
 		Rotation = 0;
 		LevelAsset = nullptr;
 		return false;
 	}
 }
 
-void ULayoutGenerator_Cell::OnLevelLoaded()
+void ULayoutGeneratorCell::OnLevelLoaded()
 {
 	// Send cell via interface to every actor of this level
 	TArray<AActor*> LevelActors;
@@ -411,9 +411,9 @@ void ULayoutGenerator_Cell::OnLevelLoaded()
 
 	for (int i = 0; i < LevelActors.Num(); i++)
 	{
-		if (LevelActors[i]->Implements<ULayoutGenerator_ReceiveCellInterface>())
+		if (LevelActors[i]->Implements<ULayoutGeneratorReceiveCellInterface>())
 		{
-			ILayoutGenerator_ReceiveCellInterface::Execute_OnCellReceived(LevelActors[i], this, FRandomStream(TempRStream.RandHelper(100000000)));
+			ILayoutGeneratorReceiveCellInterface::Execute_OnCellReceived(LevelActors[i], this, FRandomStream(TempRStream.RandHelper(100000000)));
 		}
 	}
 }

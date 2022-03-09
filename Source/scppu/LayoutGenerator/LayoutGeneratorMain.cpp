@@ -1,16 +1,16 @@
 
 
-#include "LayoutGenerator_Main.h"
+#include "LayoutGeneratorMain.h"
 #include "Components/StaticMeshComponent.h" 
 #include "Engine/LevelStreamingDynamic.h" 
 #include "DrawDebugHelpers.h" 
-#include "LayoutGenerator_SpawnValidator.h"
-#include "LayoutGenerator_Cell.h"
+#include "LayoutGeneratorSpawnValidator.h"
+#include "LayoutGeneratorCell.h"
 
 DEFINE_LOG_CATEGORY(LogLayoutGenerator);
 
 // Sets default values
-ALayoutGenerator_Main::ALayoutGenerator_Main()
+ALayoutGeneratorMain::ALayoutGeneratorMain()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -30,7 +30,7 @@ ALayoutGenerator_Main::ALayoutGenerator_Main()
 	SetRootComponent(MeshComponent);
 }
 
-void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLevelsWhenDone)
+void ALayoutGeneratorMain::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLevelsWhenDone)
 {
 	bool bSuccess;
 	ELayoutGeneratorErrors OutError;
@@ -89,14 +89,14 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLeve
 				if (Kvp.Value->LevelStreamingDynamic != nullptr)
 				{
 					Kvp.Value->LevelStreamingDynamic->SetShouldBeVisible(bShowAllLevelsWhenDone);
-					Kvp.Value->LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ALayoutGenerator_Main::OnLevelLoadedCallback);
+					Kvp.Value->LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ALayoutGeneratorMain::OnLevelLoadedCallback);
 					LevelsCurrentlyLoading++;
 				};
 
 				// Add one "dummy" level to ensure the function gets called at least once
 				LevelsCurrentlyLoading++;
 				OnLevelLoadedCallback();
-				/** ALayoutGenerator_Main::OnLevelLoadedCallback completes generation */
+				/** ALayoutGeneratorMain::OnLevelLoadedCallback completes generation */
 			}
 		});
 	});
@@ -104,7 +104,7 @@ void ALayoutGenerator_Main::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLeve
 	return;
 }
 
-bool ALayoutGenerator_Main::ClearLayout()
+bool ALayoutGeneratorMain::ClearLayout()
 {
 	if (bIsCurrentlyGeneratingLayout || !bIsLayoutPresent)
 	{
@@ -119,7 +119,7 @@ bool ALayoutGenerator_Main::ClearLayout()
 	return true;
 }
 
-TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(FName RoomRowName)
+TArray<FIntVector2D> ALayoutGeneratorMain::FindCellLocationsWithRoomRowName(FName RoomRowName)
 {
 	TArray<FIntVector2D> FoundCellLocations;
 
@@ -134,7 +134,7 @@ TArray<FIntVector2D> ALayoutGenerator_Main::FindCellLocationsWithRoomRowName(FNa
 	return FoundCellLocations;
 }
 
-ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(FIntVector2D Location)
+ULayoutGeneratorCell* ALayoutGeneratorMain::GetCell(FIntVector2D Location)
 {
 	if (Grid.Find(Location) != nullptr)
 	{
@@ -146,7 +146,7 @@ ULayoutGenerator_Cell* ALayoutGenerator_Main::GetCell(FIntVector2D Location)
 	}
 }
 
-void ALayoutGenerator_Main::DrawDebug(float Duration, bool bDrawCells)
+void ALayoutGeneratorMain::DrawDebug(float Duration, bool bDrawCells)
 {
 	// Draw grid //
 	for (auto Kvp : Grid)
@@ -169,25 +169,25 @@ void ALayoutGenerator_Main::DrawDebug(float Duration, bool bDrawCells)
 }
 
 // Called when the game starts or when spawned
-void ALayoutGenerator_Main::BeginPlay()
+void ALayoutGeneratorMain::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ALayoutGenerator_Main::Tick(float DeltaTime)
+void ALayoutGeneratorMain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void ALayoutGenerator_Main::EndPlay()
+void ALayoutGeneratorMain::EndPlay()
 {
 	ClearLayout();
 }
 
-bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutError)
+bool ALayoutGeneratorMain::InitRuntimeProperties(ELayoutGeneratorErrors& OutError)
 {
 	// DataTable initialisation //
 	if (DataTable == nullptr)
@@ -196,7 +196,7 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 		return false;
 	}
 
-	if (DataTable->RowStruct != FRoomGenerationSettings::StaticStruct())
+	if (DataTable->RowStruct != FLayoutGeneratorRoomGenerationSettings::StaticStruct())
 	{
 		OutError = ELayoutGeneratorErrors::LGE_WrongDatatableStruct;
 		return false;
@@ -204,7 +204,7 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 
 	for (auto Kvp : DataTable->GetRowMap())
 	{
-		RoomGenerationData.Add(Kvp.Key, *(FRoomGenerationSettings*)Kvp.Value);
+		RoomGenerationData.Add(Kvp.Key, *(FLayoutGeneratorRoomGenerationSettings*)Kvp.Value);
 	}
 	////
 
@@ -234,14 +234,14 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 		// Construct pre spawn validators
 		for (int i = 0; i < Kvp.Value.PreSpawnValidator.Num(); i++)
 		{
-			TSubclassOf<ULayoutGenerator_SpawnValidator> ValidatorClass;
-			ULayoutGenerator_SpawnValidator* Validator;
+			TSubclassOf<ULayoutGeneratorSpawnValidator> ValidatorClass;
+			ULayoutGeneratorSpawnValidator* Validator;
 
 			ValidatorClass = Kvp.Value.PreSpawnValidator[i];
 
 			if (!SpawnValidators.Contains(ValidatorClass) && ValidatorClass != nullptr)
 			{
-				Validator = NewObject<ULayoutGenerator_SpawnValidator>(this, ValidatorClass);
+				Validator = NewObject<ULayoutGeneratorSpawnValidator>(this, ValidatorClass);
 				Validator->RandomStream = FRandomStream(RandomStream.RandHelper(1000000));
 				SpawnValidators.Add(ValidatorClass, Validator);
 			}
@@ -250,14 +250,14 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 		// Construct post spawn validators
 		for (int i = 0; i < Kvp.Value.PostSpawnValidator.Num(); i++)
 		{
-			TSubclassOf<ULayoutGenerator_SpawnValidator> ValidatorClass;
-			ULayoutGenerator_SpawnValidator* Validator;
+			TSubclassOf<ULayoutGeneratorSpawnValidator> ValidatorClass;
+			ULayoutGeneratorSpawnValidator* Validator;
 
 			ValidatorClass = Kvp.Value.PostSpawnValidator[i];
 
 			if (!SpawnValidators.Contains(ValidatorClass) && ValidatorClass != nullptr)
 			{
-				Validator = NewObject<ULayoutGenerator_SpawnValidator>(this, ValidatorClass);
+				Validator = NewObject<ULayoutGeneratorSpawnValidator>(this, ValidatorClass);
 				Validator->RandomStream = FRandomStream(RandomStream.RandHelper(100000000));
 				SpawnValidators.Add(ValidatorClass, Validator);
 			}
@@ -271,9 +271,9 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 	{
 		for (int y = 0; y < GridSize.Y; y++)
 		{
-			ULayoutGenerator_Cell* Cell;
+			ULayoutGeneratorCell* Cell;
 
-			Cell = NewObject<ULayoutGenerator_Cell>(this, ULayoutGenerator_Cell::StaticClass());
+			Cell = NewObject<ULayoutGeneratorCell>(this, ULayoutGeneratorCell::StaticClass());
 			Cell->LayoutGenerator = this;
 			Cell->Location = FIntVector2D(x, y);
 			Cell->UniqueSeed = RandomStream.RandHelper(1000000);
@@ -291,7 +291,7 @@ bool ALayoutGenerator_Main::InitRuntimeProperties(ELayoutGeneratorErrors& OutErr
 	return true;
 }
 
-bool ALayoutGenerator_Main::GenerateRequiredRooms(ELayoutGeneratorErrors& OutError)
+bool ALayoutGeneratorMain::GenerateRequiredRooms(ELayoutGeneratorErrors& OutError)
 {
 	// Generate required rooms //
 	while (RequiredRooms.Num() > 0)
@@ -329,7 +329,7 @@ bool ALayoutGenerator_Main::GenerateRequiredRooms(ELayoutGeneratorErrors& OutErr
 	return true;
 }
 
-bool ALayoutGenerator_Main::GenerateFromQueue(ELayoutGeneratorErrors& OutError)
+bool ALayoutGeneratorMain::GenerateFromQueue(ELayoutGeneratorErrors& OutError)
 {
 	// Generate all cells that are in queue //
 	while (Queue.Num() > 0)
@@ -395,7 +395,7 @@ bool ALayoutGenerator_Main::GenerateFromQueue(ELayoutGeneratorErrors& OutError)
 	return true;
 }
 
-bool ALayoutGenerator_Main::RunPostSpawnValidation(ELayoutGeneratorErrors& OutError)
+bool ALayoutGeneratorMain::RunPostSpawnValidation(ELayoutGeneratorErrors& OutError)
 {
 	// Run post spawn validation //
 	for (auto Kvp : Grid)
@@ -403,7 +403,7 @@ bool ALayoutGenerator_Main::RunPostSpawnValidation(ELayoutGeneratorErrors& OutEr
 		if (Kvp.Value->bIsGenerated)
 		{
 			bool bIsValid;
-			FRoomGenerationSettings SourceSettings;
+			FLayoutGeneratorRoomGenerationSettings SourceSettings;
 
 			bIsValid = true;
 			SourceSettings = RoomGenerationData[Kvp.Value->RoomRowName];
@@ -425,7 +425,7 @@ bool ALayoutGenerator_Main::RunPostSpawnValidation(ELayoutGeneratorErrors& OutEr
 	return true;
 }
 
-void ALayoutGenerator_Main::ResetRuntimeProperties()
+void ALayoutGeneratorMain::ResetRuntimeProperties()
 {
 	RandomStream = FRandomStream(0);
 	RoomGenerationData.Empty();
@@ -455,7 +455,7 @@ void ALayoutGenerator_Main::ResetRuntimeProperties()
 	return;
 }
 
-void ALayoutGenerator_Main::OnLevelLoadedCallback()
+void ALayoutGeneratorMain::OnLevelLoadedCallback()
 {
 	float PercentOfLevelsDone;
 

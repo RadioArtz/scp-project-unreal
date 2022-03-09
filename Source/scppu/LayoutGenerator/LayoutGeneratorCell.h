@@ -4,36 +4,36 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "LayoutGenerator_Structs.h"
-#include "LayoutGenerator_Cell.generated.h"
+#include "LayoutGeneratorStructs.h"
+#include "LayoutGeneratorCell.generated.h"
 
 class ULevelStreamingDynamic;
-class ALayoutGenerator_Main;
+class ALayoutGeneratorMain;
 
 UINTERFACE(MinimalAPI)
-class ULayoutGenerator_ReceiveCellInterface : public UInterface
+class ULayoutGeneratorReceiveCellInterface : public UInterface
 {
 	GENERATED_BODY()
 };
 
-class ILayoutGenerator_ReceiveCellInterface
+class ILayoutGeneratorReceiveCellInterface
 {
 	GENERATED_BODY()
 
 public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Layout Generator")
-		void OnCellReceived(ULayoutGenerator_Cell* Cell, FRandomStream UniqueRandomStream);
+		void OnCellReceived(ULayoutGeneratorCell* Cell, FRandomStream UniqueRandomStream);
 };
 
 UCLASS()
-class SCPPU_API ULayoutGenerator_Cell : public UObject
+class SCPPU_API ULayoutGeneratorCell : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
-	friend class ALayoutGenerator_Main;
+	friend class ALayoutGeneratorMain;
 
 	//// FUNCTIONS ////
 
@@ -59,7 +59,7 @@ public:
 		bool IsPointInLevelBounds(FVector Point);
 
 	UFUNCTION(BlueprintCallable)
-		bool DoesPathExist(ULayoutGenerator_Cell* Goal);
+		bool DoesPathExist(ULayoutGeneratorCell* Goal);
 
 	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 10000.f);
@@ -73,7 +73,7 @@ public:
 		int32 Rotation;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
-		ALayoutGenerator_Main* LayoutGenerator;
+		ALayoutGeneratorMain* LayoutGenerator;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "References")
 		TSoftObjectPtr<UWorld> LevelAsset;
@@ -94,10 +94,10 @@ public:
 		bool bIsEnabled = true;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
-		FCellSides HasDoor;
+		FLayoutGeneratorCellSides HasDoor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Properties")
-		FCellSides ShouldDisableNeighbour;
+		FLayoutGeneratorCellSides ShouldDisableNeighbour;
 
 protected:
 	virtual void BeginDestroy() override;

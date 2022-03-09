@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "LayoutGenerator_Structs.generated.h"
+#include "LayoutGeneratorStructs.generated.h"
 
-class ULayoutGenerator_SpawnValidator;
+class ULayoutGeneratorSpawnValidator;
 
 USTRUCT(BlueprintType)
 struct FIntVector2D
@@ -48,7 +48,7 @@ public:
 };
 
 USTRUCT(BlueprintType)
-struct FCellSides
+struct FLayoutGeneratorCellSides
 {
 	GENERATED_BODY()
 
@@ -65,7 +65,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		bool bNegativeY;
 
-	FCellSides()
+	FLayoutGeneratorCellSides()
 	{
 		bPositiveX = false;
 		bPositiveY = false;
@@ -73,7 +73,7 @@ public:
 		bNegativeY = false;
 	}
 
-	FCellSides(bool bNewPosX, bool bNewPosY, bool bNewNegX, bool bNewNegY)
+	FLayoutGeneratorCellSides(bool bNewPosX, bool bNewPosY, bool bNewNegX, bool bNewNegY)
 	{
 		bPositiveX = bNewPosX;
 		bPositiveY = bNewPosY;
@@ -81,14 +81,14 @@ public:
 		bNegativeY = bNewNegY;
 	}
 
-	friend bool operator== (const FCellSides& Self, const FCellSides& Other)
+	friend bool operator== (const FLayoutGeneratorCellSides& Self, const FLayoutGeneratorCellSides& Other)
 	{
 		return (Self.bPositiveX == Other.bPositiveX) && (Self.bPositiveY == Other.bPositiveY) && (Self.bNegativeX == Other.bNegativeX) && (Self.bNegativeY == Other.bNegativeY);
 	}
 };
 
 USTRUCT(BlueprintType)
-struct FRoomGenerationSettings : public FTableRowBase
+struct FLayoutGeneratorRoomGenerationSettings : public FTableRowBase
 {
 	GENERATED_BODY()
 
@@ -111,23 +111,23 @@ public:
 
 	/** The locations of the doors. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FCellSides HasDoor;
+		FLayoutGeneratorCellSides HasDoor;
 
 	/** Which neighbouring cell to disable. Usefull when having a room that exceeds the cell bounds. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FCellSides ShouldDisableNeighbour;
+		FLayoutGeneratorCellSides ShouldDisableNeighbour;
 
 	/** 
 	*Validates a spawn location before generating the room (NOTE: Not all rooms have been generated yet!).
 	*Return value gets AND gated.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PreSpawnValidator;
+		TArray< TSubclassOf<ULayoutGeneratorSpawnValidator> > PreSpawnValidator;
 	
 	/** 
 	*Validates a spawn location after generating all rooms.
 	*Return value gets AND gated.
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutGenerator_SpawnValidator> > PostSpawnValidator;
+		TArray< TSubclassOf<ULayoutGeneratorSpawnValidator> > PostSpawnValidator;
 };

@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Engine/DataTable.h"
-#include "LayoutGenerator_Structs.h"
-#include "LayoutGenerator_Main.generated.h"
+#include "LayoutGeneratorStructs.h"
+#include "LayoutGeneratorMain.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayoutGenerator, Log, All);
 
-class ULayoutGenerator_SpawnValidator;
-class ULayoutGenerator_Cell;
+class ULayoutGeneratorSpawnValidator;
+class ULayoutGeneratorCell;
 
 UENUM(BlueprintType)
 enum class ELayoutGeneratorErrors : uint8
@@ -45,15 +45,15 @@ UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLayoutGeneratorTaskUpdate, float, PercentDone, ELayoutGeneratorTasks, CurrentTask);
 
 UCLASS()
-class SCPPU_API ALayoutGenerator_Main : public AActor
+class SCPPU_API ALayoutGeneratorMain : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ALayoutGenerator_Main();
+	ALayoutGeneratorMain();
 
-	friend class ULayoutGenerator_Cell;
+	friend class ULayoutGeneratorCell;
 
 	//// FUNCTIONS ////
 
@@ -69,7 +69,7 @@ public:
 		TArray<FIntVector2D> FindCellLocationsWithRoomRowName(FName RoomRowName);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutGenerator_Cell* GetCell(FIntVector2D Location);
+		ULayoutGeneratorCell* GetCell(FIntVector2D Location);
 
 	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 10000.f, bool bDrawCells = true);
@@ -84,7 +84,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta = (ClampMin = "1"))
 		float CellSize = 1024;
 
-	/** Datatable that specifies which rooms to generate. Has to be of type FRoomGenerationSettings. */
+	/** Datatable that specifies which rooms to generate. Has to be of type FLayoutGeneratorRoomGenerationSettings. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 		UDataTable* DataTable;
 
@@ -146,17 +146,17 @@ protected:
 
 	/** Cached datatable to ensure thread saftey and for ease of use. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FName, FRoomGenerationSettings> RoomGenerationData;
+		TMap<FName, FLayoutGeneratorRoomGenerationSettings> RoomGenerationData;
 
-	/** Contains row names and how many instances of it are still required. Coresponse to RequiredInstances inside FRoomGenerationSettings. */
+	/** Contains row names and how many instances of it are still required. Coresponse to RequiredInstances inside FLayoutGeneratorRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> RequiredRooms;
 
-	/** Contains row names and how many instances of it are still available. Coresponse to MaximumInstances inside FRoomGenerationSettings. */
+	/** Contains row names and how many instances of it are still available. Coresponse to MaximumInstances inside FLayoutGeneratorRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> AvailableRooms;
 
-	/** Contains row names. Coresponse to SpawnPoolAmount inside FRoomGenerationSettings. */
+	/** Contains row names. Coresponse to SpawnPoolAmount inside FLayoutGeneratorRoomGenerationSettings. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
 		TArray<FName> SpawnPool;
 
@@ -174,10 +174,10 @@ protected:
 
 	/** Cached spawn validator objects*/
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<TSubclassOf<ULayoutGenerator_SpawnValidator>, ULayoutGenerator_SpawnValidator*> SpawnValidators;
+		TMap<TSubclassOf<ULayoutGeneratorSpawnValidator>, ULayoutGeneratorSpawnValidator*> SpawnValidators;
 
 	/** Contains the actual grid. */
 	UPROPERTY(VisibleAnywhere, Category = "DEBUG")
-		TMap<FIntVector2D, ULayoutGenerator_Cell*> Grid;
+		TMap<FIntVector2D, ULayoutGeneratorCell*> Grid;
 
 };
