@@ -17,7 +17,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		bool IsSpawnValid(ALayoutGeneratorMain* LayoutGenerator, FIntVector2D Location);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FRandomStream RandomStream;
 
 };
