@@ -85,6 +85,32 @@ public:
 	{
 		return (Self.bPositiveX == Other.bPositiveX) && (Self.bPositiveY == Other.bPositiveY) && (Self.bNegativeX == Other.bNegativeX) && (Self.bNegativeY == Other.bNegativeY);
 	}
+
+	void RotateRight()
+	{
+		FLayoutGeneratorCellSides Original;
+
+		Original = *this;
+		this->bPositiveX = Original.bNegativeY;
+		this->bPositiveY = Original.bPositiveX;
+		this->bNegativeX = Original.bPositiveY;
+		this->bNegativeY = Original.bNegativeX;
+
+		return;
+	}
+
+	void RotateLeft()
+	{
+		FLayoutGeneratorCellSides Original;
+	
+		Original = *this;
+		this->bPositiveX = Original.bPositiveY;
+		this->bPositiveY = Original.bNegativeX;
+		this->bNegativeX = Original.bNegativeY;
+		this->bNegativeY = Original.bPositiveX;
+
+		return;
+	}
 };
 
 USTRUCT(BlueprintType)

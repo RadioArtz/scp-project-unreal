@@ -22,6 +22,39 @@ FString ULayoutGeneratorCell::GetUniqueName()
 	return FString::Printf(TEXT("%s__X%i_Y%i"), *LayoutGenerator->GetName(), Location.X, Location.Y);
 }
 
+void ULayoutGeneratorCell::GetNeighbouringCells(bool bOnlyReturnConnectedCells, ULayoutGeneratorCell*& OutCellPositiveX, ULayoutGeneratorCell*& OutCellPositiveY, ULayoutGeneratorCell*& OutCellNegativeX, ULayoutGeneratorCell*& OutCellNegativeY)
+{
+	OutCellPositiveX = LayoutGenerator->GetCell(FIntVector2D(Location.X + 1, Location.Y));
+	OutCellPositiveY = LayoutGenerator->GetCell(FIntVector2D(Location.X, Location.Y + 1));
+	OutCellNegativeX = LayoutGenerator->GetCell(FIntVector2D(Location.X - 1, Location.Y));
+	OutCellNegativeY = LayoutGenerator->GetCell(FIntVector2D(Location.X, Location.Y - 1));
+
+	if (bOnlyReturnConnectedCells)
+	{
+		if (!HasDoor.bPositiveX)
+		{
+			OutCellPositiveX = nullptr;
+		}
+
+		if (!HasDoor.bPositiveY)
+		{
+			OutCellPositiveY = nullptr;
+		}
+
+		if (!HasDoor.bNegativeX)
+		{
+			OutCellNegativeX = nullptr;
+		}
+
+		if (!HasDoor.bNegativeY)
+		{
+			OutCellNegativeY = nullptr;
+		}
+	}
+
+	return;
+}
+
 bool ULayoutGeneratorCell::LoadLevel()
 {
 	if (bIsEnabled && bIsGenerated && !LevelAsset.IsNull() && LevelStreamingDynamic == nullptr)
@@ -244,8 +277,10 @@ void ULayoutGeneratorCell::DrawDebug(float Duration)
 	////
 
 	// Draw properties as text //
-	TextToDraw.Appendf(TEXT("Location: X%i, Y%i, (Elem: %i)\n"), Location.X, Location.Y, Location.X * LayoutGenerator->GridSize.X + Location.Y);
-	TextToDraw.Appendf(TEXT("Rotation: %i\n"), Rotation);
+	TextToDraw.Appendf(TEXT("Grid Location: X=%i Y=%i (Elem=%i)\n"), Location.X, Location.Y, Location.X * LayoutGenerator->GridSize.X + Location.Y);
+	TextToDraw.Appendf(TEXT("Grid Rotation: %i\n"), Rotation);
+	TextToDraw.Appendf(TEXT("World Location: %s\n"), *GetWorldLocation().ToString());
+	TextToDraw.Appendf(TEXT("World Rotation: %s\n"), *GetWorldRotation().ToString());
 	TextToDraw.Appendf(TEXT("Room Row Name: %s\n"), *RoomRowName.ToString());
 	TextToDraw.Appendf(TEXT("Unique Seed: %i\n"), UniqueSeed);
 	TextToDraw.Appendf(TEXT("Loaded Level: %s\n"), *LevelAsset.ToString());
@@ -284,10 +319,7 @@ bool ULayoutGeneratorCell::SetRoom(const FName NewRoomRowName, const bool bForce
 	ShouldDisableNeighbour = SourceSettings.ShouldDisableNeighbour;
 
 	// Fetch info from neighbouring cells //
-	PosXCell = LayoutGenerator->GetCell(FIntVector2D(Location.X + 1, Location.Y));
-	PosYCell = LayoutGenerator->GetCell(FIntVector2D(Location.X, Location.Y + 1));
-	NegXCell = LayoutGenerator->GetCell(FIntVector2D(Location.X - 1, Location.Y));
-	NegYCell = LayoutGenerator->GetCell(FIntVector2D(Location.X, Location.Y - 1));
+	GetNeighbouringCells(false , PosXCell, PosYCell, NegXCell, NegYCell);
 
 	// Positive X
 	IsDoorRequired.bPositiveX = (PosXCell != nullptr && PosXCell->HasDoor.bNegativeX);
@@ -340,17 +372,8 @@ bool ULayoutGeneratorCell::SetRoom(const FName NewRoomRowName, const bool bForce
 		else
 		{
 			// Rotate the room to the right
-			FLayoutGeneratorCellSides PreviousHasDoor = HasDoor;
-			FLayoutGeneratorCellSides PreviousShouldDisableNeighbour = ShouldDisableNeighbour;
-
-			HasDoor.bPositiveX = PreviousHasDoor.bNegativeY;
-			HasDoor.bPositiveY = PreviousHasDoor.bPositiveX;
-			HasDoor.bNegativeX = PreviousHasDoor.bPositiveY;
-			HasDoor.bNegativeY = PreviousHasDoor.bNegativeX;
-			ShouldDisableNeighbour.bPositiveX = PreviousShouldDisableNeighbour.bNegativeY;
-			ShouldDisableNeighbour.bPositiveY = PreviousShouldDisableNeighbour.bPositiveX;
-			ShouldDisableNeighbour.bNegativeX = PreviousShouldDisableNeighbour.bPositiveY;
-			ShouldDisableNeighbour.bNegativeY = PreviousShouldDisableNeighbour.bNegativeX;
+				HasDoor.RotateRight();
+				ShouldDisableNeighbour.RotateRight();
 
 			Rotation += 1;
 		}
@@ -398,6 +421,11 @@ bool ULayoutGeneratorCell::SetRoom(const FName NewRoomRowName, const bool bForce
 		LevelAsset = nullptr;
 		return false;
 	}
+}
+
+bool ULayoutGeneratorCell::IsRoomValid()
+{
+	return false;
 }
 
 void ULayoutGeneratorCell::OnLevelLoaded()

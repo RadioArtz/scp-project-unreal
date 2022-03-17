@@ -46,6 +46,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FString GetUniqueName();
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		void GetNeighbouringCells(bool bOnlyReturnConnectedCells, ULayoutGeneratorCell*& OutCellPositiveX, ULayoutGeneratorCell*& OutCellPositiveY, ULayoutGeneratorCell*& OutCellNegativeX, ULayoutGeneratorCell*& OutCellNegativeY);
+
 	UFUNCTION(BlueprintCallable)
 		bool LoadLevel();
 
@@ -106,6 +109,9 @@ protected:
 
 	UFUNCTION()
 		bool SetRoom(const FName NewRoomRowName, const bool bForce);
+
+	UFUNCTION()
+		bool IsRoomValid();
 
 	UFUNCTION()
 		void OnLevelLoaded();
