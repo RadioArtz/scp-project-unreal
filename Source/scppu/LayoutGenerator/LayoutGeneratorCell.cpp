@@ -51,8 +51,6 @@ void ULayoutGeneratorCell::GetNeighbouringCells(bool bOnlyReturnConnectedCells, 
 			OutCellNegativeY = nullptr;
 		}
 	}
-
-	return;
 }
 
 bool ULayoutGeneratorCell::LoadLevel()
@@ -68,10 +66,9 @@ bool ULayoutGeneratorCell::LoadLevel()
 			LevelStreamingDynamic->bShouldBlockOnLoad = false;
 			LevelStreamingDynamic->bShouldBlockOnUnload = false;
 			LevelStreamingDynamic->SetShouldBeVisible(false);
-			LevelStreamingDynamic->bDisableDistanceStreaming = false;
+			LevelStreamingDynamic->bDisableDistanceStreaming = true;
 			LevelStreamingDynamic->LevelColor = FLinearColor::MakeRandomColor();
 			LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ULayoutGeneratorCell::OnLevelLoaded);
-
 			return true;
 		}
 		else
@@ -102,9 +99,17 @@ bool ULayoutGeneratorCell::UnloadLevel()
 
 void ULayoutGeneratorCell::GetAllActorsInLevel(TArray<AActor*>& OutActors)
 {
+	OutActors.Empty();
+
 	if (LevelStreamingDynamic != nullptr && LevelStreamingDynamic->HasLoadedLevel())
 	{
-		OutActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;	
+		for (int i = 0; i < LevelStreamingDynamic->GetLoadedLevel()->Actors.Num(); i++)
+		{
+			if (IsValid(LevelStreamingDynamic->GetLoadedLevel()->Actors[i]))
+			{
+				OutActors.Add(LevelStreamingDynamic->GetLoadedLevel()->Actors[i]);
+			}
+		}
 	}
 }
 
@@ -116,7 +121,7 @@ bool ULayoutGeneratorCell::IsPointInLevelBounds(FVector Point)
 		TArray<AActor*> LevelActors;
 
 		bInBounds = false;
-		LevelActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;
+		GetAllActorsInLevel(LevelActors);
 
 		for (int i = 0; i < LevelActors.Num(); i++)
 		{
@@ -207,7 +212,6 @@ bool ULayoutGeneratorCell::DoesPathExist(ULayoutGeneratorCell* Goal)
 
 	// Our search found nothing, so no path found :(
 	return false;
-
 }
 
 void ULayoutGeneratorCell::DrawDebug(float Duration)
@@ -434,7 +438,7 @@ void ULayoutGeneratorCell::OnLevelLoaded()
 	TArray<AActor*> LevelActors;
 	FRandomStream TempRStream;
 
-	LevelActors = LevelStreamingDynamic->GetLoadedLevel()->Actors;
+	GetAllActorsInLevel(LevelActors);
 	TempRStream = FRandomStream(UniqueSeed);
 
 	for (int i = 0; i < LevelActors.Num(); i++)
@@ -444,4 +448,6 @@ void ULayoutGeneratorCell::OnLevelLoaded()
 			ILayoutGeneratorReceiveCellInterface::Execute_OnCellReceived(LevelActors[i], this, FRandomStream(TempRStream.RandHelper(100000000)));
 		}
 	}
+
+	UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Level %s (%s) loaded."), *LayoutGenerator->GetName(), *GetUniqueName(), *LevelAsset.GetUniqueID().ToString());
 }

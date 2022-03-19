@@ -121,7 +121,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 	/** Called whenever this actor is being removed from a level */
-	void EndPlay();
+	void EndPlay(const EEndPlayReason::Type);
 
 	//// FUNCTIONS ////
 

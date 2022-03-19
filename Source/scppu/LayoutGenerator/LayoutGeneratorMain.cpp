@@ -85,23 +85,20 @@ void ALayoutGeneratorMain::AsyncGenerateLayout(int32 NewSeed, bool bShowAllLevel
 			OnLayoutGenerationStatusUpdate.Broadcast(.7f, ELayoutGeneratorTasks::LGT_LoadingLevels);
 			for (auto Kvp : Grid)
 			{
-				Kvp.Value->LoadLevel();
-				if (Kvp.Value->LevelStreamingDynamic != nullptr)
+				if (Kvp.Value->LoadLevel())
 				{
 					Kvp.Value->LevelStreamingDynamic->SetShouldBeVisible(bShowAllLevelsWhenDone);
 					Kvp.Value->LevelStreamingDynamic->OnLevelLoaded.AddDynamic(this, &ALayoutGeneratorMain::OnLevelLoadedCallback);
 					LevelsCurrentlyLoading++;
 				};
-
-				// Add one "dummy" level to ensure the function gets called at least once
-				LevelsCurrentlyLoading++;
-				OnLevelLoadedCallback();
-				/** ALayoutGeneratorMain::OnLevelLoadedCallback completes generation */
 			}
+
+			// Add one "dummy" level to ensure the function gets called at least once
+			LevelsCurrentlyLoading++;
+			OnLevelLoadedCallback();
+			/** ALayoutGeneratorMain::OnLevelLoadedCallback completes generation */
 		});
 	});
-
-	return;
 }
 
 bool ALayoutGeneratorMain::ClearLayout()
@@ -172,17 +169,15 @@ void ALayoutGeneratorMain::DrawDebug(float Duration, bool bDrawCells)
 void ALayoutGeneratorMain::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void ALayoutGeneratorMain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
-void ALayoutGeneratorMain::EndPlay()
+void ALayoutGeneratorMain::EndPlay(const EEndPlayReason::Type)
 {
 	ClearLayout();
 }
@@ -451,8 +446,6 @@ void ALayoutGeneratorMain::ResetRuntimeProperties()
 	}
 
 	Grid.Empty();
-
-	return;
 }
 
 void ALayoutGeneratorMain::OnLevelLoadedCallback()
@@ -472,6 +465,4 @@ void ALayoutGeneratorMain::OnLevelLoadedCallback()
 		OnLayoutGenerated.Broadcast(true, ELayoutGeneratorErrors::LGE_None);
 		UE_LOG(LogLayoutGenerator, Display, TEXT("%s: Finished generating layout."), *GetName());
 	}
-
-	return;
 }
