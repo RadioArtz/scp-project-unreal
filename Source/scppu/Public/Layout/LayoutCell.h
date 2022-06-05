@@ -18,40 +18,40 @@ class SCPPU_API ULayoutCell : public UObject
 public:
 	//// Properties ////
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FIntVector2 Location;
+		FIntVector2 Location; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		int32 Rotation;
+		int32 Rotation; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		ALayout* Owner;
+		ALayout* Owner; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsEnabled;
+		bool bIsEnabled = true; // get set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsGenerated;
+		bool bIsGenerated = false; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FRandomStream RandStream;
+		int32 UniqueSeed; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FName RowName;
+		FName RowName; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		TSoftObjectPtr<UWorld> LevelAsset;
+		TSoftObjectPtr<UWorld> LevelAsset; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		ULevelStreamingDynamic* Sublevel;
+		ULevelStreamingDynamic* Sublevel; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FString UniqueSublevelName;
+		FString UniqueSublevelName; // get
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FLayoutCellSides HasConnection;
+		FLayoutCellSides HasConnection; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FLayoutCellSides DisableNeighbouringCell;
+		FLayoutCellSides DisableNeighbouringCell; // get private set
 
 	//// Functions ////
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -60,8 +60,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FRotator GetWorldRotation();
 
-	UFUNCTION()
-		bool SetRowName(FName NewRowName, bool bForce);
+	UFUNCTION(BlueprintCallable)
+		bool IsRowNameValid(FName InRowName, int InRotation);
+
+	UFUNCTION(BlueprintCallable)
+		void SetRowName(FName NewRowName, int NewRotation);
 
 	UFUNCTION(BlueprintCallable)
 		bool LoadSublevel();
@@ -69,8 +72,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 		bool UnloadSublevel();
 
+	UFUNCTION()
+		void OnSublevelLoadedCallback();
+
 	UFUNCTION(BlueprintCallable)
-		void GetAllActorsInSublevel(TArray<AActor*>& OutActors);
+		void GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors);
 
 	UFUNCTION(BlueprintCallable)
 		bool IsPointInSublevelBounds(FVector Point);

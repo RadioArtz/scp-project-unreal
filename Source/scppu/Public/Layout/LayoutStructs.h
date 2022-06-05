@@ -9,6 +9,7 @@
 
 class ULayoutSpawnValidator;
 
+
 USTRUCT(BlueprintType)
 struct FIntVector2 
 {
@@ -40,9 +41,7 @@ public:
 
 	friend uint32 GetTypeHash(const FIntVector2& Self)
 	{
-		FString StringX = FString::FromInt(Self.X);
-		FString StringY = FString::FromInt(Self.Y);
-		return FCString::Atoi(*(StringX += StringY));
+		return FCrc::MemCrc32(&Self, sizeof(Self));
 	}
 };
 
@@ -53,16 +52,55 @@ struct FLayoutCellSides
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool PX;
+		bool bPX;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool PY;
+		bool bPY;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool NX;
+		bool bNX;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		bool NY;
+		bool bNY;
+
+	FLayoutCellSides()
+	{
+		this->bPX = false;
+		this->bPY = false;
+		this->bNX = false;
+		this->bNY = false;
+	}
+
+	FLayoutCellSides(bool bInPX, bool bInPY, bool bInNX, bool bInNY)
+	{
+		this->bPX = bInPX;
+		this->bPY = bInPY;
+		this->bNX = bInNX;
+		this->bNY = bInNY;
+	}
+
+	friend bool operator== (const FLayoutCellSides& Self, const FLayoutCellSides& Other)
+	{
+		return (Self.bPX == Other.bPX) && (Self.bPY == Other.bPY) && (Self.bNX == Other.bNX) && (Self.bNY == Other.bNY);
+	}
+
+	void RotateRight()
+	{
+		FLayoutCellSides Prev = *this;
+		this->bPX = Prev.bNY;
+		this->bPY = Prev.bPX;
+		this->bNX = Prev.bPY;
+		this->bNY = Prev.bNX;
+	}
+
+	void RotateLeft()
+	{
+		FLayoutCellSides Prev = *this;
+		this->bPX = Prev.bPY;
+		this->bPY = Prev.bNX;
+		this->bNX = Prev.bNY;
+		this->bNY = Prev.bPX;
+	}
 };
 
 USTRUCT(BlueprintType)

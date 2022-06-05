@@ -9,6 +9,7 @@
 
 class UDataTable;
 class ULayoutCell;
+ULayoutSpawnValidator;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayout, Log, All);
 
@@ -20,25 +21,27 @@ class SCPPU_API ALayout : public AActor
 public:
 	//// Properties ////
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-		bool bIsLayoutPresent;
+		bool bIsLayoutPresent; // get private set
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		FIntVector2 GridSize;
+		FIntVector2 GridSize; // get private set
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		float CellSize;
+		float CellSize; // get private set
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		UDataTable* DataTable;
+		UDataTable* DataTable; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-		FRandomStream RandStream;
+		FRandomStream RandStream; // get private set
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
-		TMap<FIntVector2, ULayoutCell*> Grid;
+		TMap<FIntVector2, ULayoutCell*> Grid; // get private set
+
+	UPROPERTY(VisibleAnywhere, Category = "Debug") // private get private set
+		TMap<TSubclassOf<ULayoutSpawnValidator>, ULayoutSpawnValidator*> SpawnValidatorCache;
 
 	//// Functions ////
-
 	// Sets default values for this actor's properties
 	ALayout();
 
@@ -47,6 +50,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		bool ClearLayout();
+
+	UFUNCTION(BlueprintCallable)
+		ULayoutSpawnValidator* GetOrCreateSpawnValidator(TSubclassOf<ULayoutSpawnValidator> InClass);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		ULayoutCell* GetCell(FIntVector2 Location);
@@ -58,7 +64,7 @@ public:
 		void GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY);
 
 	UFUNCTION(BlueprintCallable)
-		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Target);
+		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal);
 
 	UFUNCTION(BlueprintCallable)
 		void LoadAllSublevels();
@@ -67,7 +73,7 @@ public:
 		void UnloadAllSublevels();
 
 	UFUNCTION(BlueprintCallable)
-		void DrawDebug(float Duration = 5.0f, bool bDrawCellContent = true);
+		void DrawDebug(float Duration = 5.0f, bool bDrawCells = true);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

@@ -10,7 +10,7 @@
 class ALayout;
 class ULayoutCell;
 
-UCLASS(Abstract)
+UCLASS(Blueprintable, Abstract)
 class SCPPU_API ULayoutSpawnValidator : public UObject
 {
 	GENERATED_BODY()
