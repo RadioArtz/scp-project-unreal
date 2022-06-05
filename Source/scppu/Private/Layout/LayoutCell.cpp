@@ -27,6 +27,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
     }
 
     bool bIsValid = true;
+    InRotation = InRotation % 4;
 
     // Save original properties so we can overwrite them temporarily for the pre spawn validators
     int PrevRotation = this->Rotation;
@@ -133,6 +134,7 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 
     FRandomStream RStream = FRandomStream(this->UniqueSeed);
     FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(NewRowName, "");
+    NewRotation = NewRotation % 4;
     this->RowName = NewRowName;
     this->HasConnection = Row.HasConnection;
     this->DisableNeighbouringCell = Row.DisableNeighbouringCell;
@@ -243,6 +245,11 @@ bool ULayoutCell::IsPointInSublevelBounds(FVector Point)
 
 void ULayoutCell::DrawDebug(float Duration)
 {
+    if (Duration < 0.0)
+    {
+        Duration = 1e+308;
+    }
+
     // Connection paths
     if (this->HasConnection.bPX)
     {

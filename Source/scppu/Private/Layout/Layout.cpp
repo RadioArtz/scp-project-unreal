@@ -201,7 +201,10 @@ void ALayout::UnloadAllSublevels()
 
 void ALayout::DrawDebug(float Duration, bool bDrawCells)
 {
-	GEngine->Exec(this->GetWorld(), TEXT("r.DebugSafeZone.MaxDebugTextStringsPerActor 0"));
+	if (Duration < 0.0)
+	{
+		Duration = 1e+308;
+	}
 
 	for (auto Kvp : this->Grid)
 	{
@@ -218,7 +221,8 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells)
 void ALayout::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	UE_LOG(LogLayout, Log, TEXT("%s: Disabling MaxDebugStringsPerActor so debug draw can work properly"), *this->GetName());
+	GEngine->Exec(this->GetWorld(), TEXT("r.DebugSafeZone.MaxDebugTextStringsPerActor 0"));
 }
 
 // Called every frame
