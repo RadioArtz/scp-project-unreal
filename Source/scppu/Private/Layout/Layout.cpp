@@ -203,7 +203,7 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells)
 {
 	if (Duration < 0.0)
 	{
-		Duration = 1e+308;
+		Duration = 1e+18;
 	}
 
 	for (auto Kvp : this->Grid)

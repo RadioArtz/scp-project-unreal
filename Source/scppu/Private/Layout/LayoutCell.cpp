@@ -247,7 +247,7 @@ void ULayoutCell::DrawDebug(float Duration)
 {
     if (Duration < 0.0)
     {
-        Duration = 1e+308;
+        Duration = 1e+18;
     }
 
     // Connection paths
