@@ -45,7 +45,7 @@ public:
 		ULevelStreamingDynamic* Sublevel; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FString UniqueSublevelName; // get
+		FString UniqueSublevelName; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		FLayoutCellSides HasConnection; // get private set
@@ -67,10 +67,10 @@ public:
 		void SetRowName(FName NewRowName, int NewRotation);
 
 	UFUNCTION(BlueprintCallable)
-		bool LoadSublevel();
+		void LoadSublevel();
 
 	UFUNCTION(BlueprintCallable)
-		bool UnloadSublevel();
+		void UnloadSublevel();
 
 	UFUNCTION()
 		void OnSublevelLoadedCallback();

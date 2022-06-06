@@ -156,16 +156,16 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
     bIsGenerated = true;
 }
 
-bool ULayoutCell::LoadSublevel()
+void ULayoutCell::LoadSublevel()
 {
     if (IsValid(this->Sublevel))
     {
-        return false;
+        return;
     }
 
     if (this->LevelAsset.IsNull())
     {
-        return false;
+        return;
     }
 
     bool bLevelLoaded;
@@ -178,20 +178,17 @@ bool ULayoutCell::LoadSublevel()
         this->Sublevel->SetShouldBeVisible(false);
         this->Sublevel->OnLevelLoaded.AddDynamic(this, &ULayoutCell::OnSublevelLoadedCallback);
     }
-
-    return bLevelLoaded;
 }
 
-bool ULayoutCell::UnloadSublevel()
+void ULayoutCell::UnloadSublevel()
 {
     if (!IsValid(this->Sublevel))
     {
-        return false;
+        return;
     }
 
     this->Sublevel->SetIsRequestingUnloadAndRemoval(true);
     this->Sublevel = nullptr;
-    return true;
 }
 
 void ULayoutCell::GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors)
@@ -243,7 +240,7 @@ bool ULayoutCell::IsPointInSublevelBounds(FVector Point)
     return false;
 }
 
-void ULayoutCell::DrawDebug(float Duration)
+void ULayoutCell::DrawDebug(float Duration) //Change this into a switchable debug command somehow
 {
     if (Duration < 0.0)
     {

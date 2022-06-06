@@ -24,7 +24,7 @@ ALayout::ALayout()
 	SetRootComponent(MeshComponent);
 }
 
-bool ALayout::NewLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed)
+bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed)
 {
 	if (!IsValid(this->DataTable))
 	{
@@ -199,7 +199,7 @@ void ALayout::UnloadAllSublevels()
 	}
 }
 
-void ALayout::DrawDebug(float Duration, bool bDrawCells)
+void ALayout::DrawDebug(float Duration, bool bDrawCells) //Change this into a switchable debug command somehow
 {
 	if (Duration < 0.0)
 	{
@@ -221,7 +221,7 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells)
 void ALayout::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogLayout, Log, TEXT("%s: Disabling MaxDebugStringsPerActor so debug draw can work properly"), *this->GetName());
+	UE_LOG(LogLayout, Log, TEXT("%s: Disabling 'MaxDebugStringsPerActor' so debug draw will work properly"), *this->GetName());
 	GEngine->Exec(this->GetWorld(), TEXT("r.DebugSafeZone.MaxDebugTextStringsPerActor 0"));
 }
 

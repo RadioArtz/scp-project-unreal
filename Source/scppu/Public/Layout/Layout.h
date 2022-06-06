@@ -46,7 +46,7 @@ public:
 	ALayout();
 
 	UFUNCTION(BlueprintCallable)
-		bool NewLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed);
+		bool InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed);
 
 	UFUNCTION(BlueprintCallable)
 		bool ClearLayout();
