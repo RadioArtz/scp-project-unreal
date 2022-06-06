@@ -9,7 +9,7 @@
 
 class UDataTable;
 class ULayoutCell;
-ULayoutSpawnValidator;
+class ULayoutSpawnValidator;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayout, Log, All);
 
