@@ -82,7 +82,7 @@ public:
 		bool IsPointInSublevelBounds(FVector Point);
 	
 	UFUNCTION(BlueprintCallable)
-		void DrawDebug(float Duration = 5.0f);
+		void DrawDebug(float Duration = 5.0f, bool bShowText = true);
 
 protected:
 

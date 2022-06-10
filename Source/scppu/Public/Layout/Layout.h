@@ -73,7 +73,7 @@ public:
 		void UnloadAllSublevels();
 
 	UFUNCTION(BlueprintCallable)
-		void DrawDebug(float Duration = 5.0f, bool bDrawCells = true);
+		void DrawDebug(float Duration = 5.0f, bool bDrawCells = true, bool bShowText = true);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

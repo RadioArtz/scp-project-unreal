@@ -199,7 +199,7 @@ void ALayout::UnloadAllSublevels()
 	}
 }
 
-void ALayout::DrawDebug(float Duration, bool bDrawCells) //Change this into a switchable debug command somehow
+void ALayout::DrawDebug(float Duration, bool bDrawCells, bool bShowText) //Change this into a switchable debug command somehow
 {
 	if (Duration < 0.0)
 	{
@@ -212,7 +212,7 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells) //Change this into a sw
 
 		if (bDrawCells)
 		{
-			Kvp.Value->DrawDebug(Duration);
+			Kvp.Value->DrawDebug(Duration, bShowText);
 		}
 	}
 }
