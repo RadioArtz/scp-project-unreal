@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Layout/LayoutStructs.h"
 #include "LayoutGeneratorWFC.generated.h"
 
 class ALayout;
 
-UCLASS()
+UCLASS(Blueprintable)
 class SCPPU_API ULayoutGeneratorWFC : public UObject
 {
 	GENERATED_BODY()
@@ -22,5 +23,5 @@ public:
 		bool GenerateLayout(ALayout* Layout, int32 NewSeed);
 
 	UFUNCTION(BlueprintCallable)
-		void GenerateLayoutAsync(ALayout* Layout, int32 NewSeed);
+		void AsyncGenerateLayout(ALayout* Layout, int32 NewSeed);
 };
