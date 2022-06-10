@@ -79,7 +79,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
     ConnectionBlocked.bPY = !IsValid(CellPY) || !CellPY->bIsEnabled || (CellPY->bIsGenerated && !CellPY->HasConnection.bNY);
 
     //NX
-    ConnectionRequired.bNX = IsValid(CellNX) && CellPX->HasConnection.bPX;
+    ConnectionRequired.bNX = IsValid(CellNX) && CellNX->HasConnection.bPX;
     ConnectionBlocked.bNX = !IsValid(CellNX) || !CellNX->bIsEnabled || (CellNX->bIsGenerated && !CellNX->HasConnection.bPX);
 
     //NY
@@ -150,7 +150,7 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
     // Set level asset
     if (Row.Levels.Num() > 0)
     {
-        this->LevelAsset = Row.Levels[RStream.RandHelper(Row.Levels.Num() - 1)];
+        this->LevelAsset = Row.Levels[RStream.RandRange(0, Row.Levels.Num() - 1)];
     }
 
     bIsGenerated = true;
@@ -215,7 +215,7 @@ void ULayoutCell::OnSublevelLoadedCallback()
     {
         if (elem->Implements<ULayoutSublevelInterface>())
         {
-            ILayoutSublevelInterface::Execute_OnLayoutDataReceived(elem, this->Owner, this, RStream.RandHelper(MAX_int32));
+            ILayoutSublevelInterface::Execute_OnLayoutDataReceived(elem, this->Owner, this, RStream.RandRange(MIN_int32, MAX_int32));
         }
     }
 }

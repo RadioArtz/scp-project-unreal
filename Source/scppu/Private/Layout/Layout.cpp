@@ -34,7 +34,7 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 
 	if (this->DataTable->RowStruct != FLayoutCellGenerationSettings::StaticStruct())
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table contains wrong struct type (%s)"), *this->GetName(), *this->DataTable->RowStructName.ToString())
+		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table contains wrong struct type (is %s, should be %s)"), *this->GetName(), *this->DataTable->RowStructName.ToString(), TEXT("FLayoutCellGenerationSettings"));
 		return false;
 	}
 
@@ -57,8 +57,8 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 			Cell->Location = FIntVector2(x, y);
 			Cell->Rotation = 0;
 			Cell->Owner = this;
-			Cell->UniqueSeed = RandStream.RandHelper(MAX_int32);
-			Cell->UniqueSublevelName = FString::Printf(TEXT("%s__X%d_Y%d"), *this->GetName(), x, y);
+			Cell->UniqueSeed = RandStream.RandRange(MIN_int32, MAX_int32);
+			Cell->UniqueSublevelName = FString::Printf(TEXT("%s_X%d_Y%d"), *this->GetName(), x, y);
 			Grid.Add(FIntVector2(x, y), Cell);
 		}
 	}
