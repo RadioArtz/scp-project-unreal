@@ -84,6 +84,11 @@ public:
 		return (Self.bPX == Other.bPX) && (Self.bPY == Other.bPY) && (Self.bNX == Other.bNX) && (Self.bNY == Other.bNY);
 	}
 
+	friend bool operator!= (const FLayoutCellSides& Self, const FLayoutCellSides& Other)
+	{
+		return (Self.bPX != Other.bPX) || (Self.bPY != Other.bPY) || (Self.bNX != Other.bNX) || (Self.bNY != Other.bNY);
+	}
+
 	void RotateRight()
 	{
 		FLayoutCellSides Prev = *this;

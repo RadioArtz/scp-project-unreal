@@ -18,6 +18,56 @@ FRotator ULayoutCell::GetWorldRotation()
 	return FRotator(0, this->Rotation * 90, 0);
 }
 
+FLayoutCellSides ULayoutCell::GetRequiredConnections()
+{
+	ULayoutCell* CellPX;
+	ULayoutCell* CellPY;
+	ULayoutCell* CellNX;
+	ULayoutCell* CellNY;
+	FLayoutCellSides RequiredConnections;
+	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	RequiredConnections.bPX = IsValid(CellPX) && CellPX->HasConnection.bNX;
+	RequiredConnections.bPY = IsValid(CellPY) && CellPY->HasConnection.bNY;
+	RequiredConnections.bNX = IsValid(CellNX) && CellNX->HasConnection.bPX;
+	RequiredConnections.bNY = IsValid(CellNY) && CellNY->HasConnection.bPY;
+	return RequiredConnections;
+}
+
+FLayoutCellSides ULayoutCell::GetBlockedConnections()
+{
+	ULayoutCell* CellPX;
+	ULayoutCell* CellPY;
+	ULayoutCell* CellNX;
+	ULayoutCell* CellNY;
+	FLayoutCellSides BlockedConnections;
+	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	BlockedConnections.bPX = !IsValid(CellPX) || CellPX->IsBlockedByNeighbour() || (CellPX->bIsGenerated && !CellPX->HasConnection.bNX);
+	BlockedConnections.bPY = !IsValid(CellPY) || CellPY->IsBlockedByNeighbour() || (CellPY->bIsGenerated && !CellPY->HasConnection.bNY);
+	BlockedConnections.bNX = !IsValid(CellNX) || CellNX->IsBlockedByNeighbour() || (CellNX->bIsGenerated && !CellNX->HasConnection.bPX);
+	BlockedConnections.bNY = !IsValid(CellNY) || CellNY->IsBlockedByNeighbour() || (CellNY->bIsGenerated && !CellNY->HasConnection.bPY);
+	return BlockedConnections;
+}
+
+bool ULayoutCell::IsBlockedByNeighbour()
+{
+	ULayoutCell* CellPX;
+	ULayoutCell* CellPY;
+	ULayoutCell* CellNX;
+	ULayoutCell* CellNY;
+	bool bIsBlocked = false;
+	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	bIsBlocked = bIsBlocked || (IsValid(CellPX) && CellPX->DisableNeighbouringCell.bNX);
+	bIsBlocked = bIsBlocked || (IsValid(CellPY) && CellPY->DisableNeighbouringCell.bNY);
+	bIsBlocked = bIsBlocked || (IsValid(CellNX) && CellNX->DisableNeighbouringCell.bPX);
+	bIsBlocked = bIsBlocked || (IsValid(CellNY) && CellNY->DisableNeighbouringCell.bPY);
+	return bIsBlocked;
+}
+
+bool ULayoutCell::IsRequiredToGenerate()
+{
+	return this->GetRequiredConnections() != FLayoutCellSides(false, false, false, false);
+}
+
 bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 {
 	if (this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "") == nullptr)
@@ -61,47 +111,35 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 		bIsValid = bIsValid && Validator->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
 	}
 
-	// Get info from neighbouring cells (should this be its own function?)
+	// Get info from neighbouring cells 
 	ULayoutCell* CellPX;
 	ULayoutCell* CellPY;
 	ULayoutCell* CellNX;
 	ULayoutCell* CellNY;
-	FLayoutCellSides ConnectionRequired;
-	FLayoutCellSides ConnectionBlocked;
+	FLayoutCellSides RequiredConnections = this->GetRequiredConnections();
+	FLayoutCellSides BlockedConnections = this->GetBlockedConnections();
 	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
-
-	//PX
-	ConnectionRequired.bPX = IsValid(CellPX) && CellPX->HasConnection.bNX;
-	ConnectionBlocked.bPX = !IsValid(CellPX) || !CellPX->bIsEnabled || (CellPX->bIsGenerated && !CellPX->HasConnection.bNX);
-
-	//PY
-	ConnectionRequired.bPY = IsValid(CellPY) && CellPY->HasConnection.bNY;
-	ConnectionBlocked.bPY = !IsValid(CellPY) || !CellPY->bIsEnabled || (CellPY->bIsGenerated && !CellPY->HasConnection.bNY);
-
-	//NX
-	ConnectionRequired.bNX = IsValid(CellNX) && CellNX->HasConnection.bPX;
-	ConnectionBlocked.bNX = !IsValid(CellNX) || !CellNX->bIsEnabled || (CellNX->bIsGenerated && !CellNX->HasConnection.bPX);
-
-	//NY
-	ConnectionRequired.bNY = IsValid(CellNY) && CellNY->HasConnection.bPY;
-	ConnectionBlocked.bNY = !IsValid(CellNY) || !CellNY->bIsEnabled || (CellNY->bIsGenerated && !CellNY->HasConnection.bPY);
 
 	// Check if all connections fit
 	//PX
-	bIsValid = bIsValid && ((ConnectionRequired.bPX && this->HasConnection.bPX) || !ConnectionRequired.bPX);
-	bIsValid = bIsValid && ((ConnectionBlocked.bPX && !this->HasConnection.bPX) || !ConnectionBlocked.bPX);
+	bIsValid = bIsValid && ((RequiredConnections.bPX && this->HasConnection.bPX) || !RequiredConnections.bPX);
+	bIsValid = bIsValid && ((BlockedConnections.bPX && !this->HasConnection.bPX) || !BlockedConnections.bPX);
+	bIsValid = bIsValid && (!DisableNeighbouringCell.bPX || !IsValid(CellPX) || (DisableNeighbouringCell.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
 
 	//PY
-	bIsValid = bIsValid && ((ConnectionRequired.bPY && this->HasConnection.bPY) || !ConnectionRequired.bPY);
-	bIsValid = bIsValid && ((ConnectionBlocked.bPY && !this->HasConnection.bPY) || !ConnectionBlocked.bPY);
+	bIsValid = bIsValid && ((RequiredConnections.bPY && this->HasConnection.bPY) || !RequiredConnections.bPY);
+	bIsValid = bIsValid && ((BlockedConnections.bPY && !this->HasConnection.bPY) || !BlockedConnections.bPY);
+	bIsValid = bIsValid && (!DisableNeighbouringCell.bPY || !IsValid(CellPY) || (DisableNeighbouringCell.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
 
 	//NX
-	bIsValid = bIsValid && ((ConnectionRequired.bNX && this->HasConnection.bNX) || !ConnectionRequired.bNX);
-	bIsValid = bIsValid && ((ConnectionBlocked.bNX && !this->HasConnection.bNX) || !ConnectionBlocked.bNX);
+	bIsValid = bIsValid && ((RequiredConnections.bNX && this->HasConnection.bNX) || !RequiredConnections.bNX);
+	bIsValid = bIsValid && ((BlockedConnections.bNX && !this->HasConnection.bNX) || !BlockedConnections.bNX);
+	bIsValid = bIsValid && (!DisableNeighbouringCell.bNX || !IsValid(CellNX) || (DisableNeighbouringCell.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
 
 	//NY
-	bIsValid = bIsValid && ((ConnectionRequired.bNY && this->HasConnection.bNY) || !ConnectionRequired.bNY);
-	bIsValid = bIsValid && ((ConnectionBlocked.bNY && !this->HasConnection.bNY) || !ConnectionBlocked.bNY);
+	bIsValid = bIsValid && ((RequiredConnections.bNY && this->HasConnection.bNY) || !RequiredConnections.bNY);
+	bIsValid = bIsValid && ((BlockedConnections.bNY && !this->HasConnection.bNY) || !BlockedConnections.bNY);
+	bIsValid = bIsValid && (!DisableNeighbouringCell.bNY || !IsValid(CellNY) || (DisableNeighbouringCell.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
 
 	// Reset properties to their original state
 	this->Rotation = PrevRotation;
@@ -305,8 +343,8 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 		Text.Appendf(TEXT("Grid Rotation: %i\n"), this->Rotation);
 		Text.Appendf(TEXT("World Location: %s\n"), *this->GetWorldLocation().ToString());
 		Text.Appendf(TEXT("World Rotation: %s\n"), *this->GetWorldRotation().ToString());
-		Text.Appendf(TEXT("Is Enabled: %s\n"), this->bIsEnabled ? TEXT("true") : TEXT("false"));
 		Text.Appendf(TEXT("Is Generated: %s\n"), this->bIsGenerated ? TEXT("true") : TEXT("false"));
+		Text.Appendf(TEXT("Is Blocked by Neighbour: %s\n"), this->IsBlockedByNeighbour() ? TEXT("true") : TEXT("false"));
 		Text.Appendf(TEXT("Unique Seed: %i\n"), this->UniqueSeed);
 		Text.Appendf(TEXT("Row Name: %s\n"), *this->RowName.ToString());
 		Text.Appendf(TEXT("Sublevel Asset: %s\n"), *this->LevelAsset.ToString());

@@ -39,7 +39,6 @@ bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
 				for (int i = 0; i < 4; i++)
 				{
 					bool bIsValid = Layout->GetCell(Kvp.Key)->IsRowNameValid(RowName, i);
-
 					if (bIsValid)
 					{
 						// Add to list of possibilites and break since we only need one valid rotation
@@ -60,6 +59,13 @@ bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
 			}
 		}
 
+		// Ignore this cell when its blocked by another cell
+		if (Layout->GetCell(BestKey)->IsBlockedByNeighbour())
+		{
+			UncollapsedWavefunctions.Remove(BestKey);
+			continue;
+		}
+
 		// If we find a wavefunction with no possible rows, we've hit a contradiction, time to abort...
 		if (UncollapsedWavefunctions[BestKey].Num() <= 0)
 		{
@@ -67,16 +73,15 @@ bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
 			return false;
 		}
 
-		// Collapse wavefunction (set it to a possible row)
+		// Collapse wavefunction (set cell to a possible row)
 		FName FinalRowName = UncollapsedWavefunctions[BestKey][Layout->RandStream.RandRange(0, UncollapsedWavefunctions[BestKey].Num() - 1)];
 		for (int i = 0; i < 4; i++)
 		{
 			bool bIsValid = Layout->GetCell(BestKey)->IsRowNameValid(FinalRowName, i);
-
 			if (bIsValid)
 			{
 				Layout->GetCell(BestKey)->SetRowName(FinalRowName, i);
-				//break;
+				break;
 			}
 		}
 

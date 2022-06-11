@@ -27,9 +27,6 @@ public:
 		ALayout* Owner; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsEnabled = true; // get set
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsGenerated = false; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -59,6 +56,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FRotator GetWorldRotation();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FLayoutCellSides GetRequiredConnections();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FLayoutCellSides GetBlockedConnections();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool IsBlockedByNeighbour();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool IsRequiredToGenerate();
 
 	UFUNCTION(BlueprintCallable)
 		bool IsRowNameValid(FName InRowName, int InRotation);
