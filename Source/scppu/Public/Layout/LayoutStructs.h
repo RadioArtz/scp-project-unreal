@@ -127,10 +127,10 @@ public:
 		int32 SpawnPoolEntries = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FLayoutCellSides HasConnection;
+		FLayoutCellSides HasConnections;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FLayoutCellSides DisableNeighbouringCell;
+		FLayoutCellSides DisableNeighbouringCells;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutSpawnValidator> > PreSpawnValidator;

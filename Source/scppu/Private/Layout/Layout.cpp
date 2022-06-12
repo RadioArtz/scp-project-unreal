@@ -4,6 +4,7 @@
 #include "Layout/LayoutCell.h"
 #include "Layout/LayoutSpawnValidator.h"
 #include "Engine/DataTable.h"
+#include "Engine/LevelStreamingDynamic.h"
 #include "DrawDebugHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogLayout);
@@ -34,7 +35,7 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 
 	if (this->DataTable->RowStruct != FLayoutCellGenerationSettings::StaticStruct())
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table contains wrong struct type (is %s, should be %s)"), *this->GetName(), *this->DataTable->RowStructName.ToString(), TEXT("FLayoutCellGenerationSettings"));
+		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table contains wrong struct type (is '%s', should be '%s')"), *this->GetName(), *this->DataTable->RowStructName.ToString(), TEXT("FLayoutCellGenerationSettings"));
 		return false;
 	}
 
@@ -47,18 +48,17 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 	bIsLayoutPresent = true;
 	this->GridSize = NewGridSize;
 	this->CellSize = CellSize;
-	this->RandStream = FRandomStream(NewSeed);
+	this->RStream = FRandomStream(NewSeed);
 	this->Grid.Empty(this->GridSize.X * this->GridSize.Y);
 	for (int x = 0; x < this->GridSize.X; x++)
 	{
 		for (int y = 0; y < this->GridSize.Y; y++)
 		{
-			ULayoutCell* Cell = NewObject<ULayoutCell>(this, ULayoutCell::StaticClass());
+			ULayoutCell* Cell = NewObject<ULayoutCell>(this, ULayoutCell::StaticClass(), FName(FString::Printf(TEXT("%s_Cell_X%d_Y%d"), *this->GetName(), x, y)));
 			Cell->Location = FIntVector2(x, y);
 			Cell->Rotation = 0;
 			Cell->Owner = this;
-			Cell->UniqueSeed = RandStream.RandRange(MIN_int32, MAX_int32);
-			Cell->UniqueSublevelName = FString::Printf(TEXT("%s_X%d_Y%d"), *this->GetName(), x, y);
+			Cell->UniqueSeed = RStream.RandRange(0, MAX_int32 - 1);
 			Grid.Add(FIntVector2(x, y), Cell);
 		}
 	}
@@ -145,10 +145,10 @@ void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnecte
 
 	if (bOnlyReturnConnectedCells)
 	{
-		OutCellPX = (Origin->HasConnection.bPX) ? OutCellPX : nullptr;
-		OutCellPY = (Origin->HasConnection.bPY) ? OutCellPY : nullptr;
-		OutCellNX = (Origin->HasConnection.bNX) ? OutCellNX : nullptr;
-		OutCellNY = (Origin->HasConnection.bNY) ? OutCellNY : nullptr;
+		OutCellPX = (Origin->HasConnections.bPX) ? OutCellPX : nullptr;
+		OutCellPY = (Origin->HasConnections.bPY) ? OutCellPY : nullptr;
+		OutCellNX = (Origin->HasConnections.bNX) ? OutCellNX : nullptr;
+		OutCellNY = (Origin->HasConnections.bNY) ? OutCellNY : nullptr;
 	}
 }
 
@@ -183,11 +183,16 @@ bool ALayout::DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal)
 	return false;
 }
 
-void ALayout::LoadAllSublevels()
+void ALayout::LoadAllSublevels(bool bShowAllSublevels)
 {
 	for (auto Kvp : this->Grid)
 	{
 		Kvp.Value->LoadSublevel();
+		
+		if (IsValid(Kvp.Value->Sublevel))
+		{
+			Kvp.Value->Sublevel->SetShouldBeVisible(bShowAllSublevels);
+		}
 	}
 }
 

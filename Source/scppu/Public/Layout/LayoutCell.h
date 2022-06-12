@@ -42,20 +42,17 @@ public:
 		ULevelStreamingDynamic* Sublevel; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FString UniqueSublevelName; // get private set
+		FLayoutCellSides HasConnections; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FLayoutCellSides HasConnection; // get private set
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		FLayoutCellSides DisableNeighbouringCell; // get private set
+		FLayoutCellSides DisableNeighbouringCells; // get private set
 
 	//// Functions ////
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FVector GetWorldLocation();
+		FORCEINLINE FVector GetWorldLocation();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FRotator GetWorldRotation();
+		FORCEINLINE FRotator GetWorldRotation();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FLayoutCellSides GetRequiredConnections();
@@ -64,10 +61,13 @@ public:
 		FLayoutCellSides GetBlockedConnections();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE FString GetUniqueSublevelName();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool IsBlockedByNeighbour();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsRequiredToGenerate();
+		FORCEINLINE bool IsRequiredToGenerate();
 
 	UFUNCTION(BlueprintCallable)
 		bool IsRowNameValid(FName InRowName, int InRotation);

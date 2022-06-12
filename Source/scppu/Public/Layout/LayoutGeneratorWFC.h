@@ -14,6 +14,20 @@ class SCPPU_API ULayoutGeneratorWFC : public UObject
 {
 	GENERATED_BODY()
 
+protected:
+	struct FWavefunctionPossibility
+	{
+	public:
+		FName RowName;
+		int32 Rotation;
+
+		FWavefunctionPossibility(FName InRowName, int32 InRotation)
+		{
+			this->RowName = InRowName;
+			this->Rotation = InRotation;
+		}
+	};
+
 public:
 	//// Properties ////
 	

@@ -33,7 +33,7 @@ public:
 		UDataTable* DataTable; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
-		FRandomStream RandStream; // get private set
+		FRandomStream RStream; // get private set
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		TMap<FIntVector2, ULayoutCell*> Grid; // get private set
@@ -55,7 +55,7 @@ public:
 		ULayoutSpawnValidator* GetOrCreateSpawnValidator(TSubclassOf<ULayoutSpawnValidator> InClass);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutCell* GetCell(FIntVector2 Location);
+		FORCEINLINE ULayoutCell* GetCell(FIntVector2 Location);
 
 	UFUNCTION(BlueprintCallable)
 		void FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells);
@@ -67,7 +67,7 @@ public:
 		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal);
 
 	UFUNCTION(BlueprintCallable)
-		void LoadAllSublevels();
+		void LoadAllSublevels(bool bShowAllSublevels);
 
 	UFUNCTION(BlueprintCallable)
 		void UnloadAllSublevels();

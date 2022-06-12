@@ -26,10 +26,10 @@ FLayoutCellSides ULayoutCell::GetRequiredConnections()
 	ULayoutCell* CellNY;
 	FLayoutCellSides RequiredConnections;
 	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
-	RequiredConnections.bPX = IsValid(CellPX) && CellPX->HasConnection.bNX;
-	RequiredConnections.bPY = IsValid(CellPY) && CellPY->HasConnection.bNY;
-	RequiredConnections.bNX = IsValid(CellNX) && CellNX->HasConnection.bPX;
-	RequiredConnections.bNY = IsValid(CellNY) && CellNY->HasConnection.bPY;
+	RequiredConnections.bPX = IsValid(CellPX) && CellPX->HasConnections.bNX;
+	RequiredConnections.bPY = IsValid(CellPY) && CellPY->HasConnections.bNY;
+	RequiredConnections.bNX = IsValid(CellNX) && CellNX->HasConnections.bPX;
+	RequiredConnections.bNY = IsValid(CellNY) && CellNY->HasConnections.bPY;
 	return RequiredConnections;
 }
 
@@ -41,11 +41,16 @@ FLayoutCellSides ULayoutCell::GetBlockedConnections()
 	ULayoutCell* CellNY;
 	FLayoutCellSides BlockedConnections;
 	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
-	BlockedConnections.bPX = !IsValid(CellPX) || CellPX->IsBlockedByNeighbour() || (CellPX->bIsGenerated && !CellPX->HasConnection.bNX);
-	BlockedConnections.bPY = !IsValid(CellPY) || CellPY->IsBlockedByNeighbour() || (CellPY->bIsGenerated && !CellPY->HasConnection.bNY);
-	BlockedConnections.bNX = !IsValid(CellNX) || CellNX->IsBlockedByNeighbour() || (CellNX->bIsGenerated && !CellNX->HasConnection.bPX);
-	BlockedConnections.bNY = !IsValid(CellNY) || CellNY->IsBlockedByNeighbour() || (CellNY->bIsGenerated && !CellNY->HasConnection.bPY);
+	BlockedConnections.bPX = !IsValid(CellPX) || CellPX->IsBlockedByNeighbour() || (CellPX->bIsGenerated && !CellPX->HasConnections.bNX);
+	BlockedConnections.bPY = !IsValid(CellPY) || CellPY->IsBlockedByNeighbour() || (CellPY->bIsGenerated && !CellPY->HasConnections.bNY);
+	BlockedConnections.bNX = !IsValid(CellNX) || CellNX->IsBlockedByNeighbour() || (CellNX->bIsGenerated && !CellNX->HasConnections.bPX);
+	BlockedConnections.bNY = !IsValid(CellNY) || CellNY->IsBlockedByNeighbour() || (CellNY->bIsGenerated && !CellNY->HasConnections.bPY);
 	return BlockedConnections;
+}
+
+FString ULayoutCell::GetUniqueSublevelName()
+{
+	return this->GetName() + "_Sublevel";
 }
 
 bool ULayoutCell::IsBlockedByNeighbour()
@@ -56,10 +61,10 @@ bool ULayoutCell::IsBlockedByNeighbour()
 	ULayoutCell* CellNY;
 	bool bIsBlocked = false;
 	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
-	bIsBlocked = bIsBlocked || (IsValid(CellPX) && CellPX->DisableNeighbouringCell.bNX);
-	bIsBlocked = bIsBlocked || (IsValid(CellPY) && CellPY->DisableNeighbouringCell.bNY);
-	bIsBlocked = bIsBlocked || (IsValid(CellNX) && CellNX->DisableNeighbouringCell.bPX);
-	bIsBlocked = bIsBlocked || (IsValid(CellNY) && CellNY->DisableNeighbouringCell.bPY);
+	bIsBlocked = bIsBlocked || (IsValid(CellPX) && CellPX->DisableNeighbouringCells.bNX);
+	bIsBlocked = bIsBlocked || (IsValid(CellPY) && CellPY->DisableNeighbouringCells.bNY);
+	bIsBlocked = bIsBlocked || (IsValid(CellNX) && CellNX->DisableNeighbouringCells.bPX);
+	bIsBlocked = bIsBlocked || (IsValid(CellNY) && CellNY->DisableNeighbouringCells.bPY);
 	return bIsBlocked;
 }
 
@@ -72,7 +77,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 {
 	if (this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "") == nullptr)
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: %s is not a valid entry inside %s"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
 		return false;
 	}
 
@@ -82,28 +87,28 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	// Save original properties so we can overwrite them temporarily for the pre spawn validators
 	int PrevRotation = this->Rotation;
 	FName PrevRowName = this->RowName;
-	FLayoutCellSides PrevHasConnection = this->HasConnection;
-	FLayoutCellSides PrevDisableNeighbouringCell = this->DisableNeighbouringCell;
+	FLayoutCellSides PrevHasConnection = this->HasConnections;
+	FLayoutCellSides PrevDisableNeighbouringCell = this->DisableNeighbouringCells;
 
 	// Get the values from datatable row so the pre spawn validators can use them
 	FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "");
 	this->RowName = InRowName;
-	this->HasConnection = Row.HasConnection;
-	this->DisableNeighbouringCell = Row.DisableNeighbouringCell;
+	this->HasConnections = Row.HasConnections;
+	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
 	// Rotate the values from datatable row
 	for (int i = 1; i < InRotation + 1; i++)
 	{
 		this->Rotation = i;
-		this->HasConnection.RotateRight();
-		this->DisableNeighbouringCell.RotateRight();
+		this->HasConnections.RotateRight();
+		this->DisableNeighbouringCells.RotateRight();
 	}
 
 	// Run pre spawn validation
 	for (auto elem : Row.PreSpawnValidator)
 	{
 		ULayoutSpawnValidator* Validator = this->Owner->GetOrCreateSpawnValidator(elem);
-		if (Validator == nullptr)
+		if (!IsValid(Validator))
 		{
 			continue;
 		}
@@ -122,30 +127,30 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 
 	// Check if all connections fit
 	//PX
-	bIsValid = bIsValid && ((RequiredConnections.bPX && this->HasConnection.bPX) || !RequiredConnections.bPX);
-	bIsValid = bIsValid && ((BlockedConnections.bPX && !this->HasConnection.bPX) || !BlockedConnections.bPX);
-	bIsValid = bIsValid && (!DisableNeighbouringCell.bPX || !IsValid(CellPX) || (DisableNeighbouringCell.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bPX && this->HasConnections.bPX) || !RequiredConnections.bPX);
+	bIsValid = bIsValid && ((BlockedConnections.bPX && !this->HasConnections.bPX) || !BlockedConnections.bPX);
+	bIsValid = bIsValid && (!DisableNeighbouringCells.bPX || !IsValid(CellPX) || (DisableNeighbouringCells.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
 
 	//PY
-	bIsValid = bIsValid && ((RequiredConnections.bPY && this->HasConnection.bPY) || !RequiredConnections.bPY);
-	bIsValid = bIsValid && ((BlockedConnections.bPY && !this->HasConnection.bPY) || !BlockedConnections.bPY);
-	bIsValid = bIsValid && (!DisableNeighbouringCell.bPY || !IsValid(CellPY) || (DisableNeighbouringCell.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bPY && this->HasConnections.bPY) || !RequiredConnections.bPY);
+	bIsValid = bIsValid && ((BlockedConnections.bPY && !this->HasConnections.bPY) || !BlockedConnections.bPY);
+	bIsValid = bIsValid && (!DisableNeighbouringCells.bPY || !IsValid(CellPY) || (DisableNeighbouringCells.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
 
 	//NX
-	bIsValid = bIsValid && ((RequiredConnections.bNX && this->HasConnection.bNX) || !RequiredConnections.bNX);
-	bIsValid = bIsValid && ((BlockedConnections.bNX && !this->HasConnection.bNX) || !BlockedConnections.bNX);
-	bIsValid = bIsValid && (!DisableNeighbouringCell.bNX || !IsValid(CellNX) || (DisableNeighbouringCell.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bNX && this->HasConnections.bNX) || !RequiredConnections.bNX);
+	bIsValid = bIsValid && ((BlockedConnections.bNX && !this->HasConnections.bNX) || !BlockedConnections.bNX);
+	bIsValid = bIsValid && (!DisableNeighbouringCells.bNX || !IsValid(CellNX) || (DisableNeighbouringCells.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
 
 	//NY
-	bIsValid = bIsValid && ((RequiredConnections.bNY && this->HasConnection.bNY) || !RequiredConnections.bNY);
-	bIsValid = bIsValid && ((BlockedConnections.bNY && !this->HasConnection.bNY) || !BlockedConnections.bNY);
-	bIsValid = bIsValid && (!DisableNeighbouringCell.bNY || !IsValid(CellNY) || (DisableNeighbouringCell.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bNY && this->HasConnections.bNY) || !RequiredConnections.bNY);
+	bIsValid = bIsValid && ((BlockedConnections.bNY && !this->HasConnections.bNY) || !BlockedConnections.bNY);
+	bIsValid = bIsValid && (!DisableNeighbouringCells.bNY || !IsValid(CellNY) || (DisableNeighbouringCells.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
 
 	// Reset properties to their original state
 	this->Rotation = PrevRotation;
 	this->RowName = PrevRowName;
-	this->HasConnection = PrevHasConnection;
-	this->DisableNeighbouringCell = PrevDisableNeighbouringCell;
+	this->HasConnections = PrevHasConnection;
+	this->DisableNeighbouringCells = PrevDisableNeighbouringCell;
 
 	return bIsValid;
 }
@@ -157,8 +162,8 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		this->bIsGenerated = false;
 		this->RowName = "";
 		this->Rotation = 0;
-		this->HasConnection = FLayoutCellSides();
-		this->DisableNeighbouringCell = FLayoutCellSides();
+		this->HasConnections = FLayoutCellSides();
+		this->DisableNeighbouringCells = FLayoutCellSides();
 		this->LevelAsset = nullptr;
 		this->UnloadSublevel();
 		return;
@@ -166,7 +171,7 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 
 	if (this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(NewRowName, "") == nullptr)
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: %s is not a valid row entry inside data table (%s)"), *this->GetName(), *NewRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *NewRowName.ToString(), *this->Owner->DataTable->GetName());
 		return;
 	}
 
@@ -174,15 +179,15 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 	FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(NewRowName, "");
 	NewRotation = NewRotation % 4;
 	this->RowName = NewRowName;
-	this->HasConnection = Row.HasConnection;
-	this->DisableNeighbouringCell = Row.DisableNeighbouringCell;
+	this->HasConnections = Row.HasConnections;
+	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
 	// Rotate the values from row
 	for (int i = 1; i < NewRotation + 1; i++)
 	{
 		this->Rotation = i;
-		this->HasConnection.RotateRight();
-		this->DisableNeighbouringCell.RotateRight();
+		this->HasConnections.RotateRight();
+		this->DisableNeighbouringCells.RotateRight();
 	}
 
 	// Set level asset
@@ -207,7 +212,7 @@ void ULayoutCell::LoadSublevel()
 	}
 
 	bool bLevelLoaded;
-	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->Owner->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->UniqueSublevelName);
+	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->Owner->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->GetUniqueSublevelName());
 	if (bLevelLoaded)
 	{
 		this->Sublevel->bShouldBlockOnLoad = false;
@@ -253,7 +258,7 @@ void ULayoutCell::OnSublevelLoadedCallback()
 	{
 		if (elem->Implements<ULayoutSublevelInterface>())
 		{
-			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(elem, this->Owner, this, RStream.RandRange(MIN_int32, MAX_int32));
+			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(elem, this->Owner, this, RStream.RandRange(0, MAX_int32 - 1));
 		}
 	}
 }
@@ -286,50 +291,50 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 	}
 
 	// Connection paths
-	if (this->HasConnection.bPX)
+	if (this->HasConnections.bPX)
 	{
 		FVector End = this->GetWorldLocation() + FVector(this->Owner->CellSize * 0.4, 0, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
-	if (this->HasConnection.bPY)
+	if (this->HasConnections.bPY)
 	{
 		FVector End = this->GetWorldLocation() + FVector(0, this->Owner->CellSize * 0.4, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
-	if (this->HasConnection.bNX)
+	if (this->HasConnections.bNX)
 	{
 		FVector End = this->GetWorldLocation() - FVector(this->Owner->CellSize * 0.4, 0, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
-	if (this->HasConnection.bNY)
+	if (this->HasConnections.bNY)
 	{
 		FVector End = this->GetWorldLocation() - FVector(0, this->Owner->CellSize * 0.4, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
 	// Disabled neighbouring cells
-	if (this->DisableNeighbouringCell.bPX)
+	if (this->DisableNeighbouringCells.bPX)
 	{
 		FVector End = this->GetWorldLocation() + FVector(this->Owner->CellSize * 0.2, 0, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
-	if (this->DisableNeighbouringCell.bPY)
+	if (this->DisableNeighbouringCells.bPY)
 	{
 		FVector End = this->GetWorldLocation() + FVector(0, this->Owner->CellSize * 0.2, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
-	if (this->DisableNeighbouringCell.bNX)
+	if (this->DisableNeighbouringCells.bNX)
 	{
 		FVector End = this->GetWorldLocation() - FVector(this->Owner->CellSize * 0.2, 0, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
-	if (this->DisableNeighbouringCell.bNY)
+	if (this->DisableNeighbouringCells.bNY)
 	{
 		FVector End = this->GetWorldLocation() - FVector(0, this->Owner->CellSize * 0.2, 0);
 		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
@@ -339,6 +344,7 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 	if (bShowText)
 	{
 		FString Text;
+		Text.Appendf(TEXT("UObject Name: %s\n"), *this->GetName());
 		Text.Appendf(TEXT("Grid Location: X=%i Y=%i (i=%i)\n"), this->Location.X, this->Location.Y, this->Location.X * this->Owner->GridSize.X + this->Location.Y);
 		Text.Appendf(TEXT("Grid Rotation: %i\n"), this->Rotation);
 		Text.Appendf(TEXT("World Location: %s\n"), *this->GetWorldLocation().ToString());
@@ -348,7 +354,7 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 		Text.Appendf(TEXT("Unique Seed: %i\n"), this->UniqueSeed);
 		Text.Appendf(TEXT("Row Name: %s\n"), *this->RowName.ToString());
 		Text.Appendf(TEXT("Sublevel Asset: %s\n"), *this->LevelAsset.ToString());
-		Text.Appendf(TEXT("Unique Sublevel Name: %s\n"), *this->UniqueSublevelName);
+		Text.Appendf(TEXT("Unique Sublevel Name: %s\n"), *this->GetUniqueSublevelName());
 
 		DrawDebugString(this->Owner->GetWorld(), GetWorldLocation() + FVector(0, 0, 200.0f), Text, nullptr, FColor::White, Duration, true, 1.0f);
 	}
