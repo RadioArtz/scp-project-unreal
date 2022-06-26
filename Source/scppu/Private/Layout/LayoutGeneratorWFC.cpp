@@ -16,7 +16,7 @@ bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
 	FDateTime StartTime = FDateTime::UtcNow();
-	bool bSuccess = this->GenerateInternal(Layout);
+	bool bSuccess = this->GenerateInternal(Layout, NewSeed);
 	if (bSuccess)
 	{
 		FDateTime EndTime = FDateTime::UtcNow();
@@ -33,6 +33,7 @@ bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 
 void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutGeneratorWFCDone OnDone)
 {
+	// Needs to be on GT because this function will create uobjects
 	bool bLayoutInitialized = Layout->Initialize(NewSeed);
 	if (!bLayoutInitialized)
 	{
@@ -41,12 +42,15 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 	}
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting async layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
+	UE_LOG(LogLayout, Log, TEXT("%s: '%s' and its members will be borrowed by a seperate thread. Actions with them should be avoided during this time to avoid race condtions!"), *this->GetName(), *Layout->GetName());
 	FDateTime StartTime = FDateTime::UtcNow();
-	AsyncTask(ENamedThreads::AnyHiPriThreadHiPriTask, [this, Layout, OnDone, StartTime]() {
-		bool bSuccess = this->GenerateInternal(Layout);
+	AsyncTask(ENamedThreads::AnyHiPriThreadHiPriTask, [this, Layout, NewSeed, OnDone, StartTime]() {
+		bool bSuccess = this->GenerateInternal(Layout, NewSeed);
+		UE_LOG(LogLayout, Log, TEXT("%s: '%s' and its memebers have been released from the seperate thread!"), *this->GetName(), *Layout->GetName());
 		if (bSuccess)
 		{
 			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]() {
+				// Doesn't need to be on GT but idk it just feels right
 				FDateTime EndTime = FDateTime::UtcNow();
 				FTimespan GenerationTimeSpan = EndTime - StartTime;
 				UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
@@ -55,7 +59,8 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 		}
 		else 
 		{
-			AsyncTask(ENamedThreads::GameThread, [Layout, OnDone]() {
+			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone]() {
+				// Needs to be on GT because this function will dispose uobjects
 				Layout->Clear();
 				OnDone.Execute(false);
 			});
@@ -63,8 +68,10 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 	});
 }
 
-bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
+bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 {
+	FRandomStream RStream = FRandomStream(Seed);
+
 	// Get all possible rows and save them
 	TMap<FName, FLayoutCellGenerationSettings*> DataTableMap;
 	TMap<FName, int32> RequiredInstances;
@@ -84,7 +91,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 		CellPossibilities.Add(Kvp.Key, TArray<FCellPossibility>());
 	}
 
-	// Select random cells and generate the required rows (to avoid them generate next to each other OR not at all)
+	// Select random cells and generate the required rows
 	for (auto& Kvp : RequiredInstances)
 	{
 		TArray<FIntVector2> UntestedCells;
@@ -98,10 +105,10 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 			}
 
 			// Choose a random cell
-			FIntVector2 CurrentCellKey = UntestedCells[Layout->RStream.RandRange(0, UntestedCells.Num() - 1)];
+			FIntVector2 CurrentCellKey = UntestedCells[RStream.RandRange(0, UntestedCells.Num() - 1)];
 
 			// Check every rotation until we find a valid one
-			int32 StartRotation = Layout->RStream.RandRange(0, 3);
+			int32 StartRotation = RStream.RandRange(0, 3);
 			for (int i = StartRotation; i < StartRotation + 4; i++)
 			{
 				bool bIsValid = Layout->GetCell(CurrentCellKey)->IsRowNameValid(Kvp.Key, i);
@@ -134,15 +141,16 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 		for (auto& KvpCell : CellPossibilities)
 		{
 			KvpCell.Value.Empty(DataTableMap.Num());
-			for (auto KvpData : DataTableMap)
+			for (auto& KvpData : DataTableMap)
 			{
+				// Skip this row if the maximum instance limit has been reached (is not <= 0 to make -1 work as infinte)
 				if (MaximumInstances[KvpData.Key] == 0)
 				{
 					continue;
 				}
 
 				// Check every rotation until we find a valid one
-				int32 StartRotation = Layout->RStream.RandRange(0, 3);
+				int32 StartRotation = RStream.RandRange(0, 3);
 				for (int i = StartRotation; i < StartRotation + 4; i++)
 				{
 					bool bIsValid = Layout->GetCell(KvpCell.Key)->IsRowNameValid(KvpData.Key, i);
@@ -193,7 +201,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 			}
 		}
 
-		FCellPossibility CurrentCellPossibility = WeightedCellPossibilities[Layout->RStream.RandRange(0, WeightedCellPossibilities.Num() - 1)];
+		FCellPossibility CurrentCellPossibility = WeightedCellPossibilities[RStream.RandRange(0, WeightedCellPossibilities.Num() - 1)];
 		Layout->GetCell(CurrentCellKey)->SetRowName(CurrentCellPossibility.RowName, CurrentCellPossibility.Rotation);
 		UE_LOG(LogLayout, Verbose, TEXT("%s: Set '%s' to '%s'"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *CurrentCellPossibility.RowName.ToString());
 
@@ -215,10 +223,10 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 		for (auto Elem : DataTableMap[Kvp.Value->RowName]->PostSpawnValidators)
 		{
 			ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
-			bool bIsValid = Validator->IsValidSpawn(Layout, Kvp.Value, FRandomStream(Kvp.Value->UniqueSeed));
+			bool bIsValid = Validator->IsValidSpawn(Layout, Kvp.Value, FRandomStream(RStream.RandRange(0, MAX_int32 - 1)));
 			if (!bIsValid)
 			{
-				UE_LOG(LogLayout, Error, TEXT("%s: Post spawn validator '%s' returned false for '%s'. Aborting..."), *this->GetName(), *Validator->GetName(), *Kvp.Value->GetName());
+				UE_LOG(LogLayout, Error, TEXT("%s: Post spawn validator '%s' returned false for '%s'. Aborting..."), *this->GetName(), *Elem->GetName(), *Kvp.Value->GetName());
 				return false;
 			}
 		}

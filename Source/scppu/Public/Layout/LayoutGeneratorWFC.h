@@ -44,5 +44,5 @@ public:
 
 protected:
 	UFUNCTION(BlueprintCallable)
-		bool GenerateInternal(ALayout* Layout);
+		bool GenerateInternal(ALayout* Layout, int32 Seed);
 };

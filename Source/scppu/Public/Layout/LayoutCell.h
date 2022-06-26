@@ -49,22 +49,22 @@ public:
 
 	//// Functions ////
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FVector GetWorldLocation(); // move to header file to make inline work
+		FVector GetWorldLocation(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FRotator GetWorldRotation(); // move to header file to make inline work
+		FRotator GetWorldRotation(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetRequiredConnections(); // move to header file to make inline work
+		FLayoutCellSides GetRequiredConnections(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetBlockedConnections(); // move to header file to make inline work
+		FLayoutCellSides GetBlockedConnections(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FString GetUniqueSublevelName(); // move to header file to make inline work
+		FString GetUniqueSublevelName(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsBlockedByNeighbour(); // move to header file to make inline work
+		bool IsBlockedByNeighbour(); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool IsRequiredToGenerate();

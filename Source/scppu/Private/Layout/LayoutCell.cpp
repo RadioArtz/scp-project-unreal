@@ -124,22 +124,22 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	//PX
 	bIsValid = bIsValid && ((RequiredConnections.bPX && this->HasConnections.bPX) || !RequiredConnections.bPX);
 	bIsValid = bIsValid && ((BlockedConnections.bPX && !this->HasConnections.bPX) || !BlockedConnections.bPX);
-	bIsValid = bIsValid && (!DisableNeighbouringCells.bPX || !IsValid(CellPX) || (DisableNeighbouringCells.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPX || !IsValid(CellPX) || (this->DisableNeighbouringCells.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
 
 	//PY
 	bIsValid = bIsValid && ((RequiredConnections.bPY && this->HasConnections.bPY) || !RequiredConnections.bPY);
 	bIsValid = bIsValid && ((BlockedConnections.bPY && !this->HasConnections.bPY) || !BlockedConnections.bPY);
-	bIsValid = bIsValid && (!DisableNeighbouringCells.bPY || !IsValid(CellPY) || (DisableNeighbouringCells.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
+	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPY || !IsValid(CellPY) || (this->DisableNeighbouringCells.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
 
 	//NX
 	bIsValid = bIsValid && ((RequiredConnections.bNX && this->HasConnections.bNX) || !RequiredConnections.bNX);
 	bIsValid = bIsValid && ((BlockedConnections.bNX && !this->HasConnections.bNX) || !BlockedConnections.bNX);
-	bIsValid = bIsValid && (!DisableNeighbouringCells.bNX || !IsValid(CellNX) || (DisableNeighbouringCells.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNX || !IsValid(CellNX) || (this->DisableNeighbouringCells.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
 
 	//NY
 	bIsValid = bIsValid && ((RequiredConnections.bNY && this->HasConnections.bNY) || !RequiredConnections.bNY);
 	bIsValid = bIsValid && ((BlockedConnections.bNY && !this->HasConnections.bNY) || !BlockedConnections.bNY);
-	bIsValid = bIsValid && (!DisableNeighbouringCells.bNY || !IsValid(CellNY) || (DisableNeighbouringCells.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
+	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNY || !IsValid(CellNY) || (this->DisableNeighbouringCells.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
 
 	// Reset properties to their original state
 	this->Rotation = PrevRotation;
