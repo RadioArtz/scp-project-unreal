@@ -4,10 +4,11 @@
 #include "Layout/LayoutGeneratorWFC.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutCell.h"
+#include "Layout/LayoutSpawnValidator.h"
 
-bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
+bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 {
-	bool bLayoutInitialized = Layout->InitializeLayout(Layout->GridSize, Layout->CellSize, NewSeed);
+	bool bLayoutInitialized = Layout->Initialize(NewSeed);
 	if (!bLayoutInitialized)
 	{
 		return false;
@@ -15,7 +16,55 @@ bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
 	FDateTime StartTime = FDateTime::UtcNow();
+	bool bSuccess = this->GenerateInternal(Layout);
+	if (bSuccess)
+	{
+		FDateTime EndTime = FDateTime::UtcNow();
+		FTimespan GenerationTimeSpan = EndTime - StartTime;
+		UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
+		return true;
+	}
+	else
+	{
+		Layout->Clear();
+		return false;
+	}
+}
 
+void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutGeneratorWFCDone OnDone)
+{
+	bool bLayoutInitialized = Layout->Initialize(NewSeed);
+	if (!bLayoutInitialized)
+	{
+		OnDone.Execute(false);
+		return;
+	}
+
+	UE_LOG(LogLayout, Log, TEXT("%s: Starting async layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
+	FDateTime StartTime = FDateTime::UtcNow();
+	AsyncTask(ENamedThreads::AnyHiPriThreadHiPriTask, [this, Layout, OnDone, StartTime]() {
+		bool bSuccess = this->GenerateInternal(Layout);
+		if (bSuccess)
+		{
+			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]() {
+				FDateTime EndTime = FDateTime::UtcNow();
+				FTimespan GenerationTimeSpan = EndTime - StartTime;
+				UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
+				OnDone.Execute(true);
+			});
+		}
+		else 
+		{
+			AsyncTask(ENamedThreads::GameThread, [Layout, OnDone]() {
+				Layout->Clear();
+				OnDone.Execute(false);
+			});
+		}
+	});
+}
+
+bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
+{
 	// Get all possible rows and save them
 	TMap<FName, FLayoutCellGenerationSettings*> DataTableMap;
 	TMap<FName, int32> RequiredInstances;
@@ -23,126 +72,154 @@ bool ULayoutGeneratorWFC::GenerateLayout(ALayout* Layout, int32 NewSeed)
 	for (auto Kvp : Layout->DataTable->GetRowMap())
 	{
 		FLayoutCellGenerationSettings* Row = (FLayoutCellGenerationSettings*)Kvp.Value;
-		if (Row->RequiredInstances > 0)
-		{
-			RequiredInstances.Add(Kvp.Key, Row->RequiredInstances);
-		}
+		RequiredInstances.Add(Kvp.Key, Row->RequiredInstances);
+		MaximumInstances.Add(Kvp.Key, Row->MaximumInstances);
+		DataTableMap.Add(Kvp.Key, Row);
+	}
 
-		if (Row->MaximumInstances != 0)
+	// Initiate and fill CellPossibilities
+	TMap<FIntVector2, TArray<FCellPossibility>> CellPossibilities;
+	for (auto Kvp : Layout->Grid)
+	{
+		CellPossibilities.Add(Kvp.Key, TArray<FCellPossibility>());
+	}
+
+	// Select random cells and generate the required rows (to avoid them generate next to each other OR not at all)
+	for (auto& Kvp : RequiredInstances)
+	{
+		TArray<FIntVector2> UntestedCells;
+		CellPossibilities.GenerateKeyArray(UntestedCells);
+		while (Kvp.Value > 0)
 		{
-			MaximumInstances.Add(Kvp.Key, Row->MaximumInstances);
-			DataTableMap.Add(Kvp.Key, Row);
+			if (UntestedCells.Num() <= 0)
+			{
+				UE_LOG(LogLayout, Error, TEXT("%s: Required instance '%s' could not be set. Aborting..."), *this->GetName(), *Kvp.Key.ToString());
+				return false;
+			}
+
+			FIntVector2 CurrentCellKey = UntestedCells[Layout->RStream.RandRange(0, UntestedCells.Num() - 1)];
+			int32 StartRotation = Layout->RStream.RandRange(0, 3);
+			for (int i = StartRotation; i < StartRotation + 4; i++)
+			{
+				bool bIsValid = Layout->GetCell(CurrentCellKey)->IsRowNameValid(Kvp.Key, i);
+				if (bIsValid)
+				{
+					// Add to list of possibilites and break since we only need one valid rotation
+					Layout->GetCell(CurrentCellKey)->SetRowName(Kvp.Key, i);
+					UE_LOG(LogLayout, Verbose, TEXT("%s: Set '%s' to '%s' (required instance)"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *Kvp.Key.ToString());
+
+					// Update required instances variable
+					Kvp.Value--;
+
+					// Update maximum instances variable
+					MaximumInstances[Kvp.Key]--;
+
+					// Remove cell from possibilities
+					CellPossibilities.Remove(CurrentCellKey);
+					break;
+				}
+			}
+
+			UntestedCells.Remove(CurrentCellKey);
 		}
 	}
 
-	// Initiate and fill UncollapsedWavefunctions
-	TMap<FIntVector2, TArray<FWavefunctionPossibility>> UncollapsedWavefunctions;
-	for (auto& Kvp : Layout->Grid)
+	// Generate cells until there are no more left or we hit a contradiction
+	while (CellPossibilities.Num() > 0)
 	{
-		UncollapsedWavefunctions.Add(Kvp.Key, TArray<FWavefunctionPossibility>());
-	}
-
-	// TODO: Select random cells and generate the required rows (to avoid them generate next to each other OR not at all)
-
-	// Collapse wavefunctiones until there are no more left or we hit a contradiction
-	while (UncollapsedWavefunctions.Num() > 0)
-	{
-		for (auto& KvpWave : UncollapsedWavefunctions)
+		// Update possiblities of all cells (update the certainty of wavefunctions) (here is the bottleneck)
+		for (auto& KvpCell : CellPossibilities)
 		{
-			KvpWave.Value.Empty(DataTableMap.Num());
+			KvpCell.Value.Empty(DataTableMap.Num());
 			for (auto KvpData : DataTableMap)
 			{
+				if (MaximumInstances[KvpData.Key] == 0)
+				{
+					continue;
+				}
+
 				// Check every rotation until we find a valid one
 				int32 StartRotation = Layout->RStream.RandRange(0, 3);
 				for (int i = StartRotation; i < StartRotation + 4; i++)
 				{
-					bool bIsValid = Layout->GetCell(KvpWave.Key)->IsRowNameValid(KvpData.Key, i);
+					bool bIsValid = Layout->GetCell(KvpCell.Key)->IsRowNameValid(KvpData.Key, i);
 					if (bIsValid)
 					{
 						// Add to list of possibilites and break since we only need one valid rotation
-						KvpWave.Value.Add(FWavefunctionPossibility(KvpData.Key, i));
+						KvpCell.Value.Add(FCellPossibility(KvpData.Key, i));
+						UE_LOG(LogLayout, Verbose, TEXT("%s: '%s' is valid for '%s' and was added to possibilities"), *this->GetName(), *KvpData.Key.ToString(), *Layout->GetCell(KvpCell.Key)->GetName());
 						break;
 					}
 				}
 			}
 		}
 
-		// Get the wavefunction with the least RowNames
-		FIntVector2 BestWavefunctionKey;
-		for (auto& Kvp : UncollapsedWavefunctions)
+		// Get the cell with the least possibilities (wavefunction which is most certain)
+		FIntVector2 CurrentCellKey = FIntVector2(-1, -1);
+		for (auto Kvp : CellPossibilities)
 		{
-			if (!UncollapsedWavefunctions.Contains(BestWavefunctionKey) || Kvp.Value.Num() < UncollapsedWavefunctions[BestWavefunctionKey].Num())
+			if (CurrentCellKey == FIntVector2(-1, -1) || Kvp.Value.Num() < CellPossibilities[CurrentCellKey].Num())
 			{
-				BestWavefunctionKey = Kvp.Key;
+				CurrentCellKey = Kvp.Key;
 			}
 		}
 
 		// Reset this cell when its blocked by another cell and go to the next iteration 
-		if (Layout->GetCell(BestWavefunctionKey)->IsBlockedByNeighbour())
+		if (Layout->GetCell(CurrentCellKey)->IsBlockedByNeighbour())
 		{
-			Layout->GetCell(BestWavefunctionKey)->SetRowName("", 0);
-			UncollapsedWavefunctions.Remove(BestWavefunctionKey);
+			Layout->GetCell(CurrentCellKey)->SetRowName("None", 0);
+			CellPossibilities.Remove(CurrentCellKey);
 			continue;
 		}
 
-		// If we find a wavefunction with no possible rows, we've hit a contradiction, time to abort...
-		if (UncollapsedWavefunctions[BestWavefunctionKey].Num() <= 0)
+		// If we find a cell with no possible rows, we've hit a contradiction, time to abort...
+		if (CellPossibilities[CurrentCellKey].Num() <= 0)
 		{
-			UE_LOG(LogLayout, Error, TEXT("%s: Found a contradiction, wavefunction of '%s' has no possible outcome. Aborting..."), *this->GetName(), *Layout->GetCell(BestWavefunctionKey)->GetName());
-			Layout->ClearLayout();
+			UE_LOG(LogLayout, Error, TEXT("%s: Found a contradiction, '%s' has no possible row. Aborting..."), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName());
 			return false;
 		}
 
-		// Collapse wavefunction (set cell to a possible row)
-		TArray<FWavefunctionPossibility> WeightedWavefunctionPossibility;
-		for (auto elem : UncollapsedWavefunctions[BestWavefunctionKey])
+		// Set cell to a possible row (collapse wavefunction)
+		TArray<FCellPossibility> WeightedCellPossibilities;
+		for (auto Elem : CellPossibilities[CurrentCellKey])
 		{
-			FLayoutCellGenerationSettings Row = *Layout->DataTable->FindRow<FLayoutCellGenerationSettings>(elem.RowName, "");
+			FLayoutCellGenerationSettings Row = *DataTableMap[Elem.RowName];
 			for (int i = 0; i < Row.SpawnPoolEntries; i++)
 			{
-				WeightedWavefunctionPossibility.Add(elem);
+				WeightedCellPossibilities.Add(Elem);
 			}
 		}
 
-		FWavefunctionPossibility RandomPossibility = WeightedWavefunctionPossibility[Layout->RStream.RandRange(0, WeightedWavefunctionPossibility.Num() - 1)];
-		Layout->GetCell(BestWavefunctionKey)->SetRowName(RandomPossibility.RowName, RandomPossibility.Rotation);
+		FCellPossibility CurrentCellPossibility = WeightedCellPossibilities[Layout->RStream.RandRange(0, WeightedCellPossibilities.Num() - 1)];
+		Layout->GetCell(CurrentCellKey)->SetRowName(CurrentCellPossibility.RowName, CurrentCellPossibility.Rotation);
+		UE_LOG(LogLayout, Verbose, TEXT("%s: Set '%s' to '%s'"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *CurrentCellPossibility.RowName.ToString());
 
 		// Update maximum instances variable
-		MaximumInstances[RandomPossibility.RowName] = MaximumInstances[RandomPossibility.RowName] - 1;
-		if (MaximumInstances[RandomPossibility.RowName] == 0)
+		MaximumInstances[CurrentCellPossibility.RowName]--;
+
+		// Remove from CellPossibilities
+		CellPossibilities.Remove(CurrentCellKey);
+	}
+
+	// Run post spawn validation
+	for (auto Kvp : Layout->Grid)
+	{
+		if (Kvp.Value->RowName.IsNone())
 		{
-			DataTableMap.Remove(RandomPossibility.RowName);
-			MaximumInstances.Remove(RandomPossibility.RowName);
+			continue;
 		}
 
-		// Update required instances variable if necessary
-		if (RequiredInstances.Contains(RandomPossibility.RowName))
+		for (auto Elem : DataTableMap[Kvp.Value->RowName]->PostSpawnValidators)
 		{
-			RequiredInstances[RandomPossibility.RowName] = RequiredInstances[RandomPossibility.RowName] - 1;
-			if (RequiredInstances[RandomPossibility.RowName] == 0)
+			ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
+			bool bIsValid = Validator->IsValidSpawn(Layout, Kvp.Value, FRandomStream(Kvp.Value->UniqueSeed));
+			if (!bIsValid)
 			{
-				RequiredInstances.Remove(RandomPossibility.RowName);
+				UE_LOG(LogLayout, Error, TEXT("%s: Post spawn validator '%s' returned false for '%s'. Aborting..."), *this->GetName(), *Validator->GetName(), *Kvp.Value->GetName());
+				return false;
 			}
 		}
-
-		// Remove from uncollapsed wavefunctions
-		UncollapsedWavefunctions.Remove(BestWavefunctionKey);
 	}
 
-	// Check if every required row got generated TODO: Instant of aborting spawn every required row at the beginning
-	if (RequiredInstances.Num() > 0)
-	{
-		UE_LOG(LogLayout, Error, TEXT("%s: Could not generate every required row. Aborting..."), *this->GetName());
-		Layout->ClearLayout();
-		return false;
-	}
-
-	FDateTime EndTime = FDateTime::UtcNow();
-	FTimespan GenerationTimeSpan = EndTime - StartTime;
-	UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
 	return true;
-}
-
-void ULayoutGeneratorWFC::AsyncGenerateLayout(ALayout* Layout, int32 NewSeed)
-{
 }

@@ -5,10 +5,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
+#include "Layout/LayoutSpawnValidator.h"
 #include "LayoutStructs.generated.h"
-
-class ULayoutSpawnValidator;
-
 
 USTRUCT(BlueprintType)
 struct FIntVector2 
@@ -114,27 +112,57 @@ struct FLayoutCellGenerationSettings : public FTableRowBase
 	GENERATED_BODY()
 
 public:
+	/* Diffrent level variations for more varaity (chooses one randomly).*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSoftObjectPtr<UWorld> > Levels;
 
+	/* Minimum instances that will be generated. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
 		int32 RequiredInstances = 0;
 
+	/* Maximum instances that will be generated. Must be >= 'Required Instances'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1"))
-		int32 MaximumInstances = 1000;
+		int32 MaximumInstances = -1;
 
+	/* How present this row is inside the spawn pool (higher value => higer chance to generate). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
 		int32 SpawnPoolEntries = 10;
 
+	/* The sides where the cell can connect to other cells. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FLayoutCellSides HasConnections;
 
+	/* The sides where the neighbouring cells are not alloweed to generate. Must not conflict with 'Has Connections'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FLayoutCellSides DisableNeighbouringCells;
 
+	/* Validates a spawn location before setting the cell to this row. Not all cells have been generated during this time. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutSpawnValidator> > PreSpawnValidator;
+		TArray< TSubclassOf<ULayoutSpawnValidator> > PreSpawnValidators;
 
+	/* Validates a spawn location after all cells have been generated. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutSpawnValidator> > PostSpawnValidator;
+		TArray< TSubclassOf<ULayoutSpawnValidator> > PostSpawnValidators;
+
+	bool PassedSanityCheck()
+	{
+		bool bIsValid = true;
+		bIsValid = bIsValid && (this->MaximumInstances < 0 || this->MaximumInstances >= this->RequiredInstances);
+		bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPX || (this->DisableNeighbouringCells.bPX && !this->HasConnections.bPX));
+		bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPY || (this->DisableNeighbouringCells.bPY && !this->HasConnections.bPY));
+		bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNX || (this->DisableNeighbouringCells.bNX && !this->HasConnections.bNX));
+		bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNY || (this->DisableNeighbouringCells.bNY && !this->HasConnections.bNY));
+
+		for (auto Elem : this->PreSpawnValidators)
+		{
+			bIsValid = bIsValid && IsValid(Elem);
+		}
+
+		for (auto Elem : this->PostSpawnValidators)
+		{
+			bIsValid = bIsValid && IsValid(Elem);
+		}
+
+		return bIsValid;
+	}
 };

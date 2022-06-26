@@ -27,7 +27,7 @@ public:
 		ALayout* Owner; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		bool bIsGenerated = false; // get private set
+		bool bIsGenerated; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		int32 UniqueSeed; // get private set
@@ -49,25 +49,25 @@ public:
 
 	//// Functions ////
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE FVector GetWorldLocation();
+		FVector GetWorldLocation(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE FRotator GetWorldRotation();
+		FRotator GetWorldRotation(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetRequiredConnections();
+		FLayoutCellSides GetRequiredConnections(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetBlockedConnections();
+		FLayoutCellSides GetBlockedConnections(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE FString GetUniqueSublevelName();
+		FString GetUniqueSublevelName(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsBlockedByNeighbour();
+		bool IsBlockedByNeighbour(); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE bool IsRequiredToGenerate();
+		bool IsRequiredToGenerate();
 
 	UFUNCTION(BlueprintCallable)
 		bool IsRowNameValid(FName InRowName, int InRotation);

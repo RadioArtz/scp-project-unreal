@@ -25,18 +25,46 @@ ALayout::ALayout()
 	SetRootComponent(MeshComponent);
 }
 
-bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed)
+bool ALayout::SetConfig(FIntVector2 NewGridSize, float NewCellSize, UDataTable* NewDataTable)
+{
+	if (this->bIsLayoutPresent)
+	{
+		return false;
+	}
+
+	this->GridSize = NewGridSize;
+	this->CellSize = NewCellSize;
+	this->DataTable = NewDataTable;
+	return true;
+}
+
+bool ALayout::Initialize(int32 NewSeed)
 {
 	if (!IsValid(this->DataTable))
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table reference is not valid"), *this->GetName());
+		UE_LOG(LogLayout, Error, TEXT("%s: Not able to create new layout, data table reference is not valid"), *this->GetName());
 		return false;
 	}
 
 	if (this->DataTable->RowStruct != FLayoutCellGenerationSettings::StaticStruct())
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to create new layout, data table contains wrong struct type (is '%s', should be '%s')"), *this->GetName(), *this->DataTable->RowStructName.ToString(), TEXT("FLayoutCellGenerationSettings"));
+#if WITH_EDITORONLY_DATA
+		UE_LOG(LogLayout, Error, TEXT("%s: Not able to create new layout, data table contains wrong struct type (is '%s', should be '%s')"), *this->GetName(), *this->DataTable->RowStructName.ToString(), TEXT("FLayoutCellGenerationSettings"));
+#else
+		UE_LOG(LogLayout, Error, TEXT("%s: Not able to create new layout, data table contains wrong struct type"), *this->GetName());
+#endif
 		return false;
+	}
+
+	for (auto& Kvp : this->DataTable->GetRowMap())
+	{
+		FLayoutCellGenerationSettings* Row = (FLayoutCellGenerationSettings*)Kvp.Value;
+
+		if (!Row->PassedSanityCheck())
+		{
+			UE_LOG(LogLayout, Error, TEXT("%s: Row '%s' did not pass sanity check"), *this->GetName(), *Kvp.Key.ToString());
+			return false;
+		}
 	}
 
 	if (this->bIsLayoutPresent)
@@ -46,8 +74,6 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 	}
 
 	bIsLayoutPresent = true;
-	this->GridSize = NewGridSize;
-	this->CellSize = CellSize;
 	this->RStream = FRandomStream(NewSeed);
 	this->Grid.Empty(this->GridSize.X * this->GridSize.Y);
 	for (int x = 0; x < this->GridSize.X; x++)
@@ -67,7 +93,7 @@ bool ALayout::InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32
 	return true;
 }
 
-bool ALayout::ClearLayout()
+bool ALayout::Clear()
 {
 	if (!this->bIsLayoutPresent)
 	{
@@ -75,44 +101,16 @@ bool ALayout::ClearLayout()
 		return false;
 	}
 
-	bIsLayoutPresent = false;
 	for (auto Kvp : this->Grid)
 	{
 		Kvp.Value->UnloadSublevel();
 		Kvp.Value->ConditionalBeginDestroy();
 	}
 
-	for (auto Kvp : this->SpawnValidatorCache)
-	{
-		Kvp.Value->ConditionalBeginDestroy();
-	}
-
 	this->Grid.Empty();
-	this->SpawnValidatorCache.Empty();
+	bIsLayoutPresent = false;
 	UE_LOG(LogLayout, Log, TEXT("%s: Successfully cleared layout"), *this->GetName());
 	return true;
-}
-
-ULayoutSpawnValidator* ALayout::GetOrCreateSpawnValidator(TSubclassOf<ULayoutSpawnValidator> InClass)
-{
-	if (!IsValid(InClass))
-	{
-		return nullptr;
-	}
-
-	if (InClass->HasAllClassFlags(CLASS_Abstract))
-	{
-		return nullptr;
-	}
-
-	if (this->SpawnValidatorCache.Find(InClass) == nullptr)
-	{
-		ULayoutSpawnValidator* Validator = NewObject<ULayoutSpawnValidator>(this, InClass);
-		SpawnValidatorCache.Add(InClass, Validator);
-		return Validator;
-	}
-
-	return this->SpawnValidatorCache[InClass];
 }
 
 ULayoutCell* ALayout::GetCell(FIntVector2 Location)

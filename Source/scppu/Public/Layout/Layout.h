@@ -38,24 +38,21 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		TMap<FIntVector2, ULayoutCell*> Grid; // get private set
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug") // private get private set
-		TMap<TSubclassOf<ULayoutSpawnValidator>, ULayoutSpawnValidator*> SpawnValidatorCache;
-
 	//// Functions ////
 	// Sets default values for this actor's properties
 	ALayout();
 
 	UFUNCTION(BlueprintCallable)
-		bool InitializeLayout(FIntVector2 NewGridSize, float NewCellSize, int32 NewSeed);
+		bool SetConfig(FIntVector2 NewGridSize, float NewCellSize, UDataTable* NewDataTable);
 
 	UFUNCTION(BlueprintCallable)
-		bool ClearLayout();
+		bool Initialize(int32 NewSeed);
 
 	UFUNCTION(BlueprintCallable)
-		ULayoutSpawnValidator* GetOrCreateSpawnValidator(TSubclassOf<ULayoutSpawnValidator> InClass);
+		bool Clear();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE ULayoutCell* GetCell(FIntVector2 Location);
+		ULayoutCell* GetCell(FIntVector2 Location); // move to header file to make inline work
 
 	UFUNCTION(BlueprintCallable)
 		void FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells);

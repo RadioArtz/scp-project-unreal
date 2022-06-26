@@ -9,19 +9,22 @@
 
 class ALayout;
 
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_DELEGATE_OneParam(FLayoutGeneratorWFCDone, bool, bSuccess);
+
 UCLASS(Blueprintable)
 class SCPPU_API ULayoutGeneratorWFC : public UObject
 {
 	GENERATED_BODY()
 
 protected:
-	struct FWavefunctionPossibility
+	struct FCellPossibility
 	{
 	public:
 		FName RowName;
 		int32 Rotation;
 
-		FWavefunctionPossibility(FName InRowName, int32 InRotation)
+		FCellPossibility(FName InRowName, int32 InRotation)
 		{
 			this->RowName = InRowName;
 			this->Rotation = InRotation;
@@ -34,8 +37,12 @@ public:
 public:
 	//// Functions ////
 	UFUNCTION(BlueprintCallable)
-		bool GenerateLayout(ALayout* Layout, int32 NewSeed);
+		bool Generate(ALayout* Layout, int32 NewSeed);
 
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "OnDone"))
+		void AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutGeneratorWFCDone OnDone);
+
+protected:
 	UFUNCTION(BlueprintCallable)
-		void AsyncGenerateLayout(ALayout* Layout, int32 NewSeed);
+		bool GenerateInternal(ALayout* Layout);
 };

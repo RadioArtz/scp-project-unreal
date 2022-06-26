@@ -75,7 +75,7 @@ bool ULayoutCell::IsRequiredToGenerate()
 
 bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 {
-	if (this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "") == nullptr)
+	if (this->Owner->DataTable->FindRowUnchecked(InRowName) == nullptr)
 	{
 		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
 		return false;
@@ -105,14 +105,9 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	}
 
 	// Run pre spawn validation
-	for (auto elem : Row.PreSpawnValidator)
+	for (auto Elem : Row.PreSpawnValidators)
 	{
-		ULayoutSpawnValidator* Validator = this->Owner->GetOrCreateSpawnValidator(elem);
-		if (!IsValid(Validator))
-		{
-			continue;
-		}
-
+		ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
 		bIsValid = bIsValid && Validator->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
 	}
 
@@ -157,10 +152,10 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 
 void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 {
-	if (NewRowName == "")
+	if (NewRowName == "None")
 	{
 		this->bIsGenerated = false;
-		this->RowName = "";
+		this->RowName = "None";
 		this->Rotation = 0;
 		this->HasConnections = FLayoutCellSides();
 		this->DisableNeighbouringCells = FLayoutCellSides();
@@ -196,6 +191,7 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		this->LevelAsset = Row.Levels[RStream.RandRange(0, Row.Levels.Num() - 1)];
 	}
 
+	this->UnloadSublevel();
 	bIsGenerated = true;
 }
 
@@ -238,11 +234,11 @@ void ULayoutCell::GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, 
 {
 	if (IsValid(this->Sublevel) && this->Sublevel->HasLoadedLevel())
 	{
-		for (auto elem : this->Sublevel->GetLoadedLevel()->Actors)
+		for (auto Elem : this->Sublevel->GetLoadedLevel()->Actors)
 		{
-			if (IsValid(elem) && elem->IsA(ActorClass))
+			if (IsValid(Elem) && Elem->IsA(ActorClass))
 			{
-				OutActors.Add(elem);
+				OutActors.Add(Elem);
 			}
 		}
 	}
@@ -254,11 +250,11 @@ void ULayoutCell::OnSublevelLoadedCallback()
 	TArray<AActor*> LevelActors;
 	this->GetAllActorsOfClassInSublevel(AActor::StaticClass(), LevelActors);
 
-	for (auto elem : LevelActors)
+	for (auto Elem : LevelActors)
 	{
-		if (elem->Implements<ULayoutSublevelInterface>())
+		if (Elem->Implements<ULayoutSublevelInterface>())
 		{
-			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(elem, this->Owner, this, RStream.RandRange(0, MAX_int32 - 1));
+			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->Owner, this, RStream.RandRange(0, MAX_int32 - 1));
 		}
 	}
 }
@@ -268,11 +264,11 @@ bool ULayoutCell::IsPointInSublevelBounds(FVector Point)
 	TArray<AActor*> LevelActors;
 	this->GetAllActorsOfClassInSublevel(AActor::StaticClass(), LevelActors);
 
-	for (auto elem : LevelActors)
+	for (auto Elem : LevelActors)
 	{
 		FVector Origin;
 		FVector Extend;
-		elem->GetActorBounds(false, Origin, Extend, false);
+		Elem->GetActorBounds(false, Origin, Extend, false);
 
 		if ((Point.X < Origin.X + Point.X && Point.X > Origin.X - Point.X) && (Point.Y < Origin.Y + Point.Y && Point.Y > Origin.Y - Point.Y) && (Point.Z < Origin.Z + Point.Z && Point.Z > Origin.Z - Point.Z))
 		{
