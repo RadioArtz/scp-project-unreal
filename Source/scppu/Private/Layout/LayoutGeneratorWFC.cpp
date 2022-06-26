@@ -122,7 +122,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 				if (bIsValid)
 				{
 					// Add to list of possibilites and break since we only need one valid rotation
-					UE_LOG(LogLayout, Verbose, TEXT("%s: Set '%s' to '%s' (required instance)"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *FCellPossibility(Kvp.Key, i).ToString());
+					UE_LOG(LogLayout, Verbose, TEXT("%s: Setting '%s' to '%s' (required instance)"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *FCellPossibility(Kvp.Key, i).ToString());
 					Layout->GetCell(CurrentCellKey)->SetRowName(Kvp.Key, i);
 					// Update required instances variable
 					Kvp.Value--;
@@ -174,7 +174,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 						}
 
 						// Add to list of possibilites and break since we only need one valid rotation
-						UE_LOG(LogLayout, VeryVerbose, TEXT("%s: '%s' is valid for '%s' and was added to possibilities"), *this->GetName(), *Possiblity.ToString(), *Layout->GetCell(KvpCell.Key)->GetName());
+						UE_LOG(LogLayout, VeryVerbose, TEXT("%s: Adding '%s' for '%s' to possibilities"), *this->GetName(), *Possiblity.ToString(), *Layout->GetCell(KvpCell.Key)->GetName());
 						KvpCell.Value.Add(Possiblity);
 						break;
 					}
@@ -223,7 +223,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 		// Don't reset banned possibilities if we are currently redoing this cell
 		if (LastCellKey != CurrentCellKey && SolveContradictionBannedPossibilities.Num() > 0)
 		{
-			UE_LOG(LogLayout, Verbose, TEXT("%s: Reset temporarily banned possibilities"), *this->GetName());
+			UE_LOG(LogLayout, Verbose, TEXT("%s: Contradiction solved, resetting temporarily banned possibilities"), *this->GetName());
 			SolveContradictionBannedPossibilities.Empty();
 		}
 
@@ -239,7 +239,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 		}
 
 		FCellPossibility CurrentCellPossibility = WeightedCellPossibilities[RStream.RandRange(0, WeightedCellPossibilities.Num() - 1)];
-		UE_LOG(LogLayout, Verbose, TEXT("%s: Set '%s' to '%s'"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *CurrentCellPossibility.ToString());
+		UE_LOG(LogLayout, Verbose, TEXT("%s: Setting '%s' to '%s'"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *CurrentCellPossibility.ToString());
 		Layout->GetCell(CurrentCellKey)->SetRowName(CurrentCellPossibility.RowName, CurrentCellPossibility.Rotation);
 
 		// Update maximum instances variable
