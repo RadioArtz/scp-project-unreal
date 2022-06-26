@@ -37,6 +37,11 @@ public:
 		return Self.X == Other.X && Self.Y == Other.Y;
 	}
 
+	friend bool operator!=(const FIntVector2& Self, const FIntVector2& Other)
+	{
+		return Self.X != Other.X || Self.Y != Other.Y;
+	}
+
 	friend uint32 GetTypeHash(const FIntVector2& Self)
 	{
 		return FCrc::MemCrc32(&Self, sizeof(Self));
@@ -136,11 +141,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FLayoutCellSides DisableNeighbouringCells;
 
-	/* Validates a spawn location before setting the cell to this row. Not all cells have been generated during this time. Must not contain 'None'. */
+	/* Validates a spawn location before setting the cell to this row. Not all cells have been generated during this time. They are AND gated. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutSpawnValidator> > PreSpawnValidators;
 
-	/* Validates a spawn location after all cells have been generated. Must not contain 'None'. */
+	/* Validates a spawn location after all cells have been generated. They are AND gated. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		TArray< TSubclassOf<ULayoutSpawnValidator> > PostSpawnValidators;
 

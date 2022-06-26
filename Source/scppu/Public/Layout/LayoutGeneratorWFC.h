@@ -27,7 +27,17 @@ protected:
 		FCellPossibility(FName InRowName, int32 InRotation)
 		{
 			this->RowName = InRowName;
-			this->Rotation = InRotation;
+			this->Rotation = InRotation % 4;
+		}
+
+		friend bool operator== (const FCellPossibility& Self, const FCellPossibility& Other)
+		{
+			return (Self.RowName == Other.RowName) && (Self.Rotation == Other.Rotation);
+		}
+
+		FString ToString()
+		{
+			return FString::Printf(TEXT("[Row: %s, Rotation: %i]"), *this->RowName.ToString(), this->Rotation);
 		}
 	};
 
@@ -43,6 +53,6 @@ public:
 		void AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutGeneratorWFCDone OnDone);
 
 protected:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 		bool GenerateInternal(ALayout* Layout, int32 Seed);
 };
