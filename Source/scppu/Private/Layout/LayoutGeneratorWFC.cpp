@@ -97,7 +97,10 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout)
 				return false;
 			}
 
+			// Choose a random cell
 			FIntVector2 CurrentCellKey = UntestedCells[Layout->RStream.RandRange(0, UntestedCells.Num() - 1)];
+
+			// Check every rotation until we find a valid one
 			int32 StartRotation = Layout->RStream.RandRange(0, 3);
 			for (int i = StartRotation; i < StartRotation + 4; i++)
 			{

@@ -62,7 +62,7 @@ bool ALayout::Initialize(int32 NewSeed)
 
 		if (!Row->PassedSanityCheck())
 		{
-			UE_LOG(LogLayout, Error, TEXT("%s: Row '%s' did not pass sanity check"), *this->GetName(), *Kvp.Key.ToString());
+			UE_LOG(LogLayout, Error, TEXT("%s: Not able to create new layout, row '%s' did not pass sanity check"), *this->GetName(), *Kvp.Key.ToString());
 			return false;
 		}
 	}
