@@ -167,7 +167,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 					{
 						FCellPossibility Possiblity = FCellPossibility(KvpData.Key, i);
 
-						// Do not add if this possibiliy is temporarily banned to prevent a contradiction 
+						// Do not add if this possibiliy is temporarily banned to solve a contradiction 
 						if (SolveContradictionBannedPossibilities.Contains(Possiblity))
 						{
 							continue;
