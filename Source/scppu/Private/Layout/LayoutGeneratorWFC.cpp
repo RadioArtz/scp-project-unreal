@@ -52,7 +52,8 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 		UE_LOG(LogLayout, Log, TEXT("%s: '%s' and its members have been released from the seperate thread!"), *this->GetName(), *Layout->GetName());
 		if (bSuccess)
 		{
-			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]() {
+			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]()
+			{
 				// Doesn't need to be on GT but idk it just feels right
 				FDateTime EndTime = FDateTime::UtcNow();
 				FTimespan GenerationTimeSpan = EndTime - StartTime;
@@ -62,7 +63,8 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 		}
 		else 
 		{
-			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]() {
+			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]() 
+			{
 				// Needs to be on GT because this function will dispose uobjects
 				FDateTime EndTime = FDateTime::UtcNow();
 				FTimespan GenerationTimeSpan = EndTime - StartTime;
@@ -124,6 +126,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 					// Add to list of possibilites and break since we only need one valid rotation
 					UE_LOG(LogLayout, Verbose, TEXT("%s: Setting '%s' to '%s' (required instance)"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *FCellPossibility(Kvp.Key, i).ToString());
 					Layout->GetCell(CurrentCellKey)->SetRowName(Kvp.Key, i);
+					
 					// Update required instances variable
 					Kvp.Value--;
 
