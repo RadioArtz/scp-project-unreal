@@ -6,11 +6,11 @@ Note: This is a developer documentation. A basic knowledge of Unreal Engine is r
 ## Table of Content: ##
 - Overview
 - DataTable Setup
-- `FLayoutCellGenerationSettings` struct and its properties
-- `ALayout` nodes
-- `ULayoutCell` nodes
-- `ULayoutSublevelInterface` usecase
-- `ULayoutGeneratorWFC` nodes
+- [FLayoutCellGenerationSettings](https://github.com/RadioArtz/scp-project-unreal/blob/main/Source/scppu/Public/Layout/LayoutStructs.h#L115) struct and its properties
+- [ALayout](https://github.com/RadioArtz/scp-project-unreal/blob/main/Source/scppu/Public/Layout/Layout.h) nodes
+- [ULayoutCell](https://github.com/RadioArtz/scp-project-unreal/blob/main/Source/scppu/Public/Layout/LayoutCell.h) nodes
+- [ULayoutSublevelInterface](https://github.com/RadioArtz/scp-project-unreal/blob/main/Source/scppu/Public/Layout/LayoutSublevelInterface.h) usecase
+- [ULayoutGeneratorWFC](https://github.com/RadioArtz/scp-project-unreal/blob/main/Source/scppu/Public/Layout/LayoutGeneratorWFC.h) nodes
 
 ## Overview ##
 (datatable stuff here)
