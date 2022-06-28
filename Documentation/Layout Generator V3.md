@@ -15,7 +15,7 @@ Note: This is a developer documentation. A basic knowledge of Unreal Engine is r
 ## Overview ##
 (datatable stuff here)
 
-The Layout itself is grid-based and split up in 2 diffrent classes (+ 1 interface). The generator itself is seperate.
+The layout itself is grid-based and split up in 2 diffrent classes (+ 1 interface). The generator itself is seperate.
 
 The main class is `ALayout`. It is the only actor class, meaning its the only class that actually interacts with the world. It owns a map of `FIntVector2 : ULayoutCell`. It is responsible for providing world context to every `ULayoutCell` as well as inter-cell communication. It also holds a reference to the datatable.
 
