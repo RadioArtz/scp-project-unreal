@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "LayoutStructs.h"
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Layout/LayoutStructs.h"
 #include "LayoutCell.generated.h"
 
 class ALayout;

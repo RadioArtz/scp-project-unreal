@@ -13,7 +13,7 @@ DEFINE_LOG_CATEGORY(LogLayout);
 ALayout::ALayout()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	this->PrimaryActorTick.bCanEverTick = false;
 
 	// Add a mesh component and set it as scene root for easier in editor use.
 	UStaticMesh* MeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'")).Object;
@@ -22,7 +22,8 @@ ALayout::ALayout()
 	MeshComponent->SetStaticMesh(MeshAsset);
 	MeshComponent->SetMaterial(0, MeshMaterial);
 	MeshComponent->bHiddenInGame = true;
-	SetRootComponent(MeshComponent);
+	MeshComponent->SetMobility(EComponentMobility::Static);
+	this->SetRootComponent(MeshComponent);
 }
 
 bool ALayout::SetConfig(FIntVector2 NewGridSize, float NewCellSize, UDataTable* NewDataTable)
@@ -123,15 +124,16 @@ ULayoutCell* ALayout::GetCell(FIntVector2 Location)
 	return Grid[Location];
 }
 
-void ALayout::FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells)
+ULayoutCell* ALayout::GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance)
 {
-	for (auto Kvp : this->Grid)
+	if (ZTolerance >= 0 && (this->GetActorLocation().Z > WorldLocation.Z + ZTolerance || this->GetActorLocation().Z < WorldLocation.Z - ZTolerance))
 	{
-		if (Kvp.Value->RowName == RowName)
-		{
-			OutCells.Add(Kvp.Value);
-		}
+		return nullptr;
 	}
+
+	FVector RelativeLocation = WorldLocation - this->GetActorLocation() - FVector(this->CellSize / 2, this->CellSize / 2, 0);
+	FIntVector2 CellLocation = FIntVector2(FMath::DivideAndRoundNearest(RelativeLocation.X, this->CellSize), FMath::DivideAndRoundNearest(RelativeLocation.Y, this->CellSize));
+	return this->GetCell(CellLocation);
 }
 
 void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY)
@@ -147,6 +149,17 @@ void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnecte
 		OutCellPY = (Origin->HasConnections.bPY) ? OutCellPY : nullptr;
 		OutCellNX = (Origin->HasConnections.bNX) ? OutCellNX : nullptr;
 		OutCellNY = (Origin->HasConnections.bNY) ? OutCellNY : nullptr;
+	}
+}
+
+void ALayout::FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells)
+{
+	for (auto Kvp : this->Grid)
+	{
+		if (Kvp.Value->RowName == RowName)
+		{
+			OutCells.Add(Kvp.Value);
+		}
 	}
 }
 

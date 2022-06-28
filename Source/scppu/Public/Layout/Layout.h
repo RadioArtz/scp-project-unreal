@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "LayoutStructs.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Layout/LayoutStructs.h"
 #include "Layout.generated.h"
 
 class UDataTable;
@@ -54,12 +54,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		ULayoutCell* GetCell(FIntVector2 Location); // move to header file to make inline work
 
-	UFUNCTION(BlueprintCallable)
-		void FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		ULayoutCell* GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance = -1.0f);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		void GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY);
 
+	UFUNCTION(BlueprintCallable)
+		void FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells);
+	
 	UFUNCTION(BlueprintCallable)
 		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal);
 

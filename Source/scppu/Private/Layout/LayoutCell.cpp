@@ -10,7 +10,7 @@
 
 FVector ULayoutCell::GetWorldLocation()
 {
-	return (FVector(this->Location.X, this->Location.Y, 0) * this->Owner->CellSize) + this->Owner->GetActorLocation();
+	return (FVector(this->Location.X, this->Location.Y, 0) * this->Owner->CellSize) + FVector(this->Owner->CellSize / 2, this->Owner->CellSize / 2, 0) + this->Owner->GetActorLocation();
 }
 
 FRotator ULayoutCell::GetWorldRotation()

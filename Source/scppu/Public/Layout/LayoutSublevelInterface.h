@@ -23,5 +23,5 @@ class SCPPU_API ILayoutSublevelInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 	UFUNCTION(BlueprintNativeEvent)
-		void OnLayoutDataReceived(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandStream);
+		void OnLayoutDataReceived(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandomStream);
 };
