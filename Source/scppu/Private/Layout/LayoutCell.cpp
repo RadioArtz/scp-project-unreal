@@ -90,19 +90,23 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	FLayoutCellSides PrevHasConnection = this->HasConnections;
 	FLayoutCellSides PrevDisableNeighbouringCell = this->DisableNeighbouringCells;
 
-	// Get the values from datatable row so the pre spawn validators can use them
+	// Get the values from datatable row
+	int RowRotation = 0;
 	FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "");
-	this->RowName = InRowName;
-	this->HasConnections = Row.HasConnections;
-	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
 	// Rotate the values from datatable row
 	for (int i = 1; i < InRotation + 1; i++)
 	{
-		this->Rotation = i;
-		this->HasConnections.RotateRight();
-		this->DisableNeighbouringCells.RotateRight();
+		RowRotation = i;
+		Row.HasConnections.RotateRight();
+		Row.DisableNeighbouringCells.RotateRight();
 	}
+
+	// Set values for pre spawn validators
+	this->RowName = InRowName;
+	this->Rotation = RowRotation;
+	this->HasConnections = Row.HasConnections;
+	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
 	// Run pre spawn validation
 	for (auto Elem : Row.PreSpawnValidators)
@@ -110,6 +114,12 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 		ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
 		bIsValid = bIsValid && Validator->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
 	}
+
+	// Reset properties to their original state
+	this->Rotation = PrevRotation;
+	this->RowName = PrevRowName;
+	this->HasConnections = PrevHasConnection;
+	this->DisableNeighbouringCells = PrevDisableNeighbouringCell;
 
 	// Get info from neighbouring cells 
 	ULayoutCell* CellPX;
@@ -122,30 +132,24 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 
 	// Check if all connections fit
 	//PX
-	bIsValid = bIsValid && ((RequiredConnections.bPX && this->HasConnections.bPX) || !RequiredConnections.bPX);
-	bIsValid = bIsValid && ((BlockedConnections.bPX && !this->HasConnections.bPX) || !BlockedConnections.bPX);
-	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPX || !IsValid(CellPX) || (this->DisableNeighbouringCells.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bPX && Row.HasConnections.bPX) || !RequiredConnections.bPX);
+	bIsValid = bIsValid && ((BlockedConnections.bPX && !Row.HasConnections.bPX) || !BlockedConnections.bPX);
+	bIsValid = bIsValid && (!Row.DisableNeighbouringCells.bPX || !IsValid(CellPX) || (Row.DisableNeighbouringCells.bPX && !CellPX->bIsGenerated && !CellPX->IsRequiredToGenerate() && !CellPX->IsBlockedByNeighbour()));
 
 	//PY
-	bIsValid = bIsValid && ((RequiredConnections.bPY && this->HasConnections.bPY) || !RequiredConnections.bPY);
-	bIsValid = bIsValid && ((BlockedConnections.bPY && !this->HasConnections.bPY) || !BlockedConnections.bPY);
-	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bPY || !IsValid(CellPY) || (this->DisableNeighbouringCells.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bPY && Row.HasConnections.bPY) || !RequiredConnections.bPY);
+	bIsValid = bIsValid && ((BlockedConnections.bPY && !Row.HasConnections.bPY) || !BlockedConnections.bPY);
+	bIsValid = bIsValid && (!Row.DisableNeighbouringCells.bPY || !IsValid(CellPY) || (Row.DisableNeighbouringCells.bPY && !CellPY->bIsGenerated && !CellPY->IsRequiredToGenerate() && !CellPY->IsBlockedByNeighbour()));
 
 	//NX
-	bIsValid = bIsValid && ((RequiredConnections.bNX && this->HasConnections.bNX) || !RequiredConnections.bNX);
-	bIsValid = bIsValid && ((BlockedConnections.bNX && !this->HasConnections.bNX) || !BlockedConnections.bNX);
-	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNX || !IsValid(CellNX) || (this->DisableNeighbouringCells.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate()));
+	bIsValid = bIsValid && ((RequiredConnections.bNX && Row.HasConnections.bNX) || !RequiredConnections.bNX);
+	bIsValid = bIsValid && ((BlockedConnections.bNX && !Row.HasConnections.bNX) || !BlockedConnections.bNX);
+	bIsValid = bIsValid && (!Row.DisableNeighbouringCells.bNX || !IsValid(CellNX) || (Row.DisableNeighbouringCells.bNX && !CellNX->bIsGenerated && !CellNX->IsRequiredToGenerate() && !CellNX->IsBlockedByNeighbour()));
 
 	//NY
-	bIsValid = bIsValid && ((RequiredConnections.bNY && this->HasConnections.bNY) || !RequiredConnections.bNY);
-	bIsValid = bIsValid && ((BlockedConnections.bNY && !this->HasConnections.bNY) || !BlockedConnections.bNY);
-	bIsValid = bIsValid && (!this->DisableNeighbouringCells.bNY || !IsValid(CellNY) || (this->DisableNeighbouringCells.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate()));
-
-	// Reset properties to their original state
-	this->Rotation = PrevRotation;
-	this->RowName = PrevRowName;
-	this->HasConnections = PrevHasConnection;
-	this->DisableNeighbouringCells = PrevDisableNeighbouringCell;
+	bIsValid = bIsValid && ((RequiredConnections.bNY && Row.HasConnections.bNY) || !RequiredConnections.bNY);
+	bIsValid = bIsValid && ((BlockedConnections.bNY && !Row.HasConnections.bNY) || !BlockedConnections.bNY);
+	bIsValid = bIsValid && (!Row.DisableNeighbouringCells.bNY || !IsValid(CellNY) || (Row.DisableNeighbouringCells.bNY && !CellNY->bIsGenerated && !CellNY->IsRequiredToGenerate() && !CellNY->IsBlockedByNeighbour()));
 
 	return bIsValid;
 }
@@ -154,13 +158,13 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 {
 	if (NewRowName == "None")
 	{
-		this->bIsGenerated = false;
 		this->RowName = "None";
-		this->Rotation = 0;
 		this->HasConnections = FLayoutCellSides();
 		this->DisableNeighbouringCells = FLayoutCellSides();
+		this->Rotation = NewRotation % 4;
 		this->LevelAsset = nullptr;
 		this->UnloadSublevel();
+		this->bIsGenerated = true;
 		return;
 	}
 
@@ -193,6 +197,17 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 
 	this->UnloadSublevel();
 	bIsGenerated = true;
+}
+
+void ULayoutCell::ResetRowName()
+{
+	this->RowName = "None";
+	this->HasConnections = FLayoutCellSides();
+	this->DisableNeighbouringCells = FLayoutCellSides();
+	this->Rotation = 0;
+	this->LevelAsset = nullptr;
+	this->UnloadSublevel();
+	this->bIsGenerated = false;
 }
 
 void ULayoutCell::LoadSublevel()

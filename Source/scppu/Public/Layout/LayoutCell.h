@@ -76,6 +76,9 @@ public:
 		void SetRowName(FName NewRowName, int NewRotation);
 
 	UFUNCTION(BlueprintCallable)
+		void ResetRowName();
+
+	UFUNCTION(BlueprintCallable)
 		void LoadSublevel();
 
 	UFUNCTION(BlueprintCallable)
