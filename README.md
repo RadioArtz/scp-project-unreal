@@ -10,14 +10,14 @@ The original version of this project was not set up with source control from the
 #### Projectfile and contribution information:
 - This project uses Unreal Engine 4.27 with the AMD FSR plugin. [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/Plugins/FSR/license.txt)
 - When working on some major system, create an issue to inform others that you are working on it and keep it updated if you stop working on it. This is to avoid two people spending a lot of time just to find out that someone else has been working on the same thing. You can of course still work on things that others are already working on if you want to.
-- The project has c++ enabled.
+- The project has C++ enabled.
 - **No external marketplace assets** are to be used!
-- Do **NOT** contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/d0a3f758f9d75258092dbfb309da14a6c6b8ec47/License.txt)
+- Do **NOT** contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/License.txt)
 - Forks of the project are to follow the same License terms as this Project.
 
  
 ### HELP MY PROJECT IS NOT COMPILING!!
-Of course it isn't, welcome to C++. But here’s how to fix it:
+Of course it isn't, welcome to C++. Here’s how to fix it:
 1.    Make sure to fetch a working version
 2.    Delete the “Intermediate” folder inside the project folder
 3.    Right-click the project file and click on “Generate Visual Studio project files”
