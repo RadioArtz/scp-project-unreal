@@ -45,11 +45,11 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 	}
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting async layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
-	UE_LOG(LogLayout, Log, TEXT("%s: '%s' and its members will be borrowed by a seperate thread. Actions with them should be avoided during this time to avoid race conditions!"), *this->GetName(), *Layout->GetName());
+	UE_LOG(LogLayout, Warning, TEXT("%s: '%s' and its members will be borrowed by a seperate thread. Actions with them should be avoided during this time to avoid race conditions (editor/game can crash even when seemingly unrelated)!"), *this->GetName(), *Layout->GetName());
 	FDateTime StartTime = FDateTime::UtcNow();
 	AsyncTask(ENamedThreads::AnyHiPriThreadHiPriTask, [this, Layout, NewSeed, OnDone, StartTime]() {
 		bool bSuccess = this->GenerateInternal(Layout, NewSeed);
-		UE_LOG(LogLayout, Log, TEXT("%s: '%s' and its members have been released from the seperate thread!"), *this->GetName(), *Layout->GetName());
+		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' and its members have been released from the seperate thread!"), *this->GetName(), *Layout->GetName());
 		if (bSuccess)
 		{
 			AsyncTask(ENamedThreads::GameThread, [this, Layout, OnDone, StartTime]()
@@ -243,7 +243,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 		// Don't reset banned possibilities if we are currently redoing this cell
 		if (LastCellKey != CurrentCellKey && SolveContradictionBannedPossibilities.Num() > 0)
 		{
-			UE_LOG(LogLayout, Verbose, TEXT("%s: Contradiction solved, resetting temporarily banned possibilities"), *this->GetName());
+			UE_LOG(LogLayout, Verbose, TEXT("%s: Contradiction solved, resetting %i temporarily banned possibilities"), *this->GetName(), SolveContradictionBannedPossibilities.Num());
 			SolveContradictionBannedPossibilities.Empty();
 		}
 
