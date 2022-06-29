@@ -109,8 +109,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	// Run pre spawn validation
 	for (auto Elem : Row.PreSpawnValidators)
 	{
-		ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
-		bIsValid = bIsValid && Validator->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
+		bIsValid = bIsValid && Elem.GetDefaultObject()->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
 	}
 
 	// Reset properties to their original state
