@@ -40,7 +40,7 @@ public:
 		virtual void StartInteraction(APawn* Interactor, UObject* Item);
 
 	UFUNCTION(BlueprintCallable)
-		virtual void StopInteraction(APawn* Interactor);
+		virtual void EndInteraction(APawn* Interactor);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -50,7 +50,5 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Called when the game ends or when destroyed
-	virtual void BeginDestroy() override;
-
-		
+	virtual void BeginDestroy() override;	
 };

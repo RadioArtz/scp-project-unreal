@@ -23,6 +23,5 @@ public:
 public:
 		virtual void StartInteraction(APawn* Interactor, UObject* Item) override;
 
-		virtual void StopInteraction(APawn* Interactor) override;
-
+		virtual void EndInteraction(APawn* Interactor) override;
 };

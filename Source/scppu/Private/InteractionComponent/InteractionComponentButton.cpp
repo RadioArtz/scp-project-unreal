@@ -9,7 +9,7 @@ void UInteractionComponentButton::StartInteraction(APawn* Interactor, UObject* I
 	this->OnInteract.Broadcast(Interactor, Item);
 }
 
-void UInteractionComponentButton::StopInteraction(APawn* Interactor)
+void UInteractionComponentButton::EndInteraction(APawn* Interactor)
 {
-	Super::StopInteraction(Interactor);
+	Super::EndInteraction(Interactor);
 }

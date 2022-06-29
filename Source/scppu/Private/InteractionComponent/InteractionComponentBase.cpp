@@ -59,7 +59,8 @@ UInteractionComponentBase::UInteractionComponentBase()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	this->PrimaryComponentTick.bCanEverTick = true;
+	this->PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
 void UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Item)
@@ -72,7 +73,7 @@ void UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Ite
 	}
 }
 
-void UInteractionComponentBase::StopInteraction(APawn* Interactor)
+void UInteractionComponentBase::EndInteraction(APawn* Interactor)
 {
 	if (this->CurrentInteractor == Interactor)
 	{
