@@ -15,12 +15,14 @@ bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 	}
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
+	Layout->bIsReadOnly = true;
 	FDateTime StartTime = FDateTime::UtcNow();
 	bool bSuccess = this->GenerateInternal(Layout, NewSeed);
 	if (bSuccess)
 	{
 		FDateTime EndTime = FDateTime::UtcNow();
 		FTimespan GenerationTimeSpan = EndTime - StartTime;
+		Layout->bIsReadOnly = false;
 		UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
 		return true;
 	}
@@ -29,6 +31,7 @@ bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 		FDateTime EndTime = FDateTime::UtcNow();
 		FTimespan GenerationTimeSpan = EndTime - StartTime;
 		UE_LOG(LogLayout, Log, TEXT("%s: Aborted layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
+		Layout->bIsReadOnly = false;
 		Layout->Clear();
 		return false;
 	}
@@ -46,6 +49,7 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Starting async layout generation for '%s' with seed '%d'"), *this->GetName(), *Layout->GetName(), NewSeed);
 	UE_LOG(LogLayout, Warning, TEXT("%s: '%s' and its members will be borrowed by a seperate thread. Actions with them should be avoided during this time to avoid race conditions (editor/game can crash even when seemingly unrelated)!"), *this->GetName(), *Layout->GetName());
+	Layout->bIsReadOnly = true;
 	FDateTime StartTime = FDateTime::UtcNow();
 	AsyncTask(ENamedThreads::AnyHiPriThreadHiPriTask, [this, Layout, NewSeed, OnDone, StartTime]() {
 		bool bSuccess = this->GenerateInternal(Layout, NewSeed);
@@ -58,6 +62,7 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 				FDateTime EndTime = FDateTime::UtcNow();
 				FTimespan GenerationTimeSpan = EndTime - StartTime;
 				UE_LOG(LogLayout, Log, TEXT("%s: Finished layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
+				Layout->bIsReadOnly = false;
 				OnDone.ExecuteIfBound(true);
 			});
 		}
@@ -69,6 +74,7 @@ void ULayoutGeneratorWFC::AsyncGenerate(ALayout* Layout, int32 NewSeed, FLayoutG
 				FDateTime EndTime = FDateTime::UtcNow();
 				FTimespan GenerationTimeSpan = EndTime - StartTime;
 				UE_LOG(LogLayout, Log, TEXT("%s: Aborted layout generation, took %f seconds"), *this->GetName(), GenerationTimeSpan.GetTotalSeconds());
+				Layout->bIsReadOnly = false;
 				Layout->Clear();
 				OnDone.ExecuteIfBound(false);
 			});

@@ -20,8 +20,11 @@ class SCPPU_API ALayout : public AActor
 	
 public:
 	//// Properties ////
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsLayoutPresent; // get private set
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		bool bIsReadOnly; // get set
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FIntVector2 GridSize; // get private set
@@ -32,7 +35,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UDataTable* DataTable; // get private set
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		FRandomStream RStream; // get private set
 
 	UPROPERTY(VisibleAnywhere, Category = "Debug")

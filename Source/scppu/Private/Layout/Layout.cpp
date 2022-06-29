@@ -74,6 +74,12 @@ bool ALayout::Initialize(int32 NewSeed)
 		return false;
 	}
 
+	if (this->bIsReadOnly)
+	{
+		UE_LOG(LogLayout, Error, TEXT("%s: Not able to create new layout, currently read-only"), *this->GetName());
+		return false;
+	}
+
 	bIsLayoutPresent = true;
 	this->RStream = FRandomStream(NewSeed);
 	this->Grid.Empty(this->GridSize.X * this->GridSize.Y);
@@ -99,6 +105,12 @@ bool ALayout::Clear()
 	if (!this->bIsLayoutPresent)
 	{
 		UE_LOG(LogLayout, Warning, TEXT("%s: Not able to clear layout, no layout present"), *this->GetName());
+		return false;
+	}
+
+	if (this->bIsReadOnly)
+	{
+		UE_LOG(LogLayout, Error, TEXT("%s: Not able to clear layout, currently read-only"), *this->GetName());
 		return false;
 	}
 
