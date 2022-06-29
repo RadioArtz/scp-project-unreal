@@ -77,7 +77,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 {
 	if (this->Owner->DataTable->FindRowUnchecked(InRowName) == nullptr)
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
 		return false;
 	}
 
@@ -90,21 +90,19 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	FLayoutCellSides PrevHasConnection = this->HasConnections;
 	FLayoutCellSides PrevDisableNeighbouringCell = this->DisableNeighbouringCells;
 
-	// Get the values from datatable row
-	int RowRotation = 0;
-	FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(InRowName, "");
+	// Get values from datatable row
+	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->Owner->DataTable->FindRowUnchecked(InRowName);
 
-	// Rotate the values from datatable row
+	// Rotate values from datatable row
 	for (int i = 1; i < InRotation + 1; i++)
 	{
-		RowRotation = i;
 		Row.HasConnections.RotateRight();
 		Row.DisableNeighbouringCells.RotateRight();
 	}
 
-	// Set values for pre spawn validators
+	// Set values from row for pre spawn validators
 	this->RowName = InRowName;
-	this->Rotation = RowRotation;
+	this->Rotation = InRotation;
 	this->HasConnections = Row.HasConnections;
 	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
@@ -122,15 +120,20 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	this->DisableNeighbouringCells = PrevDisableNeighbouringCell;
 
 	// Get info from neighbouring cells 
-	ULayoutCell* CellPX;
-	ULayoutCell* CellPY;
-	ULayoutCell* CellNX;
-	ULayoutCell* CellNY;
+	ULayoutCell* CellPX = nullptr;
+	ULayoutCell* CellPY = nullptr;
+	ULayoutCell* CellNX = nullptr;
+	ULayoutCell* CellNY = nullptr;
 	FLayoutCellSides RequiredConnections = this->GetRequiredConnections();
 	FLayoutCellSides BlockedConnections = this->GetBlockedConnections();
-	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
 
-	// Check if all connections fit
+	// Only retrive neighbouring cells if we actually need them
+	if (Row.DisableNeighbouringCells != FLayoutCellSides(false, false, false, false))
+	{
+		this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	}
+
+	// Check if all connections fit (ignore warning, IsValid() checks for nullptr)
 	//PX
 	bIsValid = bIsValid && ((RequiredConnections.bPX && Row.HasConnections.bPX) || !RequiredConnections.bPX);
 	bIsValid = bIsValid && ((BlockedConnections.bPX && !Row.HasConnections.bPX) || !BlockedConnections.bPX);
@@ -168,26 +171,28 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		return;
 	}
 
-	if (this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(NewRowName, "") == nullptr)
+	if (this->Owner->DataTable->FindRowUnchecked(NewRowName) == nullptr)
 	{
-		UE_LOG(LogLayout, Warning, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *NewRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *NewRowName.ToString(), *this->Owner->DataTable->GetName());
 		return;
 	}
 
 	FRandomStream RStream = FRandomStream(this->UniqueSeed);
-	FLayoutCellGenerationSettings Row = *this->Owner->DataTable->FindRow<FLayoutCellGenerationSettings>(NewRowName, "");
+	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->Owner->DataTable->FindRowUnchecked(NewRowName);
 	NewRotation = NewRotation % 4;
-	this->RowName = NewRowName;
-	this->HasConnections = Row.HasConnections;
-	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
-	// Rotate the values from row
+	// Rotate values from row
 	for (int i = 1; i < NewRotation + 1; i++)
 	{
-		this->Rotation = i;
-		this->HasConnections.RotateRight();
-		this->DisableNeighbouringCells.RotateRight();
+		Row.HasConnections.RotateRight();
+		Row.DisableNeighbouringCells.RotateRight();
 	}
+
+	// Set values from row
+	this->RowName = NewRowName;
+	this->Rotation = NewRotation;
+	this->HasConnections = Row.HasConnections;
+	this->DisableNeighbouringCells = Row.DisableNeighbouringCells;
 
 	// Set level asset
 	if (Row.Levels.Num() > 0)

@@ -52,7 +52,7 @@ public:
 		bool Clear();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutCell* GetCell(FIntVector2 Location); // move to header file to make inline work
+		ULayoutCell* GetCell(FIntVector2 Location); // move body to header file to make inline work
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		ULayoutCell* GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance = -1.0f);

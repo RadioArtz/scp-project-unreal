@@ -116,12 +116,7 @@ bool ALayout::Clear()
 
 ULayoutCell* ALayout::GetCell(FIntVector2 Location)
 {
-	if (this->Grid.Find(Location) == nullptr)
-	{
-		return nullptr;
-	}
-
-	return Grid[Location];
+	return this->Grid.FindRef(Location);
 }
 
 ULayoutCell* ALayout::GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance)
