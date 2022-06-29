@@ -15,8 +15,8 @@ class SCPPU_API ULayoutCell : public UObject
 {
 	GENERATED_BODY()
 
-public:
 	//// Properties ////
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		FIntVector2 Location; // get private set
 
@@ -48,6 +48,7 @@ public:
 		FLayoutCellSides DisableNeighbouringCells; // get private set
 
 	//// Functions ////
+public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FVector GetWorldLocation(); // move body to header file to make inline work
 

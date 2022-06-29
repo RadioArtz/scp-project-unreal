@@ -41,11 +41,9 @@ protected:
 		}
 	};
 
-public:
-	//// Properties ////
-	
-public:
+
 	//// Functions ////
+public:
 	UFUNCTION(BlueprintCallable)
 		bool Generate(ALayout* Layout, int32 NewSeed);
 

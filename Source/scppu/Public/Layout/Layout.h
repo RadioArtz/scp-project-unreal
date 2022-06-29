@@ -18,8 +18,8 @@ class SCPPU_API ALayout : public AActor
 {
 	GENERATED_BODY()
 	
-public:
 	//// Properties ////
+public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsLayoutPresent; // get private set
 
@@ -42,6 +42,7 @@ public:
 		TMap<FIntVector2, ULayoutCell*> Grid; // get private set
 
 	//// Functions ////
+public:
 	// Sets default values for this actor's properties
 	ALayout();
 
