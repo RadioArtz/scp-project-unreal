@@ -16,6 +16,7 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 			{
 				FHitResult HitResult;
 				FCollisionQueryParams CollisionParams;
+				CollisionParams.TraceTag = FName("InteractionComponentSystem");
 				CollisionParams.AddIgnoredActor(Elem->GetOwner());
 				Elem->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, Elem->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
 				if (!HitResult.bBlockingHit)
