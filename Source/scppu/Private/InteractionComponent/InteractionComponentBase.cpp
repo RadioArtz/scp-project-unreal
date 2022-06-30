@@ -5,12 +5,12 @@
 
 TArray<UInteractionComponentBase*> UInteractionComponentBase::RegisteredInteractionComponents;
 
-TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComponentsInRadius(FVector WorldLocation, float Radius, bool bMustBeReachable)
+TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius , bool bMustBeReachable, FVector ReachableFrom)
 {
 	TArray<UInteractionComponentBase*> InteractionComponents;
 	for (auto& Elem : UInteractionComponentBase::RegisteredInteractionComponents)
 	{
-		if (FVector::Distance(WorldLocation, Elem->GetComponentLocation()) <= Radius)
+		if (FVector::Distance(ClosestFrom, Elem->GetComponentLocation()) <= Radius)
 		{
 			if (bMustBeReachable)
 			{
@@ -18,7 +18,7 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 				FCollisionQueryParams CollisionParams;
 				CollisionParams.TraceTag = FName("InteractionComponentSystem");
 				CollisionParams.AddIgnoredActor(Elem->GetOwner());
-				Elem->GetWorld()->LineTraceSingleByChannel(HitResult, WorldLocation, Elem->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
+				Elem->GetWorld()->LineTraceSingleByChannel(HitResult, ReachableFrom, Elem->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
 				if (!HitResult.bBlockingHit)
 				{
 					InteractionComponents.Add(Elem);
@@ -34,14 +34,14 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 	return InteractionComponents;
 }
 
-UInteractionComponentBase* UInteractionComponentBase::GetClosestInteractionComponentInRadius(FVector WorldLocation, float Radius, bool bMustBeReachable)
+UInteractionComponentBase* UInteractionComponentBase::GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
 {
 	UInteractionComponentBase* InteractionComponent = nullptr;
-	for (auto& Elem : UInteractionComponentBase::GetInteractionComponentsInRadius(WorldLocation, Radius, bMustBeReachable))
+	for (auto& Elem : UInteractionComponentBase::GetInteractionComponentsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
 	{
 		if (IsValid(InteractionComponent))
 		{
-			if (FVector::Distance(WorldLocation, Elem->GetComponentLocation()) < FVector::Distance(WorldLocation, InteractionComponent->GetComponentLocation()))
+			if (FVector::Distance(ClosestFrom, Elem->GetComponentLocation()) < FVector::Distance(ClosestFrom, InteractionComponent->GetComponentLocation()))
 			{
 				InteractionComponent = Elem;
 			}

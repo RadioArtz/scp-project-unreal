@@ -28,10 +28,10 @@ public:
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable)
-		static TArray<UInteractionComponentBase*> GetInteractionComponentsInRadius(FVector WorldLocation, float Radius = 350.0f, bool bMustBeReachable = true);
+		static TArray<UInteractionComponentBase*> GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable)
-		static UInteractionComponentBase* GetClosestInteractionComponentInRadius(FVector WorldLocation, float Radius = 350.0f, bool bMustBeReachable = true);
+		static UInteractionComponentBase* GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
 
 	// Sets default values for this component's properties
 	UInteractionComponentBase();
