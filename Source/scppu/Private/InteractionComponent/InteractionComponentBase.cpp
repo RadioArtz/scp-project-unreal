@@ -8,25 +8,34 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::RegisteredInteract
 TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius , bool bMustBeReachable, FVector ReachableFrom)
 {
 	TArray<UInteractionComponentBase*> InteractionComponents;
-	for (auto& Elem : UInteractionComponentBase::RegisteredInteractionComponents)
+	for (auto& ElemComp : UInteractionComponentBase::RegisteredInteractionComponents)
 	{
-		if (FVector::Distance(ClosestFrom, Elem->GetComponentLocation()) <= Radius)
+		if (FVector::Distance(ClosestFrom, ElemComp->GetComponentLocation()) <= Radius)
 		{
 			if (bMustBeReachable)
 			{
-				FHitResult HitResult;
+				TArray<FHitResult> HitResults;
 				FCollisionQueryParams CollisionParams;
 				CollisionParams.TraceTag = FName("InteractionComponentSystem");
-				CollisionParams.AddIgnoredActor(Elem->GetOwner());
-				Elem->GetWorld()->LineTraceSingleByChannel(HitResult, ReachableFrom, Elem->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
-				if (!HitResult.bBlockingHit)
+				CollisionParams.bTraceComplex = true;
+				ElemComp->GetWorld()->LineTraceMultiByChannel(HitResults, ReachableFrom, ElemComp->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
+				bool bAnyValidBlockingHits = false;
+				for (auto& ElemHit : HitResults)
 				{
-					InteractionComponents.Add(Elem);
+					if (ElemHit.IsValidBlockingHit())
+					{
+						bAnyValidBlockingHits = true;
+					}
+				}
+				
+				if (!bAnyValidBlockingHits)
+				{
+					InteractionComponents.Add(ElemComp);
 				}
 			}
 			else
 			{
-				InteractionComponents.Add(Elem);
+				InteractionComponents.Add(ElemComp);
 			}
 		}
 	}
