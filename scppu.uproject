@@ -201,6 +201,13 @@
 				"Android",
 				"HoloLens"
 			]
+		},
+		{
+			"Name": "FSR2",
+			"Enabled": true,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			]
 		}
 	],
 	"TargetPlatforms": [
