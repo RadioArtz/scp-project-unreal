@@ -10,7 +10,7 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 	TArray<UInteractionComponentBase*> InteractionComponents;
 	for (auto& ElemComp : UInteractionComponentBase::RegisteredInteractionComponents)
 	{
-		if (FVector::Distance(ClosestFrom, ElemComp->GetComponentLocation()) <= Radius)
+		if (ElemComp->bIsEnabled && FVector::Distance(ClosestFrom, ElemComp->GetComponentLocation()) <= Radius)
 		{
 			if (bMustBeReachable)
 			{
@@ -18,7 +18,7 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 				FCollisionQueryParams CollisionParams;
 				CollisionParams.TraceTag = FName("InteractionComponentSystem");
 				CollisionParams.bTraceComplex = true;
-				ElemComp->GetWorld()->LineTraceMultiByChannel(HitResults, ReachableFrom, ElemComp->GetComponentLocation(), ECollisionChannel::ECC_Visibility, CollisionParams);
+				ElemComp->GetWorld()->LineTraceMultiByChannel(HitResults, ElemComp->GetComponentLocation(), ReachableFrom, ECollisionChannel::ECC_Visibility, CollisionParams);
 				bool bAnyValidBlockingHits = false;
 				for (auto& ElemHit : HitResults)
 				{
@@ -75,22 +75,26 @@ UInteractionComponentBase::UInteractionComponentBase()
 
 void UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Item)
 {
-	if (!this->bIsInUse)
+	if (!this->bIsEnabled || this->bIsInUse)
 	{
-		this->bIsInUse = true;
-		this->CurrentInteractor = Interactor;
-		this->CurrentItem = Item;
+		return;
 	}
+
+	this->bIsInUse = true;
+	this->CurrentInteractor = Interactor;
+	this->CurrentItem = Item;
 }
 
 void UInteractionComponentBase::EndInteraction(APawn* Interactor)
 {
-	if (this->CurrentInteractor == Interactor)
+	if ((!this->bIsEnabled && this->CurrentInteractor == nullptr) || !(this->CurrentInteractor == Interactor))
 	{
-		this->bIsInUse = false;
-		this->CurrentInteractor = nullptr;
-		this->CurrentItem = nullptr;
+		return;
 	}
+
+	this->bIsInUse = false;
+	this->CurrentInteractor = nullptr;
+	this->CurrentItem = nullptr;
 }
 
 // Called when the game starts

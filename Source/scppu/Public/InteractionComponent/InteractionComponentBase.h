@@ -16,8 +16,11 @@ class SCPPU_API UInteractionComponentBase : public USceneComponent
 public:
 	static TArray<UInteractionComponentBase*> RegisteredInteractionComponents;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool bIsEnabled = true;
+
 	UPROPERTY(BlueprintReadOnly)
-		bool bIsInUse;
+		bool bIsInUse = false;
 
 	UPROPERTY(BlueprintReadOnly)
 		APawn* CurrentInteractor;
