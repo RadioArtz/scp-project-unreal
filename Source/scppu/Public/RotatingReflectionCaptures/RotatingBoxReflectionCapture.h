@@ -67,8 +67,10 @@ public:
 	// Sets default values for this actor's properties
 	ARotatingBoxReflectionCapture();
 
+#if WITH_EDITOR
 	UFUNCTION(CallInEditor, Category = "Custom Reflection Capture")
 		void UpdateCapture();
+#endif
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 

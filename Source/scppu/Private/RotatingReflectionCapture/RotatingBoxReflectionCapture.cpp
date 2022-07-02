@@ -1,16 +1,12 @@
 
 
-
+#include "RotatingReflectionCaptures/RotatingBoxReflectionCapture.h"
 #include "Components/BoxComponent.h"
 #include "Components/BillboardComponent.h"
 #include "Components/BoxReflectionCaptureComponent.h"
-#include "Engine/ReflectionCapture.h"
 #include "Components/SceneCaptureComponentCube.h"
 #include "Engine/TextureRenderTargetCube.h"
 #include "Engine/TextureCube.h"
-#include "LevelEditor.h"
-#include "Editor.h"
-#include "RotatingReflectionCaptures/RotatingBoxReflectionCapture.h"
 
 DEFINE_LOG_CATEGORY(LogRotatingRefCap);
 
@@ -89,9 +85,9 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 #endif
 }
 
+#if WITH_EDITOR
 void ARotatingBoxReflectionCapture::UpdateCapture()
 {
-#if WITH_EDITOR
 	// Only allow updates every two seconds (to avoid performance problems)
 	if ((FDateTime::UtcNow() - this->LastUpdate).GetTotalSeconds() < 2.0f)
 	{
@@ -141,8 +137,8 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	this->RefCap180->Cubemap = this->StaticTexture;
 	this->RefCap270->Cubemap = this->StaticTexture;
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
-#endif
 }
+#endif
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 {
