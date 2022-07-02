@@ -138,7 +138,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	this->RefCap270->Cubemap = this->StaticTexture;
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
 }
-#endif
+
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 {
@@ -148,6 +148,7 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 		this->PlacedRotation = this->GetActorRotation();
 	}
 }
+#endif
 
 // Called when the game starts or when spawned
 void ARotatingBoxReflectionCapture::BeginPlay()

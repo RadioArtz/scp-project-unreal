@@ -70,9 +70,9 @@ public:
 #if WITH_EDITOR
 	UFUNCTION(CallInEditor, Category = "Custom Reflection Capture")
 		void UpdateCapture();
-#endif
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+#endif
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
