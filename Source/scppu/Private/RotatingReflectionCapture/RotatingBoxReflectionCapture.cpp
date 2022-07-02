@@ -89,9 +89,15 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 void ARotatingBoxReflectionCapture::UpdateCapture()
 {
 	// Only allow updates every two seconds (to avoid performance problems)
-	if ((FDateTime::UtcNow() - this->LastUpdate).GetTotalSeconds() < 2.0f)
+	if ((FDateTime::UtcNow() - this->LastUpdate).GetTotalSeconds() < 1.0f)
 	{
-		UE_LOG(LogRotatingRefCap, Warning, TEXT("%s: Not updating, last update was at least 2s ago"), *this->GetName());
+		UE_LOG(LogRotatingRefCap, Warning, TEXT("%s: Not updating, last update was at least 1s ago"), *this->GetName());
+		return;
+	}
+
+	if (this->GetWorld()->WorldType != EWorldType::Editor)
+	{
+		UE_LOG(LogRotatingRefCap, Error, TEXT("%s: Cannot update inside a non-editor mode"), *this->GetName());
 		return;
 	}
 
@@ -142,11 +148,13 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 {
-	if (this->GetWorld()->WorldType == EWorldType::Editor || this->GetWorld()->WorldType == EWorldType::EditorPreview)
+	if (this->GetWorld()->WorldType != EWorldType::Editor || this->GetWorld()->WorldType != EWorldType::EditorPreview)
 	{
-		this->UpdateCapture();
-		this->PlacedRotation = this->GetActorRotation();
+		return;
 	}
+
+	this->UpdateCapture();
+	this->PlacedRotation = this->GetActorRotation();
 }
 #endif
 
