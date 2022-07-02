@@ -1,7 +1,7 @@
 
 
 
-#include "InteractionComponent/InteractionComponentButton.h"
+#include "InteractionComponents/InteractionComponentButton.h"
 
 void UInteractionComponentButton::StartInteraction(APawn* Interactor, UObject* Item)
 {

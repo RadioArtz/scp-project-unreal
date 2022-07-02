@@ -1,7 +1,7 @@
 
 
 
-#include "InteractionComponent/InteractionComponentSwitch.h"
+#include "InteractionComponents/InteractionComponentSwitch.h"
 
 void UInteractionComponentSwitch::StartInteraction(APawn* Interactor, UObject* Item)
 {

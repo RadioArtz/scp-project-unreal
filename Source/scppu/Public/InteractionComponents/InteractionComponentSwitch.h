@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionComponent/InteractionComponentBase.h"
+#include "InteractionComponents/InteractionComponentBase.h"
 #include "InteractionComponentSwitch.generated.h"
 
 UDELEGATE(BlueprintCallable)

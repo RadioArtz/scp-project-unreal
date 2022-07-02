@@ -1,7 +1,7 @@
 
 
 
-#include "InteractionComponent/InteractionComponentBase.h"
+#include "InteractionComponents/InteractionComponentBase.h"
 
 TArray<UInteractionComponentBase*> UInteractionComponentBase::RegisteredInteractionComponents;
 
@@ -48,6 +48,7 @@ UInteractionComponentBase* UInteractionComponentBase::GetClosestInteractionCompo
 	UInteractionComponentBase* InteractionComponent = nullptr;
 	for (auto& Elem : UInteractionComponentBase::GetInteractionComponentsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
 	{
+		// (ignore warning, IsValid() checks for nullptr)
 		if (IsValid(InteractionComponent))
 		{
 			if (FVector::Distance(ClosestFrom, Elem->GetComponentLocation()) < FVector::Distance(ClosestFrom, InteractionComponent->GetComponentLocation()))
