@@ -114,7 +114,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	}
 
 	// Create new render target
-	this->RenderTarget = NewObject<UTextureRenderTargetCube>(this);
+	this->RenderTarget = NewObject<UTextureRenderTargetCube>(this, FName(), RF_Transient);
 	this->RenderTarget->ClearColor = FLinearColor::Green;
 	this->RenderTarget->Init(256, EPixelFormat::PF_FloatRGBA);
 	this->RenderTarget->UpdateResourceImmediate(true);
@@ -126,7 +126,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Captured scene"), *this->GetName());
 
 	// Create new static texture
-	this->StaticTexture = NewObject<UTextureCube>(this, FName());
+	this->StaticTexture = NewObject<UTextureCube>(this, FName(), RF_Transient);
 
 	// Draw render target to static texture
 	this->StaticTexture = this->RenderTarget->ConstructTextureCube(this->StaticTexture->GetOuter(), this->StaticTexture->GetName(), this->RenderTarget->GetMaskedFlags());
@@ -142,6 +142,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	this->RefCap180->Cubemap = this->StaticTexture;
 	this->RefCap270->Cubemap = this->StaticTexture;
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
+	GEngine->SetTimeUntilNextGarbageCollection(0.25);
 }
 
 
