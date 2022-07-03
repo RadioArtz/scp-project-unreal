@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "RotatingBoxReflectionCapture.generated.h"
 
+class USceneComponent;
+class UBillboardComponent;
 class UBoxComponent;
 class UBoxReflectionCaptureComponent;
 class USceneCaptureComponentCube;
@@ -23,13 +25,11 @@ public:
 	UPROPERTY()
 		USceneComponent* Root;
 
-#if WITH_EDITOR
 	UPROPERTY()
 		UBillboardComponent* Sprite;
 
 	UPROPERTY()
 		UBoxComponent* Box;
-#endif
 
 	UPROPERTY()
 		UBoxReflectionCaptureComponent* RefCap0;
@@ -43,24 +43,24 @@ public:
 	UPROPERTY()
 		UBoxReflectionCaptureComponent* RefCap270;
 
-#if WITH_EDITOR
 	UPROPERTY()
 		USceneCaptureComponentCube* SceneCaptureCube;
-#endif
 
-	UPROPERTY()
-		FRotator PlacedRotation;
-
-#if WITH_EDITOR
-	UPROPERTY()
-		FDateTime LastUpdate;
-#endif
 
 	UPROPERTY(VisibleAnywhere, Category = "Custom Reflection Capture")
 		UTextureRenderTargetCube* RenderTarget = nullptr;
 
 	UPROPERTY(VisibleAnywhere, Category = "Custom Reflection Capture")
 		UTextureCube* StaticTexture = nullptr;
+
+	UPROPERTY()
+		FDateTime LastUpdate;
+
+	UPROPERTY()
+		FRotator PlacedRotation;
+
+	UPROPERTY()
+		bool bRemovedUnnecessaryComponents = false;
 
 	//// Functions ////	
 public:

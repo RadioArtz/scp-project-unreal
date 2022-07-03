@@ -15,7 +15,6 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	this->PrimaryActorTick.bCanEverTick = false;
-	this->bRunConstructionScriptOnDrag = false;
 	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, false);
 
 	// Root component
@@ -163,6 +162,11 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (this->bRemovedUnnecessaryComponents)
+	{
+		return;
+	}
+
 	// Delete reflection captures based on our "new" rotation
     int Rotation = FMath::DivideAndRoundNearest((this->GetActorRotation() - this->PlacedRotation).GetDenormalized().Yaw, 90.0f);
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Detected rotation %d"), *this->GetName(), Rotation);
@@ -173,26 +177,31 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 		this->RefCap90->DestroyComponent();
 		this->RefCap180->DestroyComponent();
 		this->RefCap270->DestroyComponent();
+		this->bRemovedUnnecessaryComponents = true;
 		break;
 	case 1:
 		this->RefCap270->SetVisibility(true); //Soruce angle rotates in the opposite direction
 		this->RefCap0->DestroyComponent();
 		this->RefCap90->DestroyComponent();
 		this->RefCap180->DestroyComponent();
+		this->bRemovedUnnecessaryComponents = true;
 		break;
 	case 2:
 		this->RefCap180->SetVisibility(true);
 		this->RefCap270->DestroyComponent();
 		this->RefCap0->DestroyComponent();
 		this->RefCap90->DestroyComponent();
+		this->bRemovedUnnecessaryComponents = true;
 		break;
 	case 3:
 		this->RefCap90->SetVisibility(true); //Soruce angle rotates in the opposite direction
 		this->RefCap180->DestroyComponent();
 		this->RefCap270->DestroyComponent();
 		this->RefCap0->DestroyComponent();
+		this->bRemovedUnnecessaryComponents = true;
 		break;
-
+	default:
+		UE_LOG(LogRotatingRefCap, Error, TEXT("%s: Rotation is invalid (%d)"), *this->GetName(), Rotation)
 	}
 }
 
