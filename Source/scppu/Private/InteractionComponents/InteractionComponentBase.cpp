@@ -74,28 +74,40 @@ UInteractionComponentBase::UInteractionComponentBase()
 	this->PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-void UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Item)
+bool UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Item)
 {
-	if (!this->bIsEnabled || this->bIsInUse)
+	if (!this->bIsEnabled || this->bIsInUse || Interactor == nullptr)
 	{
-		return;
+		return false;
 	}
 
 	this->bIsInUse = true;
 	this->CurrentInteractor = Interactor;
 	this->CurrentItem = Item;
+	return true;
 }
 
-void UInteractionComponentBase::EndInteraction(APawn* Interactor)
+bool UInteractionComponentBase::EndInteraction(APawn* Interactor)
 {
-	if ((!this->bIsEnabled && this->CurrentInteractor == nullptr) || !(this->CurrentInteractor == Interactor))
+	if (!this->bIsEnabled || !this->bIsInUse || this->CurrentInteractor != Interactor)
 	{
-		return;
+		return false;
 	}
 
 	this->bIsInUse = false;
 	this->CurrentInteractor = nullptr;
 	this->CurrentItem = nullptr;
+	return true;
+}
+
+void UInteractionComponentBase::SetIsEnabled(bool bNewIsEnabled)
+{
+	if (!bNewIsEnabled)
+	{
+		this->EndInteraction(this->CurrentInteractor);
+	}
+
+	this->bIsEnabled = bNewIsEnabled;
 }
 
 // Called when the game starts

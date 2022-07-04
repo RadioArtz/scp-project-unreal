@@ -3,13 +3,18 @@
 
 #include "InteractionComponents/InteractionComponentButton.h"
 
-void UInteractionComponentButton::StartInteraction(APawn* Interactor, UObject* Item)
+bool UInteractionComponentButton::StartInteraction(APawn* Interactor, UObject* Item)
 {
-	Super::StartInteraction(Interactor, Item);
+	if (!Super::StartInteraction(Interactor, Item))
+	{
+		return false;
+	}
+
 	this->OnInteract.Broadcast(Interactor, Item);
+	return true;
 }
 
-void UInteractionComponentButton::EndInteraction(APawn* Interactor)
+bool UInteractionComponentButton::EndInteraction(APawn* Interactor)
 {
-	Super::EndInteraction(Interactor);
+	return Super::EndInteraction(Interactor);
 }

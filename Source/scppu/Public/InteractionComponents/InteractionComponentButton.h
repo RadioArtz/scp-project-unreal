@@ -21,7 +21,7 @@ public:
 
 	//// Functions ////	
 public:
-		virtual void StartInteraction(APawn* Interactor, UObject* Item) override;
+		virtual bool StartInteraction(APawn* Interactor, UObject* Item) override;
 
-		virtual void EndInteraction(APawn* Interactor) override;
+		virtual bool EndInteraction(APawn* Interactor) override;
 };

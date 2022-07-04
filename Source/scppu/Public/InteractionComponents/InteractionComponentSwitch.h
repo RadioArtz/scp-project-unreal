@@ -15,6 +15,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionComponentSwitchIntera
 UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchInteractEnd, float, FinalAlpha, int32, FinalState);
 
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchNewState, float, NewAlpha, int32, NewState);
+
 UENUM(BlueprintType)
 enum class EInteractionComponentSwitchMoveMode : uint8
 {
@@ -29,22 +32,22 @@ class SCPPU_API UInteractionComponentSwitch : public UInteractionComponentBase
 
 	//// Properties ////
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1", ClampMax = "8"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "1", ClampMax = "32")) // get private set
 		int32 CurrentState = 1;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "2", ClampMax = "10"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (ClampMin = "2", ClampMax = "32")) // get private set
 		int32 MaxState = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
 		EInteractionComponentSwitchMoveMode MovementMode;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
 		float Sensitivity = 5.0f;
 
-	UPROPERTY()
+	UPROPERTY() //private get private set
 		FRotator InteractorStartRotation;
 
-	UPROPERTY()
+	UPROPERTY() //private get private set
 		float AlphaOffset;
 
 	UPROPERTY(BlueprintAssignable)
@@ -56,12 +59,17 @@ public:
 	UPROPERTY(BlueprintAssignable)
 		FInteractionComponentSwitchInteractEnd OnInteractEnd;
 
+	UPROPERTY(BlueprintAssignable)
+		FInteractionComponentSwitchNewState OnStateChanged;
+
 	//// Functions ////	
 public:
+	UFUNCTION(BlueprintCallable)
+		void SetCurrentState(int NewState = 1);
 
-	virtual void StartInteraction(APawn* Interactor, UObject* Item) override;
+	virtual bool StartInteraction(APawn* Interactor, UObject* Item) override;
 
-	virtual void EndInteraction(APawn* Interactor) override;
+	virtual bool EndInteraction(APawn* Interactor) override;
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

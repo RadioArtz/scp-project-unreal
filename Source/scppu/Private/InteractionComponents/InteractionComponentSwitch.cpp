@@ -3,36 +3,54 @@
 
 #include "InteractionComponents/InteractionComponentSwitch.h"
 
-void UInteractionComponentSwitch::StartInteraction(APawn* Interactor, UObject* Item)
+void UInteractionComponentSwitch::SetCurrentState(int NewState)
 {
-	Super::StartInteraction(Interactor, Item);
+	this->CurrentState = NewState;
+	this->MaxState = FMath::Clamp(this->MaxState, 2, 32);
+	this->CurrentState = FMath::Clamp(this->CurrentState, 1, this->MaxState);
+	this->OnStateChanged.Broadcast((this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
+}
+
+bool UInteractionComponentSwitch::StartInteraction(APawn* Interactor, UObject* Item)
+{
+	if (!Super::StartInteraction(Interactor, Item))
+	{
+		return false;
+	}
+
 	this->AlphaOffset = (float)(this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f);
 	this->InteractorStartRotation = this->CurrentInteractor->GetControlRotation();
 	this->PrimaryComponentTick.SetTickFunctionEnable(true);
 	this->OnInteractStart.Broadcast(Interactor, Item);
+	return true;
 }
 
-void UInteractionComponentSwitch::EndInteraction(APawn* Interactor)
+bool UInteractionComponentSwitch::EndInteraction(APawn* Interactor)
 {
-	Super::EndInteraction(Interactor);
+	if (!Super::EndInteraction(Interactor))
+	{
+		return false;
+	}
+
 	this->InteractorStartRotation = FRotator();
 	this->PrimaryComponentTick.SetTickFunctionEnable(false);
 	this->OnInteractEnd.Broadcast((float)(this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
+	return true;
 }
 
 void UInteractionComponentSwitch::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	FRotator Difference = (this->InteractorStartRotation - this->CurrentInteractor->GetControlRotation()).GetNormalized();
-	UE_LOG(LogTemp, Log, TEXT("%s"), *Difference.ToString());
-	float Alpha;
-	if (this->MovementMode == EInteractionComponentSwitchMoveMode::Horizontal)
+	float Alpha = 0.0f;
+	switch (this->MovementMode)
 	{
+	case EInteractionComponentSwitchMoveMode::Horizontal:
 		Alpha = FMath::Clamp(Difference.Yaw * this->Sensitivity / 180.0f + AlphaOffset, 0.0f, 1.0f);
-	}
-	else if (this->MovementMode == EInteractionComponentSwitchMoveMode::Vertical)
-	{
+		break;
+	case EInteractionComponentSwitchMoveMode::Vertical:
 		Alpha = FMath::Clamp(Difference.Pitch * this->Sensitivity / 180.0f + AlphaOffset, 0.0f, 1.0f);
+		break;
 	}
 
 	this->CurrentState = FMath::RoundToInt(FMath::GetMappedRangeValueClamped(FVector2D(0, 1), FVector2D(1, this->MaxState), Alpha));
@@ -42,7 +60,5 @@ void UInteractionComponentSwitch::TickComponent(float DeltaTime, ELevelTick Tick
 void UInteractionComponentSwitch::BeginPlay()
 {
 	Super::BeginPlay();
-	this->MaxState = FMath::Clamp(this->MaxState, 2, 10);
-	this->CurrentState = FMath::Clamp(this->CurrentState, 1, this->MaxState);
-	this->OnInteractEnd.Broadcast((this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
+	this->SetCurrentState(this->CurrentState);
 }

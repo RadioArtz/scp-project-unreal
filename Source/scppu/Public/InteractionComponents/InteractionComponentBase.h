@@ -16,16 +16,16 @@ class SCPPU_API UInteractionComponentBase : public USceneComponent
 public:
 	static TArray<UInteractionComponentBase*> RegisteredInteractionComponents;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
 		bool bIsEnabled = true;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly) // get private set
 		bool bIsInUse = false;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly) // get private set
 		APawn* CurrentInteractor;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly) // get private set
 		UObject* CurrentItem;
 
 	//// Functions ////	
@@ -40,10 +40,13 @@ public:
 	UInteractionComponentBase();
 
 	UFUNCTION(BlueprintCallable)
-		virtual void StartInteraction(APawn* Interactor, UObject* Item);
+		virtual bool StartInteraction(APawn* Interactor, UObject* Item);
 
 	UFUNCTION(BlueprintCallable)
-		virtual void EndInteraction(APawn* Interactor);
+		virtual bool EndInteraction(APawn* Interactor);
+
+	UFUNCTION(BlueprintCallable)
+		virtual void SetIsEnabled(bool bNewIsEnabled);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
