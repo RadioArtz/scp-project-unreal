@@ -3,7 +3,9 @@
 
 #include "InteractionComponents/InteractionComponentButton.h"
 
-bool UInteractionComponentButton::StartInteraction(APawn* Interactor, UObject* Item)
+class AItemBase;
+
+bool UInteractionComponentButton::StartInteraction(APawn* Interactor, AItemBase* Item)
 {
 	if (!Super::StartInteraction(Interactor, Item))
 	{

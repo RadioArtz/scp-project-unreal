@@ -6,6 +6,7 @@
 #include "Components/SceneComponent.h"
 #include "InteractionComponentBase.generated.h"
 
+class AItemBase;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class SCPPU_API UInteractionComponentBase : public USceneComponent
@@ -26,7 +27,7 @@ public:
 		APawn* CurrentInteractor;
 
 	UPROPERTY(BlueprintReadOnly) // get private set
-		UObject* CurrentItem;
+		AItemBase* CurrentItem;
 
 	//// Functions ////	
 public:
@@ -40,7 +41,7 @@ public:
 	UInteractionComponentBase();
 
 	UFUNCTION(BlueprintCallable)
-		virtual bool StartInteraction(APawn* Interactor, UObject* Item);
+		virtual bool StartInteraction(APawn* Interactor, AItemBase* Item);
 
 	UFUNCTION(BlueprintCallable)
 		virtual bool EndInteraction(APawn* Interactor);

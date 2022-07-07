@@ -3,6 +3,8 @@
 
 #include "InteractionComponents/InteractionComponentBase.h"
 
+class AItemBase;
+
 TArray<UInteractionComponentBase*> UInteractionComponentBase::RegisteredInteractionComponents;
 
 TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius , bool bMustBeReachable, FVector ReachableFrom)
@@ -74,7 +76,7 @@ UInteractionComponentBase::UInteractionComponentBase()
 	this->PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-bool UInteractionComponentBase::StartInteraction(APawn* Interactor, UObject* Item)
+bool UInteractionComponentBase::StartInteraction(APawn* Interactor, AItemBase* Item)
 {
 	if (!this->bIsEnabled || this->bIsInUse || Interactor == nullptr)
 	{

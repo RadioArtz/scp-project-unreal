@@ -6,8 +6,10 @@
 #include "InteractionComponents/InteractionComponentBase.h"
 #include "InteractionComponentSwitch.generated.h"
 
+class AItemBase;
+
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchInteractStart, APawn*, Interactor, UObject*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchInteractStart, APawn*, Interactor, AItemBase*, Item);
 
 UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionComponentSwitchInteractTick, float, DeltaTime, float, Alpha, int32, State);
@@ -67,7 +69,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void SetCurrentState(int NewState = 1);
 
-	virtual bool StartInteraction(APawn* Interactor, UObject* Item) override;
+	virtual bool StartInteraction(APawn* Interactor, AItemBase* Item) override;
 
 	virtual bool EndInteraction(APawn* Interactor) override;
 

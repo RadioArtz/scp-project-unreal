@@ -3,6 +3,8 @@
 
 #include "InteractionComponents/InteractionComponentSwitch.h"
 
+class AItemBase;
+
 void UInteractionComponentSwitch::SetCurrentState(int NewState)
 {
 	this->CurrentState = NewState;
@@ -11,7 +13,7 @@ void UInteractionComponentSwitch::SetCurrentState(int NewState)
 	this->OnStateChanged.Broadcast((this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
 }
 
-bool UInteractionComponentSwitch::StartInteraction(APawn* Interactor, UObject* Item)
+bool UInteractionComponentSwitch::StartInteraction(APawn* Interactor, AItemBase* Item)
 {
 	if (!Super::StartInteraction(Interactor, Item))
 	{
