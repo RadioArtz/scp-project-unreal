@@ -15,7 +15,6 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	this->PrimaryActorTick.bCanEverTick = false;
-	FAttachmentTransformRules AttachmentRules = FAttachmentTransformRules(EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, EAttachmentRule::KeepRelative, false);
 
 	// Root component
 	this->Root = CreateDefaultSubobject<USceneComponent >("Root", false);
@@ -30,14 +29,14 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->Sprite->bIsScreenSizeScaled = true;
 	this->Sprite->ScreenSize = 0.0025f;
 	this->Sprite->SetRelativeLocation(FVector(0, 0, 0));
-	this->Sprite->AttachToComponent(this->Root, AttachmentRules);
+	this->Sprite->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	
 	// Box component
 	this->Box = CreateDefaultSubobject<UBoxComponent >("Box", false);
 	this->Box->SetBoxExtent(FVector(1, 1, 1), false);
 	this->Box->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	this->Box->SetRelativeLocation(FVector(0, 0, 0));
-	this->Box->AttachToComponent(this->Root, AttachmentRules);
+	this->Box->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 #endif
 
 	// Reflection capture rotation 0
@@ -45,7 +44,7 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->RefCap0->ReflectionSourceType = EReflectionSourceType::SpecifiedCubemap;
 	this->RefCap0->SourceCubemapAngle = 0;
 	this->RefCap0->SetRelativeLocation(FVector(0, 0, 0));
-	this->RefCap0->AttachToComponent(this->Root, AttachmentRules);
+	this->RefCap0->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	this->RefCap0->SetVisibility(true);
 
 	// Reflection capture rotation 90
@@ -53,7 +52,7 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->RefCap90->ReflectionSourceType = EReflectionSourceType::SpecifiedCubemap;
 	this->RefCap90->SourceCubemapAngle = 90;
 	this->RefCap90->SetRelativeLocation(FVector(0, 0, 0));
-	this->RefCap90->AttachToComponent(this->Root, AttachmentRules);
+	this->RefCap90->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	this->RefCap90->SetVisibility(true);
 
 	// Reflection capture rotation 180
@@ -61,7 +60,7 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->RefCap180->ReflectionSourceType = EReflectionSourceType::SpecifiedCubemap;
 	this->RefCap180->SourceCubemapAngle = 180;
 	this->RefCap180->SetRelativeLocation(FVector(0, 0, 0));
-	this->RefCap180->AttachToComponent(this->Root, AttachmentRules);
+	this->RefCap180->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	this->RefCap180->SetVisibility(true);
 
 	// Reflection capture rotation 270
@@ -69,7 +68,7 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->RefCap270->ReflectionSourceType = EReflectionSourceType::SpecifiedCubemap;
 	this->RefCap270->SourceCubemapAngle = 270;
 	this->RefCap270->SetRelativeLocation(FVector(0, 0, 0));
-	this->RefCap270->AttachToComponent(this->Root, AttachmentRules);
+	this->RefCap270->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	this->RefCap270->SetVisibility(true);
 
 	// Scene capture cube
@@ -80,7 +79,7 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->SceneCaptureCube->ShowFlags.ReflectionEnvironment = false;
 	this->SceneCaptureCube->SetRelativeLocation(FVector(0, 0, 0));
 	this->SceneCaptureCube->SetRelativeScale3D(FVector(0.00001, 0.00001, 0.00001));
-	this->SceneCaptureCube->AttachToComponent(this->Root, AttachmentRules);
+	this->SceneCaptureCube->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 #endif
 }
 

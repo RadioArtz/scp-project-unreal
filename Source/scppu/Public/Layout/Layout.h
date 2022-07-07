@@ -7,6 +7,8 @@
 #include "Layout/LayoutStructs.h"
 #include "Layout.generated.h"
 
+class USceneComponent;
+class UBillboardComponent;
 class UDataTable;
 class ULayoutCell;
 class ULayoutSpawnValidator;
@@ -20,6 +22,12 @@ class SCPPU_API ALayout : public AActor
 	
 	//// Properties ////
 public:
+	UPROPERTY()
+		USceneComponent* Root;
+
+	UPROPERTY()
+		UBillboardComponent* Sprite;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsLayoutPresent; // get private set
 

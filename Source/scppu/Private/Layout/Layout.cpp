@@ -5,6 +5,7 @@
 #include "Layout/LayoutSpawnValidator.h"
 #include "Engine/DataTable.h"
 #include "Engine/LevelStreamingDynamic.h"
+#include "Components/BillboardComponent.h"
 #include "DrawDebugHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogLayout);
@@ -15,15 +16,20 @@ ALayout::ALayout()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	this->PrimaryActorTick.bCanEverTick = false;
 
-	// Add a mesh component and set it as scene root for easier in editor use.
-	UStaticMesh* MeshAsset = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Sphere.Sphere'")).Object;
-	UMaterialInterface* MeshMaterial = ConstructorHelpers::FObjectFinder<UMaterialInterface>(TEXT("Material'/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial'")).Object;
-	UStaticMeshComponent* MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("Debug Mesh", false);
-	MeshComponent->SetStaticMesh(MeshAsset);
-	MeshComponent->SetMaterial(0, MeshMaterial);
-	MeshComponent->bHiddenInGame = true;
-	MeshComponent->SetMobility(EComponentMobility::Static);
-	this->SetRootComponent(MeshComponent);
+	// Root component
+	this->Root = CreateDefaultSubobject<USceneComponent >("Root", false);
+	this->Root->SetMobility(EComponentMobility::Static);
+	this->SetRootComponent(this->Root);
+
+#if WITH_EDITOR
+	// Sprite component
+	this->Sprite = CreateDefaultSubobject<UBillboardComponent>("Sprite", false);
+	this->Sprite->SetSprite(ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/Engine/EditorResources/EmptyActor.EmptyActor'")).Object);
+	this->Sprite->bIsScreenSizeScaled = true;
+	this->Sprite->ScreenSize = 0.0025f;
+	this->Sprite->SetRelativeLocation(FVector(0, 0, 0));
+	this->Sprite->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
+#endif
 }
 
 bool ALayout::SetConfig(FIntVector2 NewGridSize, float NewCellSize, UDataTable* NewDataTable)
