@@ -57,5 +57,5 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Called when the game ends or when destroyed
-	virtual void BeginDestroy() override;	
+	virtual void BeginDestroy() override;
 };
