@@ -13,7 +13,7 @@ void FAttributeStructFloat::ClearOnMinValueReached(UObject* WorldContextObject)
 	WorldContextObject->GetWorld()->GetTimerManager().ClearTimer(this->OnMinValueReachedHandle);
 }
 
-void FAttributeStructFloat::BindOnMinValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event)
+void FAttributeStructFloat::SetOnMinValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event)
 {
 	if (!IsValid(WorldContextObject))
 	{
@@ -45,7 +45,7 @@ void FAttributeStructFloat::ClearOnMaxValueReached(UObject* WorldContextObject)
 	WorldContextObject->GetWorld()->GetTimerManager().ClearTimer(this->OnMaxValueReachedHandle);
 }
 
-void FAttributeStructFloat::BindOnMaxValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event)
+void FAttributeStructFloat::SetOnMaxValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event)
 {
 	if (!IsValid(WorldContextObject))
 	{
@@ -164,9 +164,9 @@ void UFloatAttributeFunctions::ClearOnMinValueReached(UObject* WorldContextObjec
 	return FloatAttribute.ClearOnMinValueReached(WorldContextObject);
 }
 
-void UFloatAttributeFunctions::BindOnMinValueReached(UObject* WorldContextObject, UPARAM(ref)FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event)
+void UFloatAttributeFunctions::SetOnMinValueReached(UObject* WorldContextObject, UPARAM(ref)FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event)
 {
-	return FloatAttribute.BindOnMinValueReached(WorldContextObject, Event);
+	return FloatAttribute.SetOnMinValueReached(WorldContextObject, Event);
 }
 
 void UFloatAttributeFunctions::ClearOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref)FAttributeStructFloat& FloatAttribute)
@@ -174,9 +174,9 @@ void UFloatAttributeFunctions::ClearOnMaxValueReached(UObject* WorldContextObjec
 	return FloatAttribute.ClearOnMaxValueReached(WorldContextObject);
 }
 
-void UFloatAttributeFunctions::BindOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref)FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event)
+void UFloatAttributeFunctions::SetOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref)FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event)
 {
-	return FloatAttribute.BindOnMaxValueReached(WorldContextObject, Event);
+	return FloatAttribute.SetOnMaxValueReached(WorldContextObject, Event);
 }
 
 float UFloatAttributeFunctions::GetMinValue(FAttributeStructFloat FloatAttribute)
