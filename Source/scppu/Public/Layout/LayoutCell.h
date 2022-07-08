@@ -10,7 +10,7 @@
 class ALayout;
 class ULevelStreamingDynamic;
 
-UCLASS()
+UCLASS(Within="Layout")
 class SCPPU_API ULayoutCell : public UObject
 {
 	GENERATED_BODY()
