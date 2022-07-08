@@ -54,11 +54,11 @@ private:
 public:
 	void ClearOnMinValueReached(UObject* WorldContextObject);
 
-	void BindOnMinValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached OnMinValueReached);
+	void BindOnMinValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event);
 
 	void ClearOnMaxValueReached(UObject* WorldContextObject);
 
-	void BindOnMaxValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached OnMaxValueReached);
+	void BindOnMaxValueReached(UObject* WorldContextObject, FAttributeStructFloatValueReached Event);
 
 	float GetMinValue();
 
@@ -88,17 +88,19 @@ class SCPPU_API UFloatAttributeFunctions : public UBlueprintFunctionLibrary
 	
 	//// Functions ////	
 public:
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Clear On Min Value Reached"))
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Clear Event On Min Value Reached"))
 		static void ClearOnMinValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Bind On Min Value Reached"))
-		static void BindOnMinValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached OnMinValueReached);
+	// ONLY ONE EVENT CAN BE BOUND AT A TIME!
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Bind Event On Min Value Reached"))
+		static void BindOnMinValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Clear On Max Value Reached"))
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Clear Event On Max Value Reached"))
 		static void ClearOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Bind On Max Value Reached"))
-		static void BindOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached OnMaxValueReached);
+	// ONLY ONE EVENT CAN BE BOUND AT A TIME!
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", DisplayName = "Bind Event On Max Value Reached"))
+		static void BindOnMaxValueReached(UObject* WorldContextObject, UPARAM(ref) FAttributeStructFloat& FloatAttribute, FAttributeStructFloatValueReached Event);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static float GetMinValue(FAttributeStructFloat FloatAttribute);
