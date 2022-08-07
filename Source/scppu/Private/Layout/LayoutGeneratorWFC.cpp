@@ -129,7 +129,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 				bool bIsValid = Layout->GetCell(CurrentCellKey)->IsRowNameValid(Kvp.Key, i);
 				if (bIsValid)
 				{
-					// Add to list of possibilites and break since we only need one valid rotation
+					// Set cell to row
 					UE_LOG(LogLayout, Verbose, TEXT("%s: Setting '%s' to '%s' (required instance)"), *this->GetName(), *Layout->GetCell(CurrentCellKey)->GetName(), *FCellPossibility(Kvp.Key, i).ToString());
 					Layout->GetCell(CurrentCellKey)->SetRowName(Kvp.Key, i);
 					
@@ -154,15 +154,6 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 	TArray<FCellPossibility> SolveContradictionBannedPossibilities;
 	while (CellPossibilities.Num() > 0)
 	{
-		/* Do some calculations to slow thread down for nice timelapses
-		int somevalue = 0;
-		for (int i = 0; i < 99999999; i++)
-		{
-			somevalue = i / 50;
-			UE_LOG(LogLayout, VeryVerbose, TEXT(" %i"), somevalue);
-		}
-		*/
-
 		// Update possiblities of all cells (update the certainty of wavefunctions) (here is the bottleneck)
 		for (auto& KvpCell : CellPossibilities)
 		{
