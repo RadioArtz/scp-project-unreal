@@ -160,6 +160,14 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 			KvpCell.Value.Empty(DataTableMap.Num());
 			for (auto& KvpData : DataTableMap)
 			{
+#if WITH_EDITOR
+				// When closing PIE all runtime uobjects get garbage collected immediately, but this function still continues to run. To avoid a crash we abort it early if this uobject is garbage.
+				if (!IsValid(this))
+				{
+					UE_LOG(LogLayout, Error, TEXT("%s: Instance is invalid (did you close the PIE session?). Aborting..."), *this->GetName());
+					return false;
+				}
+#endif
 				// Skip this row if the maximum instance limit has been reached (is not <= 0 to make -1 work as infinte)
 				if (MaximumInstances[KvpData.Key] == 0)
 				{
@@ -171,14 +179,6 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 				int32 StartRotation = RStream.RandRange(0, 3);
 				for (int i = StartRotation; i < StartRotation + 4; i++)
 				{
-#if WITH_EDITOR
-					// When closing PIE all runtime uobjects get garbage collected, but this function still continues to run. To avoid a crash we abort it early if this uobject is garbage.
-					if (!IsValid(this))
-					{
-						UE_LOG(LogLayout, Error, TEXT("%s: Instance is invalid (did you close the PIE session?). Aborting..."), *this->GetName());
-						return false;
-					}
-#endif
 					bool bIsValid = Layout->GetCell(KvpCell.Key)->IsRowNameValid(KvpData.Key, i);
 					if (bIsValid)
 					{
