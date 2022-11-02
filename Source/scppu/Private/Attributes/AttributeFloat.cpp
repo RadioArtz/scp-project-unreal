@@ -68,7 +68,7 @@ void UAttributeFloatFunctions::SetBaseValue(UPARAM(ref) FAttributeFloat& Attribu
 	Attribute.SetBaseValue(NewValue);
 }
 
-float UAttributeFloatFunctions::GetFinalValue(FAttributeFloat Attribute)
+float UAttributeFloatFunctions::GetFinalValue(UPARAM(ref) FAttributeFloat& Attribute)
 {
 	return Attribute.GetFinalValue();
 }

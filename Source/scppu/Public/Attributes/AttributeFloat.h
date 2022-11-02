@@ -59,7 +59,7 @@ public:
 		static void SetBaseValue(UPARAM(ref) FAttributeFloat& Attribute, float NewValue);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static float GetFinalValue(FAttributeFloat Attribute);
+		static float GetFinalValue(UPARAM(ref) FAttributeFloat& Attribute);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static void GetModifiers(FAttributeFloat Attribute, TArray<TSubclassOf<UAttributeFloatModifierBase>>& OutModifiers);
