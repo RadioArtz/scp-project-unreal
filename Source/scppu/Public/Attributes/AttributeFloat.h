@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "AttributeFloat.generated.h"
 
+class UAttributeFloatModifierBase;
+
 USTRUCT(BlueprintType)
 struct FAttributeFloat
 {
@@ -16,7 +18,14 @@ public:
 		float BaseValue = 0.0f; // get private set
 
 	UPROPERTY(EditAnywhere)
-		TArray<FString> Modifiers; // get private set
+		TArray<TSubclassOf<UAttributeFloatModifierBase>> Modifiers; // get private set
+
+private:
+	UPROPERTY()
+		float CachedFinalValue = 0.0f;
+
+	UPROPERTY()
+		bool bHasBeenInitialized = false;
 
 	//// Functions ////
 public:
@@ -26,11 +35,13 @@ public:
 
 	float GetFinalValue();
 
-	void AddModifier(FString Modifier);
+	int AddModifier(TSubclassOf<UAttributeFloatModifierBase> Modifier);
 
 	void RemoveModifier(int Index);
 
-	void ClearModifiers(FString Modifier);
+	void ClearModifiers();
+
+	void ForceModifierRecalculation();
 
 };
 
@@ -44,21 +55,24 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static float GetBaseValue(FAttributeFloat Attribute);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure)
+	UFUNCTION(BlueprintCallable)
 		static void SetBaseValue(UPARAM(ref) FAttributeFloat& Attribute, float NewValue);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		static float GetFinalValue(FAttributeFloat Attribute);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static void GetModifiers(FAttributeFloat Attribute, TArray<FString>& OutModifiers);
+		static void GetModifiers(FAttributeFloat Attribute, TArray<TSubclassOf<UAttributeFloatModifierBase>>& OutModifiers);
 
 	UFUNCTION(BlueprintCallable)
-		static void AddModifier(UPARAM(ref) FAttributeFloat& Attribute, FString Modifier);
+		static int AddModifier(UPARAM(ref) FAttributeFloat& Attribute, TSubclassOf<UAttributeFloatModifierBase> Modifier);
 
 	UFUNCTION(BlueprintCallable)
 		static void RemoveModifier(UPARAM(ref) FAttributeFloat& Attribute, int Index);
 
 	UFUNCTION(BlueprintCallable)
 		static void ClearModifiers(UPARAM(ref) FAttributeFloat& Attribute);
+
+	UFUNCTION(BlueprintCallable)
+		static void ForceModifierRecalculation(UPARAM(ref) FAttributeFloat& Attribute);
 };
