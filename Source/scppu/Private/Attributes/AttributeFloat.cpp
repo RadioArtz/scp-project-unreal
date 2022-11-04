@@ -2,7 +2,7 @@
 
 
 #include "Attributes/AttributeFloat.h"
-#include "Attributes/AttributeFloatModifierBase.h"
+#include "Attributes/AttributeFloatModifier.h"
 
 FAttributeFloat::FAttributeFloat()
 {
@@ -25,37 +25,75 @@ float FAttributeFloat::GetFinalValue()
 	return this->CachedFinalValue;
 }
 
-int FAttributeFloat::AddModifier(TSubclassOf<UAttributeFloatModifierBase> Modifier)
+void FAttributeFloat::AddModifier(FName ModifierKey)
 {
-	this->Modifiers.Add(Modifier);
+	this->ModifierKeys.Add(ModifierKey);
 	this->ForceModifierRecalculation();
-	return this->Modifiers.Num() - 1;
 }
 
-void FAttributeFloat::RemoveModifier(int Index)
+bool FAttributeFloat::AddUniqueModifier(FName ModifierKey)
 {
-	this->Modifiers.RemoveAt(Index);
+	if (this->ModifierKeys.Contains(ModifierKey))
+	{
+		return false;
+	}
+
+	this->ModifierKeys.Add(ModifierKey);
 	this->ForceModifierRecalculation();
+	return true;
+}
+
+void FAttributeFloat::RemoveModifier(FName ModifierKey)
+{
+	this->ModifierKeys.RemoveSingle(ModifierKey);
+	this->ForceModifierRecalculation();
+}
+
+int FAttributeFloat::RemoveAllModifiers(FName ModifierKey)
+{
+	int RemovedElements = this->ModifierKeys.Remove(ModifierKey);
+	this->ForceModifierRecalculation();
+	return RemovedElements;
 }
 
 void FAttributeFloat::ClearModifiers()
 {
-	this->Modifiers.Empty();
+	this->ModifierKeys.Empty();
 	this->ForceModifierRecalculation();
 }
 
 void FAttributeFloat::ForceModifierRecalculation()
 {
-	this->CachedFinalValue = this->BaseValue;
-	for (auto Elem : this->Modifiers)
+	UDataTable* DataTable = GetDefault<UAttributeFloatModifierSettings>()->ModifierDataTable.LoadSynchronous();
+	int AdditionSum = 0;
+	int MultiplicationSum = 0;
+	int ReductionSum = 0;
+
+	for (auto Elem : this->ModifierKeys)
 	{
-		if (!IsValid(Elem))
+		FAttributeFloatModifier* Modifier = DataTable->FindRow<FAttributeFloatModifier>(Elem, "");
+		if (Modifier == nullptr)
 		{
 			continue;
 		}
 
-		this->CachedFinalValue = this->CachedFinalValue + Elem.GetDefaultObject()->GetModifiedValue(this->BaseValue);
+		switch (Modifier->Mode)
+		{
+			case EAttributeFloatModifierMode::Addition:
+				AdditionSum = AdditionSum + Modifier->Value;
+				break;
+			case EAttributeFloatModifierMode::Multiplication:
+				MultiplicationSum = MultiplicationSum + Modifier->Value;
+				break;
+			case EAttributeFloatModifierMode::Reduction:
+				ReductionSum = ReductionSum + Modifier->Value;
+				break;
+			default:
+				break;
+		}
 	}
+
+	this->CachedFinalValue = (this->BaseValue + AdditionSum) * (1 + MultiplicationSum) * (1 - ReductionSum);
 }
 
 float UAttributeFloatFunctions::GetBaseValue(FAttributeFloat Attribute)
@@ -73,19 +111,29 @@ float UAttributeFloatFunctions::GetFinalValue(UPARAM(ref) FAttributeFloat& Attri
 	return Attribute.GetFinalValue();
 }
 
-void UAttributeFloatFunctions::GetModifiers(FAttributeFloat Attribute, TArray<TSubclassOf<UAttributeFloatModifierBase>>& OutModifiers)
+void UAttributeFloatFunctions::GetModifierKeys(FAttributeFloat Attribute, TArray<FName>& OutModifierKeys)
 {
-	OutModifiers = Attribute.Modifiers;
+	OutModifierKeys = Attribute.ModifierKeys;
 }
 
-int UAttributeFloatFunctions::AddModifier(UPARAM(ref) FAttributeFloat& Attribute, TSubclassOf<UAttributeFloatModifierBase> Modifier)
+void UAttributeFloatFunctions::AddModifier(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey)
 {
-	return Attribute.AddModifier(Modifier);
+	return Attribute.AddModifier(ModifierKey);
 }
 
-void UAttributeFloatFunctions::RemoveModifier(UPARAM(ref) FAttributeFloat& Attribute, int Index)
+bool UAttributeFloatFunctions::AddUniqueModifier(UPARAM(ref)FAttributeFloat& Attribute, FName ModifierKey)
 {
-	Attribute.RemoveModifier(Index);
+	return Attribute.AddUniqueModifier(ModifierKey);
+}
+
+void UAttributeFloatFunctions::RemoveModifier(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey)
+{
+	Attribute.RemoveModifier(ModifierKey);
+}
+
+int UAttributeFloatFunctions::RemoveAllModifiers(UPARAM(ref)FAttributeFloat& Attribute, FName ModifierKey)
+{
+	return Attribute.RemoveAllModifiers(ModifierKey);
 }
 
 void UAttributeFloatFunctions::ClearModifiers(UPARAM(ref) FAttributeFloat& Attribute)
