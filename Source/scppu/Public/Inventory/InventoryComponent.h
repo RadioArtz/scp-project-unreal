@@ -48,7 +48,7 @@ public:
 		AItemBase* GetItem(int Slot);
 
 	UFUNCTION(BlueprintCallable)
-		bool MoveItem(int FromSlot, int ToSlot, bool bSwapIfNecessary);
+		bool MoveItem(int FromSlot, UInventoryComponent* ReceivingTarget, int ToSlot, bool bSwapIfNecessary);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		int FindSlotOfItem(AItemBase* Item);

@@ -9,7 +9,7 @@ UInventoryComponent::UInventoryComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = false;
+	this->PrimaryComponentTick.bCanEverTick = false;
 }
 
 bool UInventoryComponent::AddItem(AItemBase* Item, int Slot)
@@ -73,9 +73,14 @@ AItemBase* UInventoryComponent::GetItem(int Slot)
 	return this->ItemMap[Slot];
 }
 
-bool UInventoryComponent::MoveItem(int FromSlot, int ToSlot, bool bSwapIfNecessary)
+bool UInventoryComponent::MoveItem(int FromSlot, UInventoryComponent* ReceivingTarget, int ToSlot, bool bSwapIfNecessary)
 {
-	if (FromSlot > this->Size || FromSlot < 0 || ToSlot > this->Size || ToSlot < 0)
+	if (ReceivingTarget == nullptr)
+	{
+		ReceivingTarget = this;
+	}
+
+	if (FromSlot > this->Size || FromSlot < 0 || ToSlot > ReceivingTarget->Size || ToSlot < 0)
 	{
 		return false;
 	}
@@ -85,21 +90,27 @@ bool UInventoryComponent::MoveItem(int FromSlot, int ToSlot, bool bSwapIfNecessa
 		return false;
 	}
 
-	if (!bSwapIfNecessary && !this->IsSlotEmpty(ToSlot))
+	if (!bSwapIfNecessary && !ReceivingTarget->IsSlotEmpty(ToSlot))
 	{
 		return false;
 	}
 
 	AItemBase* MovingItem = this->ItemMap[FromSlot];
 	this->ItemMap.Remove(FromSlot);
-	if (!this->IsSlotEmpty(ToSlot))
+	if (!ReceivingTarget->IsSlotEmpty(ToSlot))
 	{
-		this->ItemMap.Add(FromSlot, this->ItemMap[ToSlot]);
-		this->ItemMap.Remove(ToSlot);
+		this->ItemMap.Add(FromSlot, ReceivingTarget->ItemMap[ToSlot]);
+		ReceivingTarget->ItemMap.Remove(ToSlot);
 	}
 
-	this->ItemMap.Add(ToSlot, MovingItem);
+	ReceivingTarget->ItemMap.Add(ToSlot, MovingItem);
 	this->OnInventoryChanged.Broadcast();
+	
+	if (this != ReceivingTarget)
+	{
+		ReceivingTarget->OnInventoryChanged.Broadcast();
+	}
+
 	return true;
 }
 
@@ -132,7 +143,7 @@ void UInventoryComponent::Resize(int NewSize, bool bDropExcessiveItems, FVector 
 					this->DropItem(i, DropLocation);
 				}
 
-				this->MoveItem(i, this->GetFirstEmptySlot(), false);
+				this->MoveItem(i, this, this->GetFirstEmptySlot(), false);
 			}
 		}
 	}

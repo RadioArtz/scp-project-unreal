@@ -70,10 +70,11 @@ AItemBase* AItemBase::GetClosestItemInRadius(FVector ClosestFrom, float Radius, 
 AItemBase::AItemBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	this->PrimaryActorTick.bCanEverTick = true;
 	this->ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>("ItemMesh", false);
 	this->ItemMesh->SetMobility(EComponentMobility::Movable);
 	this->ItemMesh->SetSimulatePhysics(true);
+	this->ItemMesh->SetCollisionProfileName("Item");
 	this->SetRootComponent(this->ItemMesh);
 	this->SetActorHiddenInGame(false);
 	this->SetActorEnableCollision(true);
@@ -90,6 +91,7 @@ void AItemBase::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->SetActorHiddenInGame(false);
 		this->SetActorEnableCollision(true);
 		this->ItemMesh->SetSimulatePhysics(true);
+		this->ItemMesh->RecreatePhysicsState();
 		this->SetOwner(nullptr);
 		this->OnItemDropped(PrevOwningInventoryComponent);
 		AItemBase::RegisteredItems.Add(this);

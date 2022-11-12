@@ -17,14 +17,14 @@ class SCPPU_API AItemBase : public AActor
 public:
 	static TArray<AItemBase*> RegisteredItems;
 
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UStaticMeshComponent* ItemMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		FText Name = FText::FromString("Default Item");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FText Description = FText::FromString("This is a default item. If you read this text something is wrong because it's a placeholder text.");
+		FText Description = FText::FromString("It does nothing and adds nothing to the game.");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		UTexture2D* InventoryTexture;
