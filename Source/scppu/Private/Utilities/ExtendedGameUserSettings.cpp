@@ -1,7 +1,7 @@
 
 
 
-#include "Utility/ExtendedGameUserSettings.h"
+#include "Utilities/ExtendedGameUserSettings.h"
 
 UExtendedGameUserSettings* UExtendedGameUserSettings::GetExtendedGameUserSettings()
 {

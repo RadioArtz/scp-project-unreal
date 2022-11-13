@@ -1,6 +1,6 @@
 
 
-#include "RotatingReflectionCaptures/RotatingBoxReflectionCapture.h"
+#include "Utilities/RotatingBoxReflectionCapture.h"
 #include "Components/BoxComponent.h"
 #include "Components/BillboardComponent.h"
 #include "Components/BoxReflectionCaptureComponent.h"
