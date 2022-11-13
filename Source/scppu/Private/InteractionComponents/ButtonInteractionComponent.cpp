@@ -5,9 +5,9 @@
 
 class ABaseItem;
 
-bool UButtonInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem* Item)
+bool UButtonInteractionComponent::BeginInteraction(APawn* Interactor, ABaseItem* Item)
 {
-	if (!Super::StartInteraction(Interactor, Item))
+	if (!Super::BeginInteraction(Interactor, Item))
 	{
 		return false;
 	}

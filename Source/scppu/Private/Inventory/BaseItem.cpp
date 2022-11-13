@@ -93,7 +93,7 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->ItemMesh->SetSimulatePhysics(true);
 		this->ItemMesh->RecreatePhysicsState();
 		this->SetOwner(nullptr);
-		this->OnItemDropped(PrevOwningInventoryComponent);
+		this->OnDroppedFromInventory(PrevOwningInventoryComponent);
 		ABaseItem::RegisteredItems.Add(this);
 	}
 	else // Item has been added/moved
@@ -102,7 +102,7 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->SetActorEnableCollision(false);
 		this->ItemMesh->SetSimulatePhysics(false);
 		this->SetOwner(this->OwningInventoryComponent->GetOwner());
-		this->OnItemAdded(this->OwningInventoryComponent);
+		this->OnAddedToInventory(this->OwningInventoryComponent);
 		ABaseItem::RegisteredItems.Remove(this);
 	}
 }

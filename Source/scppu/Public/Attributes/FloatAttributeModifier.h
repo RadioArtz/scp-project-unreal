@@ -29,15 +29,15 @@ public:
 
 private:
 	UPROPERTY(VisibleAnywhere)
-		FString Formula = "(BaseValue + Sum of all Additions) * (1 + Sum of all Multiplications) * (1 - Sum of all Reductions)";
+		FString Formula = "(Base value + Sum of all additon values) * (1 + Sum of all multiplications values) * (1 - Sum of all reduction values)";
 };
 
-UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Attribute Float Modifier Settings"))
-class SCPPU_API UAttributeFloatModifierSettings : public UDeveloperSettings
+UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Float Attribute Modifier Settings"))
+class SCPPU_API UFloatAttributeModifierSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
-		TSoftObjectPtr<UDataTable> ModifierDataTable;
+		TSoftObjectPtr<UDataTable> AttributeModifierDataTable;
 };

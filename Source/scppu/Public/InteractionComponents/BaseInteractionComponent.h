@@ -40,10 +40,10 @@ public:
 	// Sets default values for this component's properties
 	UBaseInteractionComponent();
 
-	UFUNCTION(BlueprintCallable)
-		virtual bool StartInteraction(APawn* Interactor, ABaseItem* Item);
+	UFUNCTION(BlueprintCallable, meta = (DefaultToSelf = "Interactor", HidePin = "Interactor"))
+		virtual bool BeginInteraction(APawn* Interactor, ABaseItem* Item);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta = (DefaultToSelf = "Interactor", HidePin = "Interactor"))
 		virtual bool EndInteraction(APawn* Interactor);
 
 	UFUNCTION(BlueprintCallable)

@@ -5,7 +5,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
-#include "Layout/LayoutSpawnValidator.h"
+#include "Layout/BaseLayoutSpawnValidator.h"
 #include "LayoutStructs.generated.h"
 
 USTRUCT(BlueprintType)
@@ -143,11 +143,11 @@ public:
 
 	/* Validates a spawn location before setting the cell to this row. Not all cells have been generated during this time. They are AND gated. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutSpawnValidator> > PreSpawnValidators;
+		TArray< TSubclassOf<UBaseLayoutSpawnValidator> > PreSpawnValidators;
 
 	/* Validates a spawn location after all cells have been generated. They are AND gated. Must not contain 'None'. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TArray< TSubclassOf<ULayoutSpawnValidator> > PostSpawnValidators;
+		TArray< TSubclassOf<UBaseLayoutSpawnValidator> > PostSpawnValidators;
 
 	bool PassedSanityCheck()
 	{

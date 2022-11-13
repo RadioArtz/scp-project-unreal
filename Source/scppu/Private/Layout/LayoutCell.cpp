@@ -3,7 +3,7 @@
 
 #include "Layout/LayoutCell.h"
 #include "Layout/Layout.h"
-#include "Layout/LayoutSpawnValidator.h"
+#include "Layout/BaseLayoutSpawnValidator.h"
 #include "Layout/LayoutSublevelInterface.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "DrawDebugHelpers.h"

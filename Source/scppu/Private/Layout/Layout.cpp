@@ -2,7 +2,7 @@
 
 #include "Layout/Layout.h"
 #include "Layout/LayoutCell.h"
-#include "Layout/LayoutSpawnValidator.h"
+#include "Layout/BaseLayoutSpawnValidator.h"
 #include "Engine/DataTable.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "Components/BillboardComponent.h"

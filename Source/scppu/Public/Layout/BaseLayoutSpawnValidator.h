@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "LayoutSpawnValidator.generated.h"
+#include "BaseLayoutSpawnValidator.generated.h"
 
 class ALayout;
 class ULayoutCell;
 
 UCLASS(Blueprintable, Abstract)
-class SCPPU_API ULayoutSpawnValidator : public UObject
+class SCPPU_API UBaseLayoutSpawnValidator : public UObject
 {
 	GENERATED_BODY()
 

@@ -9,13 +9,13 @@
 class ABaseItem;
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentInteractStart, APawn*, Interactor, ABaseItem*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentBeginInteract, APawn*, Interactor, ABaseItem*, Item);
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FSwitchInteractionComponentInteractTick, float, DeltaTime, float, Alpha, int32, State);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FSwitchInteractionComponentTickInteract, float, DeltaTime, float, Alpha, int32, State);
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentInteractEnd, float, FinalAlpha, int32, FinalState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentEndInteract, float, FinalAlpha, int32, FinalState);
 
 UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentNewState, float, NewAlpha, int32, NewState);
@@ -53,13 +53,13 @@ public:
 		float AlphaOffset;
 
 	UPROPERTY(BlueprintAssignable)
-		FSwitchInteractionComponentInteractStart OnInteractStart;
+		FSwitchInteractionComponentBeginInteract OnBeginInteract;
 
 	UPROPERTY(BlueprintAssignable)
-		FSwitchInteractionComponentInteractTick OnInteractTick;
+		FSwitchInteractionComponentTickInteract OnTickInteract;
 
 	UPROPERTY(BlueprintAssignable)
-		FSwitchInteractionComponentInteractEnd OnInteractEnd;
+		FSwitchInteractionComponentEndInteract OnEndInteract;
 
 	UPROPERTY(BlueprintAssignable)
 		FSwitchInteractionComponentNewState OnStateChanged;
@@ -69,7 +69,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void SetCurrentState(int NewState = 1);
 
-	virtual bool StartInteraction(APawn* Interactor, ABaseItem* Item) override;
+	virtual bool BeginInteraction(APawn* Interactor, ABaseItem* Item) override;
 
 	virtual bool EndInteraction(APawn* Interactor) override;
 

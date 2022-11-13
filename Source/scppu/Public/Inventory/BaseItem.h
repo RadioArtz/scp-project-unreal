@@ -48,10 +48,10 @@ public:
 		void SetOwningInventory(UInventoryComponent* NewOwningInventoryComponent);
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnItemAdded(UInventoryComponent* NewOwningInventoryComponent);
+		void OnAddedToInventory(UInventoryComponent* NewOwningInventoryComponent);
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnItemDropped(UInventoryComponent* PreviousOwningInventoryComponent);
+		void OnDroppedFromInventory(UInventoryComponent* PreviousOwningInventoryComponent);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

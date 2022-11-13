@@ -4,7 +4,7 @@
 #include "Layout/LayoutGeneratorWFC.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutCell.h"
-#include "Layout/LayoutSpawnValidator.h"
+#include "Layout/BaseLayoutSpawnValidator.h"
 
 bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 {
@@ -285,7 +285,7 @@ bool ULayoutGeneratorWFC::GenerateInternal(ALayout* Layout, int32 Seed)
 
 		for (auto Elem : DataTableMap[Kvp.Value->RowName]->PostSpawnValidators)
 		{
-			ULayoutSpawnValidator* Validator = Elem.GetDefaultObject();
+			UBaseLayoutSpawnValidator* Validator = Elem.GetDefaultObject();
 			bool bIsValid = Validator->IsValidSpawn(Layout, Kvp.Value, FRandomStream(RStream.RandRange(0, MAX_int32 - 1)));
 			if (!bIsValid)
 			{

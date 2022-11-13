@@ -63,7 +63,10 @@ public:
 		int GetFirstEmptySlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool CanItemBeAdded(ABaseItem* Item);
+		bool IsItemAllowed(ABaseItem* Item);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		bool IsFull();
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

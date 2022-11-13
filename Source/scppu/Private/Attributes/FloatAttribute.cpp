@@ -64,7 +64,7 @@ void FFloatAttribute::ClearModifiers()
 
 void FFloatAttribute::ForceModifierRecalculation()
 {
-	UDataTable* DataTable = GetDefault<UAttributeFloatModifierSettings>()->ModifierDataTable.LoadSynchronous();
+	UDataTable* DataTable = GetDefault<UFloatAttributeModifierSettings>()->AttributeModifierDataTable.LoadSynchronous();
 	int AdditionSum = 0;
 	int MultiplicationSum = 0;
 	int ReductionSum = 0;

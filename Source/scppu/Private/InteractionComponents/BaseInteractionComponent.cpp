@@ -76,7 +76,7 @@ UBaseInteractionComponent::UBaseInteractionComponent()
 	this->PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-bool UBaseInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem* Item)
+bool UBaseInteractionComponent::BeginInteraction(APawn* Interactor, ABaseItem* Item)
 {
 	if (!this->bIsEnabled || this->bIsInUse || Interactor == nullptr)
 	{

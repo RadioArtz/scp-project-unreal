@@ -13,9 +13,9 @@ void USwitchInteractionComponent::SetCurrentState(int NewState)
 	this->OnStateChanged.Broadcast((this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
 }
 
-bool USwitchInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem* Item)
+bool USwitchInteractionComponent::BeginInteraction(APawn* Interactor, ABaseItem* Item)
 {
-	if (!Super::StartInteraction(Interactor, Item))
+	if (!Super::BeginInteraction(Interactor, Item))
 	{
 		return false;
 	}
@@ -23,7 +23,7 @@ bool USwitchInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem*
 	this->AlphaOffset = (float)(this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f);
 	this->InteractorStartRotation = this->CurrentInteractor->GetControlRotation();
 	this->PrimaryComponentTick.SetTickFunctionEnable(true);
-	this->OnInteractStart.Broadcast(Interactor, Item);
+	this->OnBeginInteract.Broadcast(Interactor, Item);
 	return true;
 }
 
@@ -36,7 +36,7 @@ bool USwitchInteractionComponent::EndInteraction(APawn* Interactor)
 
 	this->InteractorStartRotation = FRotator();
 	this->PrimaryComponentTick.SetTickFunctionEnable(false);
-	this->OnInteractEnd.Broadcast((float)(this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
+	this->OnEndInteract.Broadcast((float)(this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
 	return true;
 }
 
@@ -56,7 +56,7 @@ void USwitchInteractionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 
 	this->CurrentState = FMath::RoundToInt(FMath::GetMappedRangeValueClamped(FVector2D(0, 1), FVector2D(1, this->MaxState), Alpha));
-	this->OnInteractTick.Broadcast(DeltaTime, Alpha, this->CurrentState);
+	this->OnTickInteract.Broadcast(DeltaTime, Alpha, this->CurrentState);
 }
 
 void USwitchInteractionComponent::BeginPlay()

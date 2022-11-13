@@ -24,7 +24,7 @@ bool UInventoryComponent::AddItem(ABaseItem* Item, int Slot)
 		return false;
 	}
 
-	if (!this->CanItemBeAdded(Item))
+	if (!this->IsItemAllowed(Item))
 	{
 		return false;
 	}
@@ -169,13 +169,8 @@ int UInventoryComponent::GetFirstEmptySlot()
 	return -1;
 }
 
-bool UInventoryComponent::CanItemBeAdded(ABaseItem* Item)
+bool UInventoryComponent::IsItemAllowed(ABaseItem* Item)
 {
-	if (this->GetFirstEmptySlot() == -1)
-	{
-		return false;
-	}
-
 	if (bUseWhitelistAsBlacklist)
 	{
 		for (auto Elem : this->Whitelist)
@@ -198,6 +193,11 @@ bool UInventoryComponent::CanItemBeAdded(ABaseItem* Item)
 	}
 
 	return true;
+}
+
+bool UInventoryComponent::IsFull()
+{
+	return (this->ItemMap.Num() >= this->Size);
 }
 
 // Called when the game starts

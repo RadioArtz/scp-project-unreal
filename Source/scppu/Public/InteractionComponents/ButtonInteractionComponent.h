@@ -23,7 +23,7 @@ public:
 
 	//// Functions ////	
 public:
-		virtual bool StartInteraction(APawn* Interactor, ABaseItem* Item) override;
+		virtual bool BeginInteraction(APawn* Interactor, ABaseItem* Item) override;
 
 		virtual bool EndInteraction(APawn* Interactor) override;
 };
