@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Components/SceneComponent.h"
-#include "InteractionComponentBase.generated.h"
+#include "BaseInteractionComponent.generated.h"
 
-class AItemBase;
+class ABaseItem;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class SCPPU_API UInteractionComponentBase : public USceneComponent
+class SCPPU_API UBaseInteractionComponent : public USceneComponent
 {
 	GENERATED_BODY()
 
 	//// Properties ////
 public:
-	static TArray<UInteractionComponentBase*> RegisteredInteractionComponents;
+	static TArray<UBaseInteractionComponent*> RegisteredInteractionComponents;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
 		bool bIsEnabled = true;
@@ -27,27 +27,27 @@ public:
 		APawn* CurrentInteractor;
 
 	UPROPERTY(BlueprintReadOnly) // get private set
-		AItemBase* CurrentItem;
+		ABaseItem* CurrentItem;
 
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable)
-		static TArray<UInteractionComponentBase*> GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
+		static TArray<UBaseInteractionComponent*> GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable)
-		static UInteractionComponentBase* GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
+		static UBaseInteractionComponent* GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius = 350.0f, bool bMustBeReachable = true, FVector ReachableFrom = FVector(0, 0, 0));
 
 	// Sets default values for this component's properties
-	UInteractionComponentBase();
+	UBaseInteractionComponent();
 
 	UFUNCTION(BlueprintCallable)
-		virtual bool StartInteraction(APawn* Interactor, AItemBase* Item);
+		virtual bool StartInteraction(APawn* Interactor, ABaseItem* Item);
 
 	UFUNCTION(BlueprintCallable)
 		virtual bool EndInteraction(APawn* Interactor);
 
 	UFUNCTION(BlueprintCallable)
-		virtual void SetIsEnabled(bool bNewIsEnabled);
+		virtual void SetEnabled(bool bNewEnabled);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

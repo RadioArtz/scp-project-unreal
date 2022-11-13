@@ -1,11 +1,11 @@
 
 
 
-#include "InteractionComponents/InteractionComponentSwitch.h"
+#include "InteractionComponents/SwitchInteractionComponent.h"
 
-class AItemBase;
+class ABaseItem;
 
-void UInteractionComponentSwitch::SetCurrentState(int NewState)
+void USwitchInteractionComponent::SetCurrentState(int NewState)
 {
 	this->CurrentState = NewState;
 	this->MaxState = FMath::Clamp(this->MaxState, 2, 32);
@@ -13,7 +13,7 @@ void UInteractionComponentSwitch::SetCurrentState(int NewState)
 	this->OnStateChanged.Broadcast((this->CurrentState - 1.0f) / (float)(this->MaxState - 1.0f), this->CurrentState);
 }
 
-bool UInteractionComponentSwitch::StartInteraction(APawn* Interactor, AItemBase* Item)
+bool USwitchInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem* Item)
 {
 	if (!Super::StartInteraction(Interactor, Item))
 	{
@@ -27,7 +27,7 @@ bool UInteractionComponentSwitch::StartInteraction(APawn* Interactor, AItemBase*
 	return true;
 }
 
-bool UInteractionComponentSwitch::EndInteraction(APawn* Interactor)
+bool USwitchInteractionComponent::EndInteraction(APawn* Interactor)
 {
 	if (!Super::EndInteraction(Interactor))
 	{
@@ -40,17 +40,17 @@ bool UInteractionComponentSwitch::EndInteraction(APawn* Interactor)
 	return true;
 }
 
-void UInteractionComponentSwitch::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void USwitchInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	FRotator Difference = (this->InteractorStartRotation - this->CurrentInteractor->GetControlRotation()).GetNormalized();
 	float Alpha = 0.0f;
 	switch (this->MovementMode)
 	{
-	case EInteractionComponentSwitchMoveMode::Horizontal:
+	case ESwitchInteractionComponentMovementMode::Horizontal:
 		Alpha = FMath::Clamp(Difference.Yaw * this->Sensitivity / 180.0f + AlphaOffset, 0.0f, 1.0f);
 		break;
-	case EInteractionComponentSwitchMoveMode::Vertical:
+	case ESwitchInteractionComponentMovementMode::Vertical:
 		Alpha = FMath::Clamp(Difference.Pitch * this->Sensitivity / 180.0f + AlphaOffset, 0.0f, 1.0f);
 		break;
 	}
@@ -59,7 +59,7 @@ void UInteractionComponentSwitch::TickComponent(float DeltaTime, ELevelTick Tick
 	this->OnInteractTick.Broadcast(DeltaTime, Alpha, this->CurrentState);
 }
 
-void UInteractionComponentSwitch::BeginPlay()
+void USwitchInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	this->SetCurrentState(this->CurrentState);

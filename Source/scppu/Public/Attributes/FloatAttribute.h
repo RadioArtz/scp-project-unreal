@@ -3,10 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AttributeFloat.generated.h"
+#include "FloatAttribute.generated.h"
 
 USTRUCT(BlueprintType)
-struct FAttributeFloat
+struct FFloatAttribute
 {
 	GENERATED_BODY()
 
@@ -27,7 +27,7 @@ private:
 
 	//// Functions ////
 public:
-	FAttributeFloat();
+	FFloatAttribute();
 
 	void SetBaseValue(float NewValue);
 
@@ -55,32 +55,32 @@ class SCPPU_API UAttributeFloatFunctions : public UBlueprintFunctionLibrary
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static float GetBaseValue(FAttributeFloat Attribute);
+		static float GetBaseValue(FFloatAttribute Attribute);
 
 	UFUNCTION(BlueprintCallable)
-		static void SetBaseValue(UPARAM(ref) FAttributeFloat& Attribute, float NewValue);
+		static void SetBaseValue(UPARAM(ref) FFloatAttribute& Attribute, float NewValue);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static float GetFinalValue(UPARAM(ref) FAttributeFloat& Attribute);
+		static float GetFinalValue(UPARAM(ref) FFloatAttribute& Attribute);
 
 	UFUNCTION(BlueprintCallable)
-		static void GetModifierKeys(FAttributeFloat Attribute, TArray<FName>& OutModifierKeys);
+		static void GetModifierKeys(FFloatAttribute Attribute, TArray<FName>& OutModifierKeys);
 
 	UFUNCTION(BlueprintCallable)
-		static void AddModifier(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey);
+		static void AddModifier(UPARAM(ref) FFloatAttribute& Attribute, FName ModifierKey);
 
 	UFUNCTION(BlueprintCallable)
-		static bool AddUniqueModifier(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey);
+		static bool AddUniqueModifier(UPARAM(ref) FFloatAttribute& Attribute, FName ModifierKey);
 
 	UFUNCTION(BlueprintCallable)
-		static void RemoveModifier(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey);
+		static void RemoveModifier(UPARAM(ref) FFloatAttribute& Attribute, FName ModifierKey);
 
 	UFUNCTION(BlueprintCallable)
-		static int RemoveAllModifiers(UPARAM(ref) FAttributeFloat& Attribute, FName ModifierKey);
+		static int RemoveAllModifiers(UPARAM(ref) FFloatAttribute& Attribute, FName ModifierKey);
 
 	UFUNCTION(BlueprintCallable)
-		static void ClearModifiers(UPARAM(ref) FAttributeFloat& Attribute);
+		static void ClearModifiers(UPARAM(ref) FFloatAttribute& Attribute);
 
 	UFUNCTION(BlueprintCallable)
-		static void ForceModifierRecalculation(UPARAM(ref) FAttributeFloat& Attribute);
+		static void ForceModifierRecalculation(UPARAM(ref) FFloatAttribute& Attribute);
 };

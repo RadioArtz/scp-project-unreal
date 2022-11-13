@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "InventoryComponent.generated.h"
 
-class AItemBase;
+class ABaseItem;
 
 UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventoryComponentChanged);
@@ -25,10 +25,10 @@ public:
 		bool bUseWhitelistAsBlacklist = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		TArray<TSubclassOf<AItemBase>> Whitelist;
+		TArray<TSubclassOf<ABaseItem>> Whitelist;
 
 	UPROPERTY()
-		TMap<int, AItemBase*> ItemMap;
+		TMap<int, ABaseItem*> ItemMap;
 
 	UPROPERTY(BlueprintAssignable)
 		FInventoryComponentChanged OnInventoryChanged;
@@ -39,19 +39,19 @@ public:
 	UInventoryComponent();
 
 	UFUNCTION(BlueprintCallable)
-		bool AddItem(AItemBase* Item, int Slot);
+		bool AddItem(ABaseItem* Item, int Slot);
 
 	UFUNCTION(BlueprintCallable)
 		bool DropItem(int Slot, FVector DropLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		AItemBase* GetItem(int Slot);
+		ABaseItem* GetItem(int Slot);
 
 	UFUNCTION(BlueprintCallable)
 		bool MoveItem(int FromSlot, UInventoryComponent* ReceivingTarget, int ToSlot, bool bSwapIfNecessary);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		int FindSlotOfItem(AItemBase* Item);
+		int FindSlotOfItem(ABaseItem* Item);
 
 	UFUNCTION(BlueprintCallable)
 		void Resize(int NewSize, bool bDropExcessiveItems = true, FVector DropLocation = FVector(0, 0, 0));
@@ -63,7 +63,7 @@ public:
 		int GetFirstEmptySlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool CanItemBeAdded(AItemBase* Item);
+		bool CanItemBeAdded(ABaseItem* Item);
 
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;

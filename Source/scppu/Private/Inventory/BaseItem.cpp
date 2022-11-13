@@ -1,15 +1,15 @@
 
 
 
-#include "Inventory/ItemBase.h"
+#include "Inventory/BaseItem.h"
 #include "Inventory/InventoryComponent.h"
 
-TArray<AItemBase*> AItemBase::RegisteredItems;
+TArray<ABaseItem*> ABaseItem::RegisteredItems;
 
-TArray<AItemBase*> AItemBase::GetItemsInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
+TArray<ABaseItem*> ABaseItem::GetItemsInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
 {
-	TArray<AItemBase*> Items;
-	for (auto& ElemItem : AItemBase::RegisteredItems)
+	TArray<ABaseItem*> Items;
+	for (auto& ElemItem : ABaseItem::RegisteredItems)
 	{
 		if (FVector::Distance(ClosestFrom, ElemItem->GetActorLocation()) <= Radius)
 		{
@@ -44,10 +44,10 @@ TArray<AItemBase*> AItemBase::GetItemsInRadius(FVector ClosestFrom, float Radius
 	return Items;
 }
 
-AItemBase* AItemBase::GetClosestItemInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
+ABaseItem* ABaseItem::GetClosestItemInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
 {
-	AItemBase* Item = nullptr;
-	for (auto& Elem : AItemBase::GetItemsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
+	ABaseItem* Item = nullptr;
+	for (auto& Elem : ABaseItem::GetItemsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
 	{
 		// (ignore warning, IsValid() checks for nullptr)
 		if (IsValid(Item))
@@ -67,7 +67,7 @@ AItemBase* AItemBase::GetClosestItemInRadius(FVector ClosestFrom, float Radius, 
 }
 
 // Sets default values
-AItemBase::AItemBase()
+ABaseItem::ABaseItem()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	this->PrimaryActorTick.bCanEverTick = true;
@@ -80,7 +80,7 @@ AItemBase::AItemBase()
 	this->SetActorEnableCollision(true);
 }
 
-void AItemBase::SetOwningInventory(UInventoryComponent* NewOwningInventoryComponent)
+void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryComponent)
 {
 	UInventoryComponent* PrevOwningInventoryComponent = this->OwningInventoryComponent;
 	this->OwningInventoryComponent = NewOwningInventoryComponent;
@@ -94,7 +94,7 @@ void AItemBase::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->ItemMesh->RecreatePhysicsState();
 		this->SetOwner(nullptr);
 		this->OnItemDropped(PrevOwningInventoryComponent);
-		AItemBase::RegisteredItems.Add(this);
+		ABaseItem::RegisteredItems.Add(this);
 	}
 	else // Item has been added/moved
 	{
@@ -103,18 +103,18 @@ void AItemBase::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->ItemMesh->SetSimulatePhysics(false);
 		this->SetOwner(this->OwningInventoryComponent->GetOwner());
 		this->OnItemAdded(this->OwningInventoryComponent);
-		AItemBase::RegisteredItems.Remove(this);
+		ABaseItem::RegisteredItems.Remove(this);
 	}
 }
 
 // Called when the game starts or when spawned
-void AItemBase::BeginPlay()
+void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
-	AItemBase::RegisteredItems.Add(this);
+	ABaseItem::RegisteredItems.Add(this);
 }
 
-void AItemBase::EndPlay(EEndPlayReason::Type EndPlayReason)
+void ABaseItem::EndPlay(EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 	if (this->OwningInventoryComponent != nullptr)
@@ -122,11 +122,11 @@ void AItemBase::EndPlay(EEndPlayReason::Type EndPlayReason)
 		this->OwningInventoryComponent->DropItem(this->OwningInventoryComponent->FindSlotOfItem(this), FVector(0, 0, 0));
 	}
 
-	AItemBase::RegisteredItems.Remove(this);
+	ABaseItem::RegisteredItems.Remove(this);
 }
 
 // Called every frame
-void AItemBase::Tick(float DeltaTime)
+void ABaseItem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }

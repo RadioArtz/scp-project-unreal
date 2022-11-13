@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Attributes/AttributeFloat.h"
+#include "Attributes/FloatAttribute.h"
 #include "PlayerAttributeComponent.generated.h"
 
 UDELEGATE(BlueprintCallable)
@@ -21,16 +21,16 @@ public:
 		float CurrentValue; // get private set
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FAttributeFloat MinValue; // get set
+		FFloatAttribute MinValue; // get set
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FAttributeFloat MaxValue; // get set
+		FFloatAttribute MaxValue; // get set
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FAttributeFloat RegenrationRate; // get set
+		FFloatAttribute RegenrationRate; // get set
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		FAttributeFloat RegenerationDelay; // get set
+		FFloatAttribute RegenerationDelay; // get set
 
 	UPROPERTY(BlueprintAssignable)
 		FPlayerAttributeComponentValueChanged OnMinValueReached;

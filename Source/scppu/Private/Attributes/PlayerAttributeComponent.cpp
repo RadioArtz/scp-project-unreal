@@ -2,7 +2,7 @@
 
 
 #include "Attributes/PlayerAttributeComponent.h"
-#include "Attributes/AttributeFloat.h"
+#include "Attributes/FloatAttribute.h"
 
 // Sets default values for this component's properties
 UPlayerAttributeComponent::UPlayerAttributeComponent()
@@ -12,10 +12,10 @@ UPlayerAttributeComponent::UPlayerAttributeComponent()
 	this->PrimaryComponentTick.bCanEverTick = true;
 	this->SetComponentTickInterval(0.1f);
 
-	this->MinValue = FAttributeFloat();
-	this->MaxValue = FAttributeFloat();
-	this->RegenrationRate = FAttributeFloat();
-	this->RegenerationDelay = FAttributeFloat();
+	this->MinValue = FFloatAttribute();
+	this->MaxValue = FFloatAttribute();
+	this->RegenrationRate = FFloatAttribute();
+	this->RegenerationDelay = FFloatAttribute();
 }
 
 void UPlayerAttributeComponent::SetCurrentValue(float NewValue, bool bSkipRegenrationDelay)

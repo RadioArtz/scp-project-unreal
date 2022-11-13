@@ -1,16 +1,16 @@
 
 
 
-#include "InteractionComponents/InteractionComponentBase.h"
+#include "InteractionComponents/BaseInteractionComponent.h"
 
-class AItemBase;
+class ABaseItem;
 
-TArray<UInteractionComponentBase*> UInteractionComponentBase::RegisteredInteractionComponents;
+TArray<UBaseInteractionComponent*> UBaseInteractionComponent::RegisteredInteractionComponents;
 
-TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius , bool bMustBeReachable, FVector ReachableFrom)
+TArray<UBaseInteractionComponent*> UBaseInteractionComponent::GetInteractionComponentsInRadius(FVector ClosestFrom, float Radius , bool bMustBeReachable, FVector ReachableFrom)
 {
-	TArray<UInteractionComponentBase*> InteractionComponents;
-	for (auto& ElemComp : UInteractionComponentBase::RegisteredInteractionComponents)
+	TArray<UBaseInteractionComponent*> InteractionComponents;
+	for (auto& ElemComp : UBaseInteractionComponent::RegisteredInteractionComponents)
 	{
 		if (ElemComp->bIsEnabled && FVector::Distance(ClosestFrom, ElemComp->GetComponentLocation()) <= Radius)
 		{
@@ -45,10 +45,10 @@ TArray<UInteractionComponentBase*> UInteractionComponentBase::GetInteractionComp
 	return InteractionComponents;
 }
 
-UInteractionComponentBase* UInteractionComponentBase::GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
+UBaseInteractionComponent* UBaseInteractionComponent::GetClosestInteractionComponentInRadius(FVector ClosestFrom, float Radius, bool bMustBeReachable, FVector ReachableFrom)
 {
-	UInteractionComponentBase* InteractionComponent = nullptr;
-	for (auto& Elem : UInteractionComponentBase::GetInteractionComponentsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
+	UBaseInteractionComponent* InteractionComponent = nullptr;
+	for (auto& Elem : UBaseInteractionComponent::GetInteractionComponentsInRadius(ClosestFrom, Radius, bMustBeReachable, ReachableFrom))
 	{
 		// (ignore warning, IsValid() checks for nullptr)
 		if (IsValid(InteractionComponent))
@@ -68,7 +68,7 @@ UInteractionComponentBase* UInteractionComponentBase::GetClosestInteractionCompo
 }
 
 // Sets default values for this component's properties
-UInteractionComponentBase::UInteractionComponentBase()
+UBaseInteractionComponent::UBaseInteractionComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -76,7 +76,7 @@ UInteractionComponentBase::UInteractionComponentBase()
 	this->PrimaryComponentTick.bStartWithTickEnabled = false;
 }
 
-bool UInteractionComponentBase::StartInteraction(APawn* Interactor, AItemBase* Item)
+bool UBaseInteractionComponent::StartInteraction(APawn* Interactor, ABaseItem* Item)
 {
 	if (!this->bIsEnabled || this->bIsInUse || Interactor == nullptr)
 	{
@@ -89,7 +89,7 @@ bool UInteractionComponentBase::StartInteraction(APawn* Interactor, AItemBase* I
 	return true;
 }
 
-bool UInteractionComponentBase::EndInteraction(APawn* Interactor)
+bool UBaseInteractionComponent::EndInteraction(APawn* Interactor)
 {
 	if (!this->bIsEnabled || !this->bIsInUse || this->CurrentInteractor != Interactor)
 	{
@@ -102,36 +102,36 @@ bool UInteractionComponentBase::EndInteraction(APawn* Interactor)
 	return true;
 }
 
-void UInteractionComponentBase::SetIsEnabled(bool bNewIsEnabled)
+void UBaseInteractionComponent::SetEnabled(bool bNewEnabled)
 {
-	if (!bNewIsEnabled)
+	if (!bNewEnabled)
 	{
 		this->EndInteraction(this->CurrentInteractor);
 	}
 
-	this->bIsEnabled = bNewIsEnabled;
+	this->bIsEnabled = bNewEnabled;
 }
 
 // Called when the game starts
-void UInteractionComponentBase::BeginPlay()
+void UBaseInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	// Don't register components with no owner (e.g. default object)
 	if (IsValid(this->GetOwner()))
 	{
-		UInteractionComponentBase::RegisteredInteractionComponents.Add(this);
+		UBaseInteractionComponent::RegisteredInteractionComponents.Add(this);
 	}
 }
 
-void UInteractionComponentBase::BeginDestroy()
+void UBaseInteractionComponent::BeginDestroy()
 {
 	Super::BeginDestroy();
-	UInteractionComponentBase::RegisteredInteractionComponents.Remove(this);
+	UBaseInteractionComponent::RegisteredInteractionComponents.Remove(this);
 }
 
 // Called every frame
-void UInteractionComponentBase::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UBaseInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }

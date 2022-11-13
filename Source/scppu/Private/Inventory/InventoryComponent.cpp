@@ -2,7 +2,7 @@
 
 
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/ItemBase.h"
+#include "Inventory/BaseItem.h"
 
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
@@ -12,7 +12,7 @@ UInventoryComponent::UInventoryComponent()
 	this->PrimaryComponentTick.bCanEverTick = false;
 }
 
-bool UInventoryComponent::AddItem(AItemBase* Item, int Slot)
+bool UInventoryComponent::AddItem(ABaseItem* Item, int Slot)
 {
 	if (Slot > this->Size || Slot < 0)
 	{
@@ -49,7 +49,7 @@ bool UInventoryComponent::DropItem(int Slot, FVector DropLocation)
 		return false;
 	}
 
-	AItemBase* Item = this->ItemMap[Slot];
+	ABaseItem* Item = this->ItemMap[Slot];
 	Item->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Item->SetActorLocation(DropLocation);
 	Item->SetOwningInventory(nullptr);
@@ -58,7 +58,7 @@ bool UInventoryComponent::DropItem(int Slot, FVector DropLocation)
 	return true;
 }
 
-AItemBase* UInventoryComponent::GetItem(int Slot)
+ABaseItem* UInventoryComponent::GetItem(int Slot)
 {
 	if (Slot > this->Size || Slot < 0)
 	{
@@ -95,7 +95,7 @@ bool UInventoryComponent::MoveItem(int FromSlot, UInventoryComponent* ReceivingT
 		return false;
 	}
 
-	AItemBase* MovingItem = this->ItemMap[FromSlot];
+	ABaseItem* MovingItem = this->ItemMap[FromSlot];
 	this->ItemMap.Remove(FromSlot);
 	if (!ReceivingTarget->IsSlotEmpty(ToSlot))
 	{
@@ -114,7 +114,7 @@ bool UInventoryComponent::MoveItem(int FromSlot, UInventoryComponent* ReceivingT
 	return true;
 }
 
-int UInventoryComponent::FindSlotOfItem(AItemBase* Item)
+int UInventoryComponent::FindSlotOfItem(ABaseItem* Item)
 {
 	for (auto Kvp : this->ItemMap)
 	{
@@ -169,7 +169,7 @@ int UInventoryComponent::GetFirstEmptySlot()
 	return -1;
 }
 
-bool UInventoryComponent::CanItemBeAdded(AItemBase* Item)
+bool UInventoryComponent::CanItemBeAdded(ABaseItem* Item)
 {
 	if (this->GetFirstEmptySlot() == -1)
 	{

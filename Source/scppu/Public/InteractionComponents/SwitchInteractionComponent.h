@@ -3,32 +3,32 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InteractionComponents/InteractionComponentBase.h"
-#include "InteractionComponentSwitch.generated.h"
+#include "InteractionComponents/BaseInteractionComponent.h"
+#include "SwitchInteractionComponent.generated.h"
 
-class AItemBase;
-
-UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchInteractStart, APawn*, Interactor, AItemBase*, Item);
+class ABaseItem;
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInteractionComponentSwitchInteractTick, float, DeltaTime, float, Alpha, int32, State);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentInteractStart, APawn*, Interactor, ABaseItem*, Item);
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchInteractEnd, float, FinalAlpha, int32, FinalState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FSwitchInteractionComponentInteractTick, float, DeltaTime, float, Alpha, int32, State);
 
 UDELEGATE(BlueprintCallable)
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInteractionComponentSwitchNewState, float, NewAlpha, int32, NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentInteractEnd, float, FinalAlpha, int32, FinalState);
+
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSwitchInteractionComponentNewState, float, NewAlpha, int32, NewState);
 
 UENUM(BlueprintType)
-enum class EInteractionComponentSwitchMoveMode : uint8
+enum class ESwitchInteractionComponentMovementMode : uint8
 {
 	Horizontal,
 	Vertical,
 };
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
-class SCPPU_API UInteractionComponentSwitch : public UInteractionComponentBase
+class SCPPU_API USwitchInteractionComponent : public UBaseInteractionComponent
 {
 	GENERATED_BODY()
 
@@ -41,7 +41,7 @@ public:
 		int32 MaxState = 2;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
-		EInteractionComponentSwitchMoveMode MovementMode;
+		ESwitchInteractionComponentMovementMode MovementMode;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly) // get private set
 		float Sensitivity = 5.0f;
@@ -53,23 +53,23 @@ public:
 		float AlphaOffset;
 
 	UPROPERTY(BlueprintAssignable)
-		FInteractionComponentSwitchInteractStart OnInteractStart;
+		FSwitchInteractionComponentInteractStart OnInteractStart;
 
 	UPROPERTY(BlueprintAssignable)
-		FInteractionComponentSwitchInteractTick OnInteractTick;
+		FSwitchInteractionComponentInteractTick OnInteractTick;
 
 	UPROPERTY(BlueprintAssignable)
-		FInteractionComponentSwitchInteractEnd OnInteractEnd;
+		FSwitchInteractionComponentInteractEnd OnInteractEnd;
 
 	UPROPERTY(BlueprintAssignable)
-		FInteractionComponentSwitchNewState OnStateChanged;
+		FSwitchInteractionComponentNewState OnStateChanged;
 
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable)
 		void SetCurrentState(int NewState = 1);
 
-	virtual bool StartInteraction(APawn* Interactor, AItemBase* Item) override;
+	virtual bool StartInteraction(APawn* Interactor, ABaseItem* Item) override;
 
 	virtual bool EndInteraction(APawn* Interactor) override;
 

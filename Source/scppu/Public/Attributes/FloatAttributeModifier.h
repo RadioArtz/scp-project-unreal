@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Engine/DataTable.h"
-#include "AttributeFloatModifier.generated.h"
+#include "FloatAttributeModifier.generated.h"
 
 UENUM()
-enum EAttributeFloatModifierMode
+enum EFloatAttributeModifierMode
 {
 	Addition = 0,
 	Multiplication = 1,
@@ -16,13 +16,13 @@ enum EAttributeFloatModifierMode
 };
 
 USTRUCT(BlueprintType)
-struct FAttributeFloatModifier : public FTableRowBase
+struct FFloatAttributeModifier : public FTableRowBase
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		TEnumAsByte<EAttributeFloatModifierMode> Mode;
+		TEnumAsByte<EFloatAttributeModifierMode> Mode;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 		float Value;
