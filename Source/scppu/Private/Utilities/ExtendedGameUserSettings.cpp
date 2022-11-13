@@ -92,11 +92,8 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 	}
 
 	// Update Gamma
-	if (GEngine != nullptr)
+	if (GEngine != nullptr && !GEngine->IsEditor())
 	{
-		if (!GEngine->IsEditor())
-		{
-			GEngine->Exec(nullptr, *FString::Printf(TEXT("gamma %f"), this->GetScreenGamma()));
-		}
+		GEngine->Exec(nullptr, *FString::Printf(TEXT("gamma %f"), this->GetScreenGamma()));
 	}
 }
