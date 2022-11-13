@@ -91,7 +91,7 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 		}
 	}
 
-	// Update Gamma CVar (UPDATE: gamma is not a cvar (?) still have to figure out what it is.)
+	// Update Gamma
 	if (GEngine != nullptr)
 	{
 		if (!GEngine->IsEditor())
