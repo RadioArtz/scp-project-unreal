@@ -92,25 +92,11 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 	}
 
 	// Update Gamma CVar (UPDATE: gamma is not a cvar (?) still have to figure out what it is.)
-	/**
+	if (GEngine != nullptr)
 	{
-		FString ConfigSection = TEXT("SystemSettings");
-#if WITH_EDITOR
-		if (GIsEditor)
+		if (!GEngine->IsEditor())
 		{
-			ConfigSection = TEXT("SystemSettingsEditor");
-		}
-#endif
-		float GammaValue = 0;
-		if (GConfig->GetFloat(*ConfigSection, TEXT("gamma"), GammaValue, GEngineIni))
-		{
-			// FSR2 was already set by system settings. We are capable of setting it here.
-		}
-		else
-		{
-			static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("gamma"));
-			CVar->Set(this->ScreenGammaLevel != 0, ECVF_SetByGameSetting);
+			GEngine->Exec(nullptr, *FString::Printf(TEXT("gamma %f"), this->GetScreenGamma()));
 		}
 	}
-	*/
 }
