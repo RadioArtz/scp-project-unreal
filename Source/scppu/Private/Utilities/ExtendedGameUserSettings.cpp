@@ -94,7 +94,7 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 	// Update Gamma
 	if (GEngine == nullptr || GIsEditor)
 	{
-		// Do not set gamma in editor because the whole editor will be affected.
+		// Do not set gamma in PIE because the whole editor will be affected.
 	}
 	else
 	{
