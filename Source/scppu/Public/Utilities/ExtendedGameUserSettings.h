@@ -54,11 +54,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		int GetFSR2Quality() const;
 
-	// Sets the user setting for screen gamma
+	// Sets the user setting for screen gamma as a 0.5f..5.0f value
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		void SetScreenGamma(float Value);
 
-	// Returns the user setting for screen gamma
+	// Returns the user setting for screen gamma as a 0.5f..5.0f value
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		float GetScreenGamma() const;
 

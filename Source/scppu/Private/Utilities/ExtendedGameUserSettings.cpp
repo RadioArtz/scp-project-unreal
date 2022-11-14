@@ -30,7 +30,7 @@ int UExtendedGameUserSettings::GetFSR2Quality() const
 
 void UExtendedGameUserSettings::SetScreenGamma(float Value)
 {
-	this->ScreenGammaLevel = Value;
+	this->ScreenGammaLevel = FMath::Clamp(Value, 0.5f, 5.0f);
 }
 
 float UExtendedGameUserSettings::GetScreenGamma() const
@@ -92,7 +92,11 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 	}
 
 	// Update Gamma
-	if (GEngine != nullptr && !GEngine->IsEditor())
+	if (GEngine == nullptr || GIsEditor)
+	{
+		// Do not set gamma in editor because the whole editor will be affected.
+	}
+	else
 	{
 		GEngine->Exec(nullptr, *FString::Printf(TEXT("gamma %f"), this->GetScreenGamma()));
 	}
