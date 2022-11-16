@@ -19,7 +19,7 @@ class SCPPU_API UInventoryComponent : public UActorComponent
 	//// Properties ////
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		int Size = 10;
+		int32 Size = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		bool bUseWhitelistAsBlacklist = false;
@@ -28,7 +28,7 @@ public:
 		TArray<TSubclassOf<ABaseItem>> Whitelist;
 
 	UPROPERTY()
-		TMap<int, ABaseItem*> ItemMap;
+		TMap<int32, ABaseItem*> ItemMap;
 
 	UPROPERTY(BlueprintAssignable)
 		FInventoryComponentChanged OnInventoryChanged;
@@ -39,25 +39,25 @@ public:
 	UInventoryComponent();
 
 	UFUNCTION(BlueprintCallable)
-		bool AddItem(ABaseItem* Item, int Slot);
+		bool AddItem(ABaseItem* Item, int32 Slot);
 
 	UFUNCTION(BlueprintCallable)
-		bool DropItem(int Slot, FVector DropLocation);
+		bool DropItem(int32 Slot, FVector DropLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ABaseItem* GetItem(int Slot);
+		ABaseItem* GetItem(int32 Slot);
 
 	UFUNCTION(BlueprintCallable)
-		bool MoveItem(int FromSlot, UInventoryComponent* ReceivingTarget, int ToSlot, bool bSwapIfNecessary);
+		bool MoveItem(int32 FromSlot, UInventoryComponent* ReceivingTarget, int32 ToSlot, bool bSwapIfNecessary);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		int FindSlotOfItem(ABaseItem* Item);
 
 	UFUNCTION(BlueprintCallable)
-		void Resize(int NewSize, bool bDropExcessiveItems = true, FVector DropLocation = FVector(0, 0, 0));
+		void Resize(int32 NewSize, bool bDropExcessiveItems = true, FVector DropLocation = FVector(0, 0, 0));
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsSlotEmpty(int Slot);
+		bool IsSlotEmpty(int32 Slot);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		int GetFirstEmptySlot();

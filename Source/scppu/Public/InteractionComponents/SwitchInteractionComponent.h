@@ -67,7 +67,7 @@ public:
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable)
-		void SetCurrentState(int NewState = 1);
+		void SetCurrentState(int32 NewState = 1);
 
 	virtual bool BeginInteraction(APawn* Interactor, ABaseItem* Item) override;
 

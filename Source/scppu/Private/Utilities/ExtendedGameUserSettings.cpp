@@ -18,7 +18,7 @@ bool UExtendedGameUserSettings::IsFSR1Enabled() const
 	return this->bUseFSR1;
 }
 
-void UExtendedGameUserSettings::SetFSR2Quality(int Value)
+void UExtendedGameUserSettings::SetFSR2Quality(int32 Value)
 {
 	this->FSR2QualityLevel = FMath::Clamp(Value, 0, 4);
 }

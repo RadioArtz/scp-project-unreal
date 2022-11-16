@@ -12,7 +12,7 @@ UInventoryComponent::UInventoryComponent()
 	this->PrimaryComponentTick.bCanEverTick = false;
 }
 
-bool UInventoryComponent::AddItem(ABaseItem* Item, int Slot)
+bool UInventoryComponent::AddItem(ABaseItem* Item, int32 Slot)
 {
 	if (Slot > this->Size || Slot < 0)
 	{
@@ -37,7 +37,7 @@ bool UInventoryComponent::AddItem(ABaseItem* Item, int Slot)
 	return true;
 }
 
-bool UInventoryComponent::DropItem(int Slot, FVector DropLocation)
+bool UInventoryComponent::DropItem(int32 Slot, FVector DropLocation)
 {
 	if (Slot > this->Size || Slot < 0)
 	{
@@ -58,7 +58,7 @@ bool UInventoryComponent::DropItem(int Slot, FVector DropLocation)
 	return true;
 }
 
-ABaseItem* UInventoryComponent::GetItem(int Slot)
+ABaseItem* UInventoryComponent::GetItem(int32 Slot)
 {
 	if (Slot > this->Size || Slot < 0)
 	{
@@ -73,7 +73,7 @@ ABaseItem* UInventoryComponent::GetItem(int Slot)
 	return this->ItemMap[Slot];
 }
 
-bool UInventoryComponent::MoveItem(int FromSlot, UInventoryComponent* ReceivingTarget, int ToSlot, bool bSwapIfNecessary)
+bool UInventoryComponent::MoveItem(int32 FromSlot, UInventoryComponent* ReceivingTarget, int32 ToSlot, bool bSwapIfNecessary)
 {
 	if (ReceivingTarget == nullptr)
 	{
@@ -127,7 +127,7 @@ int UInventoryComponent::FindSlotOfItem(ABaseItem* Item)
 	return -1;
 }
 
-void UInventoryComponent::Resize(int NewSize, bool bDropExcessiveItems, FVector DropLocation)
+void UInventoryComponent::Resize(int32 NewSize, bool bDropExcessiveItems, FVector DropLocation)
 {
 	int PrevSize = this->Size;
 	this->Size = NewSize;
@@ -151,7 +151,7 @@ void UInventoryComponent::Resize(int NewSize, bool bDropExcessiveItems, FVector 
 	this->OnInventoryChanged.Broadcast();
 }
 
-bool UInventoryComponent::IsSlotEmpty(int Slot)
+bool UInventoryComponent::IsSlotEmpty(int32 Slot)
 {
 	return !this->ItemMap.Contains(Slot);
 }

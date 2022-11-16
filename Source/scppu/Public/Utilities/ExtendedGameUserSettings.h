@@ -25,7 +25,7 @@ protected:
 	 *	4 = Ultra Performance
 	 */
 	UPROPERTY(config)
-		int FSR2QualityLevel = 0;
+		int32 FSR2QualityLevel = 0;
 
 	// Gamma level to use. Higher value = more brightness
 	UPROPERTY(config)
@@ -48,7 +48,7 @@ public:
 	// Sets the user setting for FSR2 (0..4, higher is stronger)
 	// @param Value 0:disabled, 1:quality, 2:balanced, 3:performance, 4:ultra performance (gets clamped if needed)
 	UFUNCTION(BlueprintCallable, Category = Settings)
-		void SetFSR2Quality(int Value);
+		void SetFSR2Quality(int32 Value);
 
 	// Returns the user setting for FSR2 (0..4, higher is stronger)
 	UFUNCTION(BlueprintCallable, Category = Settings)

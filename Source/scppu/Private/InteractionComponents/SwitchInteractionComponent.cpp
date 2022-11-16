@@ -5,7 +5,7 @@
 
 class ABaseItem;
 
-void USwitchInteractionComponent::SetCurrentState(int NewState)
+void USwitchInteractionComponent::SetCurrentState(int32 NewState)
 {
 	this->CurrentState = NewState;
 	this->MaxState = FMath::Clamp(this->MaxState, 2, 32);
