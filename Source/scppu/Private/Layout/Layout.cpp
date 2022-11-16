@@ -96,7 +96,6 @@ bool ALayout::Initialize(int32 NewSeed)
 			ULayoutCell* Cell = NewObject<ULayoutCell>(this, ULayoutCell::StaticClass(), FName(FString::Printf(TEXT("%s_Cell_X%d_Y%d"), *this->GetName(), x, y)));
 			Cell->Location = FIntVector2(x, y);
 			Cell->Rotation = 0;
-			Cell->Owner = this;
 			Cell->UniqueSeed = RStream.RandRange(0, MAX_int32 - 1);
 			Grid.Add(FIntVector2(x, y), Cell);
 		}

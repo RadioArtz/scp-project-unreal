@@ -24,9 +24,6 @@ public:
 		int32 Rotation; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-		ALayout* Owner; // get private set
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bIsGenerated; // get private set
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -49,6 +46,9 @@ public:
 
 	//// Functions ////
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		ALayout* GetLayout(); // move body to header file to make inline work
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FVector GetWorldLocation(); // move body to header file to make inline work
 

@@ -8,9 +8,14 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "DrawDebugHelpers.h"
 
+ALayout* ULayoutCell::GetLayout()
+{
+	return Cast<ALayout>(this->GetOuter());
+}
+
 FVector ULayoutCell::GetWorldLocation()
 {
-	return (FVector(this->Location.X, this->Location.Y, 0) * this->Owner->CellSize) + FVector(this->Owner->CellSize / 2, this->Owner->CellSize / 2, 0) + this->Owner->GetActorLocation();
+	return (FVector(this->Location.X, this->Location.Y, 0) * this->GetLayout()->CellSize) + FVector(this->GetLayout()->CellSize / 2, this->GetLayout()->CellSize / 2, 0) + this->GetLayout()->GetActorLocation();
 }
 
 FRotator ULayoutCell::GetWorldRotation()
@@ -25,7 +30,7 @@ FLayoutCellSides ULayoutCell::GetRequiredConnections()
 	ULayoutCell* CellNX;
 	ULayoutCell* CellNY;
 	FLayoutCellSides RequiredConnections;
-	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	this->GetLayout()->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
 	RequiredConnections.bPX = IsValid(CellPX) && CellPX->HasConnections.bNX;
 	RequiredConnections.bPY = IsValid(CellPY) && CellPY->HasConnections.bNY;
 	RequiredConnections.bNX = IsValid(CellNX) && CellNX->HasConnections.bPX;
@@ -40,7 +45,7 @@ FLayoutCellSides ULayoutCell::GetBlockedConnections()
 	ULayoutCell* CellNX;
 	ULayoutCell* CellNY;
 	FLayoutCellSides BlockedConnections;
-	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	this->GetLayout()->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
 	BlockedConnections.bPX = !IsValid(CellPX) || CellPX->IsBlockedByNeighbour() || (CellPX->bIsGenerated && !CellPX->HasConnections.bNX);
 	BlockedConnections.bPY = !IsValid(CellPY) || CellPY->IsBlockedByNeighbour() || (CellPY->bIsGenerated && !CellPY->HasConnections.bNY);
 	BlockedConnections.bNX = !IsValid(CellNX) || CellNX->IsBlockedByNeighbour() || (CellNX->bIsGenerated && !CellNX->HasConnections.bPX);
@@ -60,7 +65,7 @@ bool ULayoutCell::IsBlockedByNeighbour()
 	ULayoutCell* CellNX;
 	ULayoutCell* CellNY;
 	bool bIsBlocked = false;
-	this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+	this->GetLayout()->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
 	bIsBlocked = bIsBlocked || (IsValid(CellPX) && CellPX->DisableNeighbouringCells.bNX);
 	bIsBlocked = bIsBlocked || (IsValid(CellPY) && CellPY->DisableNeighbouringCells.bNY);
 	bIsBlocked = bIsBlocked || (IsValid(CellNX) && CellNX->DisableNeighbouringCells.bPX);
@@ -75,9 +80,9 @@ bool ULayoutCell::IsRequiredToGenerate()
 
 bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 {
-	if (this->Owner->DataTable->FindRowUnchecked(InRowName) == nullptr)
+	if (this->GetLayout()->DataTable->FindRowUnchecked(InRowName) == nullptr)
 	{
-		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *InRowName.ToString(), *this->GetLayout()->DataTable->GetName());
 		return false;
 	}
 
@@ -91,7 +96,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	FLayoutCellSides PrevDisableNeighbouringCell = this->DisableNeighbouringCells;
 
 	// Get values from datatable row
-	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->Owner->DataTable->FindRowUnchecked(InRowName);
+	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->GetLayout()->DataTable->FindRowUnchecked(InRowName);
 
 	// Rotate values from datatable row
 	for (int i = 1; i < InRotation + 1; i++)
@@ -109,7 +114,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	// Run pre spawn validation
 	for (auto Elem : Row.PreSpawnValidators)
 	{
-		bIsValid = bIsValid && Elem.GetDefaultObject()->IsValidSpawn(this->Owner, this, FRandomStream(this->UniqueSeed));
+		bIsValid = bIsValid && Elem.GetDefaultObject()->IsValidSpawn(this->GetLayout(), this, FRandomStream(this->UniqueSeed));
 	}
 
 	// Reset properties to their original state
@@ -129,7 +134,7 @@ bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
 	// Only retrive neighbouring cells if we actually need them
 	if (Row.DisableNeighbouringCells != FLayoutCellSides(false, false, false, false))
 	{
-		this->Owner->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
+		this->GetLayout()->GetNeighbouringCells(this, false, CellPX, CellPY, CellNX, CellNY);
 	}
 
 	// Check if all connections fit (ignore warning, IsValid() checks for nullptr)
@@ -170,14 +175,14 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		return;
 	}
 
-	if (this->Owner->DataTable->FindRowUnchecked(NewRowName) == nullptr)
+	if (this->GetLayout()->DataTable->FindRowUnchecked(NewRowName) == nullptr)
 	{
-		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *NewRowName.ToString(), *this->Owner->DataTable->GetName());
+		UE_LOG(LogLayout, Error, TEXT("%s: '%s' is not a valid row entry inside '%s'"), *this->GetName(), *NewRowName.ToString(), *this->GetLayout()->DataTable->GetName());
 		return;
 	}
 
 	FRandomStream RStream = FRandomStream(this->UniqueSeed);
-	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->Owner->DataTable->FindRowUnchecked(NewRowName);
+	FLayoutCellGenerationSettings Row = *(FLayoutCellGenerationSettings*)this->GetLayout()->DataTable->FindRowUnchecked(NewRowName);
 	NewRotation = NewRotation % 4;
 
 	// Rotate values from row
@@ -227,7 +232,7 @@ void ULayoutCell::LoadSublevel()
 	}
 
 	bool bLevelLoaded;
-	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->Owner->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->GetUniqueSublevelName());
+	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->GetUniqueSublevelName());
 	if (bLevelLoaded)
 	{
 		this->Sublevel->bShouldBlockOnLoad = false;
@@ -273,7 +278,7 @@ void ULayoutCell::OnSublevelLoadedCallback()
 	{
 		if (Elem->Implements<ULayoutSublevelInterface>())
 		{
-			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->Owner, this, RStream.RandRange(0, MAX_int32 - 1));
+			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->GetLayout(), this, RStream.RandRange(0, MAX_int32 - 1));
 		}
 	}
 }
@@ -308,51 +313,51 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 	// Connection paths
 	if (this->HasConnections.bPX)
 	{
-		FVector End = this->GetWorldLocation() + FVector(this->Owner->CellSize * 0.4, 0, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() + FVector(this->GetLayout()->CellSize * 0.4, 0, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
 	if (this->HasConnections.bPY)
 	{
-		FVector End = this->GetWorldLocation() + FVector(0, this->Owner->CellSize * 0.4, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() + FVector(0, this->GetLayout()->CellSize * 0.4, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
 	if (this->HasConnections.bNX)
 	{
-		FVector End = this->GetWorldLocation() - FVector(this->Owner->CellSize * 0.4, 0, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() - FVector(this->GetLayout()->CellSize * 0.4, 0, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
 	if (this->HasConnections.bNY)
 	{
-		FVector End = this->GetWorldLocation() - FVector(0, this->Owner->CellSize * 0.4, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() - FVector(0, this->GetLayout()->CellSize * 0.4, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Green, false, Duration, 0, 20.0f);
 	}
 
 	// Disabled neighbouring cells
 	if (this->DisableNeighbouringCells.bPX)
 	{
-		FVector End = this->GetWorldLocation() + FVector(this->Owner->CellSize * 0.2, 0, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() + FVector(this->GetLayout()->CellSize * 0.2, 0, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
 	if (this->DisableNeighbouringCells.bPY)
 	{
-		FVector End = this->GetWorldLocation() + FVector(0, this->Owner->CellSize * 0.2, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() + FVector(0, this->GetLayout()->CellSize * 0.2, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
 	if (this->DisableNeighbouringCells.bNX)
 	{
-		FVector End = this->GetWorldLocation() - FVector(this->Owner->CellSize * 0.2, 0, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() - FVector(this->GetLayout()->CellSize * 0.2, 0, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
 	if (this->DisableNeighbouringCells.bNY)
 	{
-		FVector End = this->GetWorldLocation() - FVector(0, this->Owner->CellSize * 0.2, 0);
-		DrawDebugLine(this->Owner->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
+		FVector End = this->GetWorldLocation() - FVector(0, this->GetLayout()->CellSize * 0.2, 0);
+		DrawDebugLine(this->GetWorld(), this->GetWorldLocation(), End, FColor::Red, false, Duration, 0, 20.0f);
 	}
 
 	// Propeties
@@ -360,7 +365,7 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 	{
 		FString Text;
 		Text.Appendf(TEXT("UObject Name: %s\n"), *this->GetName());
-		Text.Appendf(TEXT("Grid Location: X=%i Y=%i (i=%i)\n"), this->Location.X, this->Location.Y, this->Location.X * this->Owner->GridSize.X + this->Location.Y);
+		Text.Appendf(TEXT("Grid Location: X=%i Y=%i (i=%i)\n"), this->Location.X, this->Location.Y, this->Location.X * this->GetLayout()->GridSize.X + this->Location.Y);
 		Text.Appendf(TEXT("Grid Rotation: %i\n"), this->Rotation);
 		Text.Appendf(TEXT("World Location: %s\n"), *this->GetWorldLocation().ToString());
 		Text.Appendf(TEXT("World Rotation: %s\n"), *this->GetWorldRotation().ToString());
@@ -371,7 +376,7 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 		Text.Appendf(TEXT("Sublevel Asset: %s\n"), *this->LevelAsset.ToString());
 		Text.Appendf(TEXT("Unique Sublevel Name: %s\n"), *this->GetUniqueSublevelName());
 
-		DrawDebugString(this->Owner->GetWorld(), GetWorldLocation() + FVector(0, 0, 200.0f), Text, nullptr, FColor::White, Duration, true, 1.0f);
+		DrawDebugString(this->GetWorld(), GetWorldLocation() + FVector(0, 0, 200.0f), Text, nullptr, FColor::White, Duration, true, 1.0f);
 	}
 }
 
