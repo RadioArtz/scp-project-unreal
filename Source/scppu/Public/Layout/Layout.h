@@ -64,7 +64,7 @@ public:
 		bool Clear();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutCell* GetCell(FIntVector2 Location); // move body to header file to make inline work
+		FORCEINLINE ULayoutCell* GetCell(FIntVector2 Location) { return this->Grid.FindRef(Location); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		ULayoutCell* GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance = -1.0f);

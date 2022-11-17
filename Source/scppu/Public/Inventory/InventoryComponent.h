@@ -45,7 +45,7 @@ public:
 		bool DropItem(int32 Slot, FVector DropLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ABaseItem* GetItem(int32 Slot);
+		FORCEINLINE ABaseItem* GetItem(int32 Slot) { return this->ItemMap.FindRef(Slot); }
 
 	UFUNCTION(BlueprintCallable)
 		bool MoveItem(int32 FromSlot, UInventoryComponent* ReceivingTarget, int32 ToSlot, bool bSwapIfNecessary);

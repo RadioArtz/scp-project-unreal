@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Layout/Layout.h"
 #include "Layout/LayoutStructs.h"
 #include "LayoutCell.generated.h"
 
-class ALayout;
 class ULevelStreamingDynamic;
 
 UCLASS(Within="Layout")
@@ -47,28 +47,28 @@ public:
 	//// Functions ////
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ALayout* GetLayout(); // move body to header file to make inline work
+		FORCEINLINE ALayout* GetLayout() { return Cast<ALayout>(this->GetOuter()); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FVector GetWorldLocation(); // move body to header file to make inline work
+		FORCEINLINE FVector GetWorldLocation() { return (FVector(this->Location.X, this->Location.Y, 0) * this->GetLayout()->CellSize) + FVector(this->GetLayout()->CellSize / 2, this->GetLayout()->CellSize / 2, 0) + this->GetLayout()->GetActorLocation(); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FRotator GetWorldRotation(); // move body to header file to make inline work
+		FORCEINLINE FRotator GetWorldRotation() { return FRotator(0, this->Rotation * 90, 0); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetRequiredConnections(); // move body to header file to make inline work
+		FLayoutCellSides GetRequiredConnections();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FLayoutCellSides GetBlockedConnections(); // move body to header file to make inline work
+		FLayoutCellSides GetBlockedConnections();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FString GetUniqueSublevelName(); // move body to header file to make inline work
+		FORCEINLINE FString GetSublevelName() { return this->GetName() + "_Sublevel"; }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsBlockedByNeighbour(); // move body to header file to make inline work
+		bool IsBlockedByNeighbour();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsRequiredToGenerate();
+		FORCEINLINE bool IsRequiredToGenerate() { return this->GetRequiredConnections() != FLayoutCellSides(false, false, false, false); }
 
 	UFUNCTION(BlueprintCallable)
 		bool IsRowNameValid(FName InRowName, int InRotation);

@@ -131,11 +131,6 @@ bool ALayout::Clear()
 	return true;
 }
 
-ULayoutCell* ALayout::GetCell(FIntVector2 Location)
-{
-	return this->Grid.FindRef(Location);
-}
-
 ULayoutCell* ALayout::GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance)
 {
 	if (ZTolerance >= 0 && (this->GetActorLocation().Z > WorldLocation.Z + ZTolerance || this->GetActorLocation().Z < WorldLocation.Z - ZTolerance))
@@ -150,10 +145,10 @@ ULayoutCell* ALayout::GetCellFromWorldLocation(FVector WorldLocation, float ZTol
 
 void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY)
 {
-	OutCellPX = GetCell(FIntVector2(Origin->Location.X + 1, Origin->Location.Y));
-	OutCellPY = GetCell(FIntVector2(Origin->Location.X, Origin->Location.Y + 1));
-	OutCellNX = GetCell(FIntVector2(Origin->Location.X - 1, Origin->Location.Y));
-	OutCellNY = GetCell(FIntVector2(Origin->Location.X, Origin->Location.Y - 1));
+	OutCellPX = this->GetCell(FIntVector2(Origin->Location.X + 1, Origin->Location.Y));
+	OutCellPY = this->GetCell(FIntVector2(Origin->Location.X, Origin->Location.Y + 1));
+	OutCellNX = this->GetCell(FIntVector2(Origin->Location.X - 1, Origin->Location.Y));
+	OutCellNY = this->GetCell(FIntVector2(Origin->Location.X, Origin->Location.Y - 1));
 
 	if (bOnlyReturnConnectedCells)
 	{

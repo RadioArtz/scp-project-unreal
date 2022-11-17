@@ -58,21 +58,6 @@ bool UInventoryComponent::DropItem(int32 Slot, FVector DropLocation)
 	return true;
 }
 
-ABaseItem* UInventoryComponent::GetItem(int32 Slot)
-{
-	if (Slot > this->Size || Slot < 0)
-	{
-		return nullptr;
-	}
-
-	if (this->IsSlotEmpty(Slot))
-	{
-		return nullptr;
-	}
-
-	return this->ItemMap[Slot];
-}
-
 bool UInventoryComponent::MoveItem(int32 FromSlot, UInventoryComponent* ReceivingTarget, int32 ToSlot, bool bSwapIfNecessary)
 {
 	if (ReceivingTarget == nullptr)

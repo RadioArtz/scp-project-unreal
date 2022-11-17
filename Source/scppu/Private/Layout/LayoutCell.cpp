@@ -2,26 +2,10 @@
 
 
 #include "Layout/LayoutCell.h"
-#include "Layout/Layout.h"
 #include "Layout/BaseLayoutSpawnValidator.h"
 #include "Layout/LayoutSublevelInterface.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "DrawDebugHelpers.h"
-
-ALayout* ULayoutCell::GetLayout()
-{
-	return Cast<ALayout>(this->GetOuter());
-}
-
-FVector ULayoutCell::GetWorldLocation()
-{
-	return (FVector(this->Location.X, this->Location.Y, 0) * this->GetLayout()->CellSize) + FVector(this->GetLayout()->CellSize / 2, this->GetLayout()->CellSize / 2, 0) + this->GetLayout()->GetActorLocation();
-}
-
-FRotator ULayoutCell::GetWorldRotation()
-{
-	return FRotator(0, this->Rotation * 90, 0);
-}
 
 FLayoutCellSides ULayoutCell::GetRequiredConnections()
 {
@@ -53,11 +37,6 @@ FLayoutCellSides ULayoutCell::GetBlockedConnections()
 	return BlockedConnections;
 }
 
-FString ULayoutCell::GetUniqueSublevelName()
-{
-	return this->GetName() + "_Sublevel";
-}
-
 bool ULayoutCell::IsBlockedByNeighbour()
 {
 	ULayoutCell* CellPX;
@@ -71,11 +50,6 @@ bool ULayoutCell::IsBlockedByNeighbour()
 	bIsBlocked = bIsBlocked || (IsValid(CellNX) && CellNX->DisableNeighbouringCells.bPX);
 	bIsBlocked = bIsBlocked || (IsValid(CellNY) && CellNY->DisableNeighbouringCells.bPY);
 	return bIsBlocked;
-}
-
-bool ULayoutCell::IsRequiredToGenerate()
-{
-	return this->GetRequiredConnections() != FLayoutCellSides(false, false, false, false);
 }
 
 bool ULayoutCell::IsRowNameValid(FName InRowName, int InRotation)
@@ -232,7 +206,7 @@ void ULayoutCell::LoadSublevel()
 	}
 
 	bool bLevelLoaded;
-	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->GetUniqueSublevelName());
+	this->Sublevel = ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(this->GetWorld(), this->LevelAsset, this->GetWorldLocation(), this->GetWorldRotation(), bLevelLoaded, this->GetSublevelName());
 	if (bLevelLoaded)
 	{
 		this->Sublevel->bShouldBlockOnLoad = false;
@@ -374,7 +348,7 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 		Text.Appendf(TEXT("Unique Seed: %i\n"), this->UniqueSeed);
 		Text.Appendf(TEXT("Row Name: %s\n"), *this->RowName.ToString());
 		Text.Appendf(TEXT("Sublevel Asset: %s\n"), *this->LevelAsset.ToString());
-		Text.Appendf(TEXT("Unique Sublevel Name: %s\n"), *this->GetUniqueSublevelName());
+		Text.Appendf(TEXT("Unique Sublevel Name: %s\n"), *this->GetSublevelName());
 
 		DrawDebugString(this->GetWorld(), GetWorldLocation() + FVector(0, 0, 200.0f), Text, nullptr, FColor::White, Duration, true, 1.0f);
 	}
