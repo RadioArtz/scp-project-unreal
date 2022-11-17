@@ -51,7 +51,7 @@ public:
 		void OnAddedToInventory(UInventoryComponent* NewOwningInventoryComponent);
 
 	UFUNCTION(BlueprintImplementableEvent)
-		void OnDroppedFromInventory(UInventoryComponent* PreviousOwningInventoryComponent);
+		void OnRemovedFromInventory(UInventoryComponent* PreviousOwningInventoryComponent);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

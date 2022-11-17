@@ -24,7 +24,7 @@ bool UInventoryComponent::AddItem(ABaseItem* Item, int32 Slot)
 		return false;
 	}
 
-	if (!this->IsItemAllowed(Item))
+	if (!this->DoesAcceptItemClass(Item->StaticClass()))
 	{
 		return false;
 	}
@@ -49,7 +49,7 @@ bool UInventoryComponent::DropItem(int32 Slot, FVector DropLocation)
 		return false;
 	}
 
-	ABaseItem* Item = this->ItemMap[Slot];
+	ABaseItem* Item = this->GetItem(Slot);
 	Item->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Item->SetActorLocation(DropLocation);
 	Item->SetOwningInventory(nullptr);
@@ -80,17 +80,29 @@ bool UInventoryComponent::MoveItem(int32 FromSlot, UInventoryComponent* Receivin
 		return false;
 	}
 
-	ABaseItem* MovingItem = this->ItemMap[FromSlot];
-	this->ItemMap.Remove(FromSlot);
-	if (!ReceivingTarget->IsSlotEmpty(ToSlot))
+	if (!ReceivingTarget->DoesAcceptItemClass(this->GetItem(FromSlot)->StaticClass()))
 	{
-		this->ItemMap.Add(FromSlot, ReceivingTarget->ItemMap[ToSlot]);
-		ReceivingTarget->ItemMap.Remove(ToSlot);
+		return false;
 	}
 
-	ReceivingTarget->ItemMap.Add(ToSlot, MovingItem);
+	if (!ReceivingTarget->IsSlotEmpty(ToSlot) && !this->DoesAcceptItemClass(ReceivingTarget->GetItem(FromSlot)->StaticClass()))
+	{
+		return false;
+	}
+
+	ABaseItem* ItemA = this->GetItem(FromSlot);
+	ABaseItem* ItemB = ReceivingTarget->GetItem(ToSlot);
+	this->DropItem(FromSlot, FVector::ZeroVector); // Remove item A from us
+
+	if (ItemB != nullptr) // We need to swap 
+	{
+		ReceivingTarget->DropItem(ToSlot, FVector::ZeroVector); // Remove item B from other inventory
+		this->AddItem(ItemB, FromSlot); // Add item B to us
+	}
+
+	ReceivingTarget->AddItem(ItemA, ToSlot); // Add item A to other inventory
 	this->OnInventoryChanged.Broadcast();
-	
+
 	if (this != ReceivingTarget)
 	{
 		ReceivingTarget->OnInventoryChanged.Broadcast();
@@ -127,8 +139,10 @@ void UInventoryComponent::Resize(int32 NewSize, bool bDropExcessiveItems, FVecto
 				{
 					this->DropItem(i, DropLocation);
 				}
-
-				this->MoveItem(i, this, this->GetFirstEmptySlot(), false);
+				else
+				{
+					this->MoveItem(i, this, this->GetFirstEmptySlot(), false);
+				}
 			}
 		}
 	}
@@ -154,13 +168,13 @@ int UInventoryComponent::GetFirstEmptySlot()
 	return -1;
 }
 
-bool UInventoryComponent::IsItemAllowed(ABaseItem* Item)
+bool UInventoryComponent::DoesAcceptItemClass(TSubclassOf<ABaseItem> ItemClass)
 {
 	if (bUseWhitelistAsBlacklist)
 	{
 		for (auto Elem : this->Whitelist)
 		{
-			if (Item->IsA(Elem))
+			if (ItemClass->IsChildOf(Elem))
 			{
 				return false;
 			}
@@ -170,7 +184,7 @@ bool UInventoryComponent::IsItemAllowed(ABaseItem* Item)
 	{
 		for (auto Elem : this->Whitelist)
 		{
-			if (!Item->IsA(Elem))
+			if (!ItemClass->IsChildOf(Elem))
 			{
 				return false;
 			}

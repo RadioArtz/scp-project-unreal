@@ -63,7 +63,7 @@ public:
 		int GetFirstEmptySlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsItemAllowed(ABaseItem* Item);
+		bool DoesAcceptItemClass(TSubclassOf<ABaseItem> ItemClass);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool IsFull();

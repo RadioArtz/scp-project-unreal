@@ -85,7 +85,7 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 	UInventoryComponent* PrevOwningInventoryComponent = this->OwningInventoryComponent;
 	this->OwningInventoryComponent = NewOwningInventoryComponent;
 
-	// Item has been dropped
+	// Item has been dropped/removed from inventory
 	if (this->OwningInventoryComponent == nullptr)
 	{
 		this->SetActorHiddenInGame(false);
@@ -93,7 +93,7 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->ItemMesh->SetSimulatePhysics(true);
 		this->ItemMesh->RecreatePhysicsState();
 		this->SetOwner(nullptr);
-		this->OnDroppedFromInventory(PrevOwningInventoryComponent);
+		this->OnRemovedFromInventory(PrevOwningInventoryComponent);
 		ABaseItem::RegisteredItems.Add(this);
 	}
 	else // Item has been added/moved
