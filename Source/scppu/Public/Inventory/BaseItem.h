@@ -20,16 +20,19 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere)
 		UStaticMeshComponent* ItemMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FText Name = FText::FromString("Default Item");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		FText Description = FText::FromString("It does nothing and adds nothing to the game.");
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UTexture2D* InventoryTexture;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+		USoundBase* InventoryPickupSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UInventoryComponent* OwningInventoryComponent = nullptr;
 	
 	//// Functions ////	
