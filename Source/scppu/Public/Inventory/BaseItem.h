@@ -30,7 +30,7 @@ public:
 		UTexture2D* InventoryTexture;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-		USoundBase* InventoryPickupSound;
+		USoundBase* InventorySound;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		UInventoryComponent* OwningInventoryComponent = nullptr;
