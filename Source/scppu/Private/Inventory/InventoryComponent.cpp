@@ -14,7 +14,7 @@ UInventoryComponent::UInventoryComponent()
 
 bool UInventoryComponent::AddItem(ABaseItem* Item, int32 Slot)
 {
-	if (Slot > this->Size || Slot < 0)
+	if (!this->IsValidSlot(Slot))
 	{
 		return false;
 	}
@@ -32,14 +32,14 @@ bool UInventoryComponent::AddItem(ABaseItem* Item, int32 Slot)
 	Item->AttachToActor(this->GetOwner(), FAttachmentTransformRules::KeepWorldTransform);
 	Item->SetActorLocation(this->GetOwner()->GetActorLocation());
 	Item->SetOwningInventory(this);
-	this->ItemMap.Add(Slot, Item);
+	this->ItemArray[Slot] = Item;
 	this->OnInventoryChanged.Broadcast();
 	return true;
 }
 
 bool UInventoryComponent::DropItem(int32 Slot, FVector DropLocation)
 {
-	if (Slot > this->Size || Slot < 0)
+	if (!this->IsValidSlot(Slot))
 	{
 		return false;
 	}
@@ -53,7 +53,7 @@ bool UInventoryComponent::DropItem(int32 Slot, FVector DropLocation)
 	Item->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	Item->SetActorLocation(DropLocation);
 	Item->SetOwningInventory(nullptr);
-	this->ItemMap.Remove(Slot);
+	this->ItemArray[Slot] = nullptr;
 	this->OnInventoryChanged.Broadcast();
 	return true;
 }
@@ -65,7 +65,7 @@ bool UInventoryComponent::MoveItem(int32 FromSlot, UInventoryComponent* Receivin
 		ReceivingTarget = this;
 	}
 
-	if (FromSlot > this->Size || FromSlot < 0 || ToSlot > ReceivingTarget->Size || ToSlot < 0)
+	if (!this->IsValidSlot(FromSlot) || !ReceivingTarget->IsValidSlot(ToSlot))
 	{
 		return false;
 	}
@@ -111,51 +111,46 @@ bool UInventoryComponent::MoveItem(int32 FromSlot, UInventoryComponent* Receivin
 	return true;
 }
 
-int UInventoryComponent::FindSlotOfItem(ABaseItem* Item)
+void UInventoryComponent::Resize(int32 NewSize, FVector ExcessiveItemsDropLocation)
 {
-	for (auto Kvp : this->ItemMap)
+	if (NewSize < 0)
 	{
-		if (Kvp.Value == Item)
+		return;
+	}
+
+	int32 OriginalSize = this->Size;
+
+	for (int i = 0; i < NewSize; i++)
+	{
+		if (i >= this->ItemArray.Num())
 		{
-			return Kvp.Key;
+			this->ItemArray.Add(nullptr);
 		}
 	}
 
-	return -1;
-}
-
-void UInventoryComponent::Resize(int32 NewSize, bool bDropExcessiveItems, FVector DropLocation)
-{
-	int PrevSize = this->Size;
-	this->Size = NewSize;
-
-	if (bDropExcessiveItems && this->Size < PrevSize)
+	for (int i = OriginalSize - 1; i >= NewSize; i--)
 	{
-		for (int i = this->Size - 1; i < PrevSize; i++)
+		if (this->ItemArray[i] != nullptr)
 		{
-			if (!IsSlotEmpty(i))
+			if (this->GetFirstEmptySlot() != -1)
 			{
-				if (this->GetFirstEmptySlot() == -1)
-				{
-					this->DropItem(i, DropLocation);
-				}
-				else
-				{
-					this->MoveItem(i, this, this->GetFirstEmptySlot(), false);
-				}
+				this->MoveItem(i, this, this->GetFirstEmptySlot(), false);	
+			}
+			else
+			{
+				this->DropItem(i, ExcessiveItemsDropLocation);
 			}
 		}
+
+		this->ItemArray.RemoveAt(i);
 	}
 
+	// Has to be down here because Size will effect i.a. MoveItem and DropItem functionality
+	this->Size = NewSize;
 	this->OnInventoryChanged.Broadcast();
 }
 
-bool UInventoryComponent::IsSlotEmpty(int32 Slot)
-{
-	return !this->ItemMap.Contains(Slot);
-}
-
-int UInventoryComponent::GetFirstEmptySlot()
+int32 UInventoryComponent::GetFirstEmptySlot()
 {
 	for (int i = 0; i < this->Size; i++)
 	{
@@ -196,13 +191,22 @@ bool UInventoryComponent::DoesAcceptItemClass(TSubclassOf<ABaseItem> ItemClass)
 
 bool UInventoryComponent::IsFull()
 {
-	return (this->ItemMap.Num() >= this->Size);
+	for (int i = 0; i < this->Size; i++)
+	{
+		if (this->GetItem(i) == nullptr)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 // Called when the game starts
 void UInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	this->ItemArray.Init(nullptr, this->Size);
 }
 
 // Called every frame

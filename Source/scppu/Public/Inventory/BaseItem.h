@@ -32,7 +32,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		USoundBase* InventorySound;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly)
 		UInventoryComponent* OwningInventoryComponent = nullptr;
 	
 	//// Functions ////	

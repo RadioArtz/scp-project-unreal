@@ -28,7 +28,7 @@ public:
 		TArray<TSubclassOf<ABaseItem>> Whitelist;
 
 	UPROPERTY()
-		TMap<int32, ABaseItem*> ItemMap;
+		TArray<ABaseItem*> ItemArray;
 
 	UPROPERTY(BlueprintAssignable)
 		FInventoryComponentChanged OnInventoryChanged;
@@ -45,22 +45,25 @@ public:
 		bool DropItem(int32 Slot, FVector DropLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		FORCEINLINE ABaseItem* GetItem(int32 Slot) { return this->ItemMap.FindRef(Slot); }
+		FORCEINLINE bool IsValidSlot(int32 Slot) { return Slot >= 0 && Slot < this->Size; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE ABaseItem* GetItem(int32 Slot) { return this->ItemArray.IsValidIndex(Slot) ? this->ItemArray[Slot] : nullptr; }
 
 	UFUNCTION(BlueprintCallable)
 		bool MoveItem(int32 FromSlot, UInventoryComponent* ReceivingTarget, int32 ToSlot, bool bSwapIfNecessary);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		int FindSlotOfItem(ABaseItem* Item);
+		FORCEINLINE int32 FindSlotOfItem(ABaseItem* Item) { return this->ItemArray.Find(Item); }
 
 	UFUNCTION(BlueprintCallable)
-		void Resize(int32 NewSize, bool bDropExcessiveItems = true, FVector DropLocation = FVector(0, 0, 0));
+		void Resize(int32 NewSize, FVector ExcessiveItemsDropLocation);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		bool IsSlotEmpty(int32 Slot);
+		FORCEINLINE bool IsSlotEmpty(int32 Slot) { return (this->GetItem(Slot) == nullptr); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		int GetFirstEmptySlot();
+		int32 GetFirstEmptySlot();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		bool DoesAcceptItemClass(TSubclassOf<ABaseItem> ItemClass);
