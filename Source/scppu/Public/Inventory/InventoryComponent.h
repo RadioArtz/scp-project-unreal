@@ -27,6 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 		TArray<TSubclassOf<ABaseItem>> Whitelist;
 
+	// Array size is always equal with inventory size. Empty slots hold a nullptr reference.
 	UPROPERTY()
 		TArray<ABaseItem*> ItemArray;
 

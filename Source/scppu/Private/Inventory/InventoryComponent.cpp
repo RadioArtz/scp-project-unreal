@@ -120,6 +120,7 @@ void UInventoryComponent::Resize(int32 NewSize, FVector ExcessiveItemsDropLocati
 
 	int32 OriginalSize = this->Size;
 
+	// Extend ItemArray to its new size
 	for (int i = 0; i < NewSize; i++)
 	{
 		if (i >= this->ItemArray.Num())
@@ -128,11 +129,12 @@ void UInventoryComponent::Resize(int32 NewSize, FVector ExcessiveItemsDropLocati
 		}
 	}
 
+	// Remove excessive Items from ItemArray
 	for (int i = OriginalSize - 1; i >= NewSize; i--)
 	{
 		if (this->ItemArray[i] != nullptr)
 		{
-			if (this->GetFirstEmptySlot() != -1)
+			if (this->GetFirstEmptySlot() != INDEX_NONE)
 			{
 				this->MoveItem(i, this, this->GetFirstEmptySlot(), false);	
 			}
@@ -160,7 +162,7 @@ int32 UInventoryComponent::GetFirstEmptySlot()
 		}
 	}
 
-	return -1;
+	return INDEX_NONE;
 }
 
 bool UInventoryComponent::DoesAcceptItemClass(TSubclassOf<ABaseItem> ItemClass)
