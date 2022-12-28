@@ -169,14 +169,11 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 		return;
 	}
 
-
 	// Delete reflection captures based on our "new" rotation
     int Rotation = FMath::DivideAndRoundNearest((this->GetActorRotation() - this->PlacedRotation).GetDenormalized().Yaw, 90.0f);
 	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Detected rotation %d"), *this->GetName(), Rotation);
 	UE_LOG(LogRotatingRefCap, Warning, TEXT("%s: Map build data id: %s"), *this->GetName(), *this->RefCap0->MapBuildDataId.ToString());
-	FString Text;
-	Text.Append(FString::Printf(TEXT("Time: %f\n"), this->GetWorld()->GetRealTimeSeconds()));
-	DrawDebugString(this->GetWorld(), this->GetActorLocation(), Text, nullptr, FColor::White, 10000, true, 1.0f);
+
 	switch (Rotation)
 	{
 	case 0:
