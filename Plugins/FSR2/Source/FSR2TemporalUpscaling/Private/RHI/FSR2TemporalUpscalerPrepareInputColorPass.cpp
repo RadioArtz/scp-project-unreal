@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -34,7 +34,7 @@ public:
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_input_color_jittered)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_exposure)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_prepared_input_color)
-		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_ReconstructedPrevNearestDepth)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_reconstructed_previous_nearest_depth)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_luma_history)
 	END_SHADER_PARAMETER_STRUCT()
 
@@ -80,7 +80,7 @@ public:
 		static uint32 Sizes[] = { sizeof(FFSR2PassParameters) / sizeof(uint32) };
 		return Sizes[Index];
 	}
-	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job, FParameters* Parameters)
+	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job, FParameters* Parameters)
 	{
 		for (uint32 i = 0; i < job->computeJobDescriptor.pipeline.constCount; i++)
 		{
@@ -134,7 +134,7 @@ public:
 				}
 				case FFX_FSR2_RESOURCE_IDENTIFIER_RECONSTRUCTED_PREVIOUS_NEAREST_DEPTH:
 				{
-					Parameters->rw_ReconstructedPrevNearestDepth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
+					Parameters->rw_reconstructed_previous_nearest_depth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
 				case FFX_FSR2_RESOURCE_IDENTIFIER_LUMA_HISTORY:

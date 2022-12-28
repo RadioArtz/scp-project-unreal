@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -46,10 +46,12 @@ struct FFSR2BackendState
 		FRDGTexture* RDG;
 		TRefCountPtr<FRDGPooledBuffer>* PooledBuffer;
 	} Resources[FSR2_MAX_RESOURCE_COUNT];
-	FfxRenderJobDescription Jobs[FSR2_MAX_RESOURCE_COUNT];
+	FfxGpuJobDescription Jobs[FSR2_MAX_RESOURCE_COUNT];
 	uint64 ResourceMask;
 	uint64 DynamicMask;
 	uint32 NumJobs;
+	ERHIFeatureLevel::Type FeatureLevel;
+	FfxDevice device;
 
 	uint32 AddResource(FRHIResource* Resource, FfxResourceType Type, TRefCountPtr<IPooledRenderTarget>* RT, FRDGTexture* RDG, TRefCountPtr<FRDGPooledBuffer>* PooledBuffer);
 
@@ -74,3 +76,4 @@ struct FFSR2BackendState
 extern FfxErrorCode ffxFsr2GetInterfaceUE(FfxFsr2Interface* outInterface, class FFSR2TemporalUpscaler const* Upscaler, void* scratchBuffer, size_t scratchBufferSize);
 extern size_t ffxFsr2GetScratchMemorySize();
 extern FfxResource ffxGetResourceFromUEResource(FfxFsr2Interface* backendInterface, FRDGTexture* rdgRes, FfxResourceStates state = FFX_RESOURCE_STATE_COMPUTE_READ);
+extern void ffxFsr2SetFeatureLevel(FfxFsr2Interface* backendInterface, ERHIFeatureLevel::Type FeatureLevel);

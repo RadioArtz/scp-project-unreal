@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -56,6 +56,7 @@ enum class EFSR2TemporalUpscalerAPI : uint8
 //-------------------------------------------------------------------------------------
 class FFSR2TemporalUpscaler final : public ITemporalUpscaler, public ICustomStaticScreenPercentage, public IScreenSpaceDenoiser
 {
+	friend class FFSR2FXSystem;
 public:
 	FFSR2TemporalUpscaler();
 	virtual ~FFSR2TemporalUpscaler();

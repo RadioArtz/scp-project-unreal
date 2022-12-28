@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -36,7 +36,7 @@ class IFSR2SubPass
 public:
 	virtual ~IFSR2SubPass() {}
 	virtual void SetupPipeline(FfxFsr2Pass passId, const FfxPipelineDescription* desc, FfxPipelineState* outPipeline, bool bSupportHalf) = 0;
-	virtual void Dispatch(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job) = 0;
+	virtual void Dispatch(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job) = 0;
 };
 
 //-------------------------------------------------------------------------------------
@@ -93,9 +93,10 @@ public:
 		}
 	}
 
-	void Dispatch(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job) override
+	void Dispatch(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job) override
 	{
-		TShaderMapRef<TShaderClass> ComputeShader(GetGlobalShaderMap(ERHIFeatureLevel::Type::SM5), Permutation);
+		TShaderMapRef<TShaderClass> ComputeShader(GetGlobalShaderMap(Context->FeatureLevel), Permutation);
+
 		FIntVector DispatchCount(job->computeJobDescriptor.dimensions[0], job->computeJobDescriptor.dimensions[1], job->computeJobDescriptor.dimensions[2]);
 		typename TShaderClass::FParameters* Parameters = GraphBuilder.AllocParameters<typename TShaderClass::FParameters>();
 		TShaderClass::BindParameters(GraphBuilder, Context, job, Parameters);

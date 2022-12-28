@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "2.0",
-	"FriendlyName": "FSR 2.0",
-	"Description": "FidelityFX Super Resolution 2.0",
+	"VersionName": "2.1.2",
+	"FriendlyName": "FSR 2.1",
+	"Description": "FidelityFX Super Resolution 2.1",
 	"Category": "Rendering",
 	"CreatedBy": "AMD",
 	"CreatedByURL": "https://gpuopen.com/unreal-engine/",
