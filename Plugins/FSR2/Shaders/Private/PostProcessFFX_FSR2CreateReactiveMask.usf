@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -22,7 +22,6 @@
 #include "/Engine/Private/ScreenPass.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
 
-
 // =====================================================================================
 //
 // SHADER RESOURCES
@@ -37,6 +36,7 @@ Texture2D SceneColor;
 Texture2D SceneColorPreAlpha;
 RWTexture2D<float> ReactiveMask;
 RWTexture2D<float> CompositeMask;
+SamplerState Sampler;
 
 // =====================================================================================
 //
@@ -53,6 +53,8 @@ float ReactiveMaskTranslucencyLumaBias;
 float ReactiveMaskPreDOFTranslucencyScale;
 uint ReactiveMaskPreDOFTranslucencyMax;
 float ReactiveMaskTranslucencyMaxDistance;
+float ForceLitReactiveValue;
+uint ReactiveShadingModelID;
 
 // =====================================================================================
 //
@@ -66,17 +68,20 @@ void MainCS(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_Group
 	uint Height = View.ViewSizeAndInvSize.y;
 	uint2 ThreadId = DispatchThreadId.xy + View.ViewRectMin.xy;
 
-	if (Width > ThreadId.x && Height > ThreadId.y)
+	if (Width > DispatchThreadId.x && Height > DispatchThreadId.y)
 	{
+		float2 TexelUV = (float2(ThreadId.xy) + 0.5f) / (View.ViewSizeAndInvSize.xy + View.ViewRectMin.xy);
+		float2 ScreenPos = ViewportUVToScreenPos(TexelUV);
 		float4 Output = float4(0.f, 0.f, 0.f, 0.f);
 		float4 BufferB = GBufferB[ThreadId];
-		float4 FullSceneColor = SceneColor[ThreadId];
-		float4 SceneColorNoAlpha = SceneColorPreAlpha[DispatchThreadId.xy];
 		float4 BufferD = GBufferD[ThreadId];
-		float4 Reflection = ReflectionTexture[ThreadId];
-		float4 Translucency = InputSeparateTranslucency[ThreadId];
+		float4 FullSceneColor = SceneColor[ThreadId];
+		float4 SceneColorNoAlpha = SceneColorPreAlpha[ThreadId];
 		float CurrentDepth = InputDepth[ThreadId].x;
-		float2 ScreenPos = ViewportUVToScreenPos((float2(ThreadId.xy) + 0.5f) / View.ViewSizeAndInvSize.xy);
+
+		TexelUV = (float2(ThreadId.xy) + 0.5f) / (View.BufferSizeAndInvSize.xy + View.ViewRectMin.xy);
+		float4 Reflection = ReflectionTexture.SampleLevel(Sampler, TexelUV, 0);
+		float4 Translucency = InputSeparateTranslucency.SampleLevel(Sampler, TexelUV, 0);
 		float2 TranslucencyContribution = float2(0.f, 0.f);
 
 		FGBufferData GBuffer = DecodeGBufferData(float4(0.f, 0.f, 0.f, 0.f),
@@ -93,6 +98,7 @@ void MainCS(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_Group
 													false);
 
 		float Roughness = GBuffer.Roughness;
+		float ForceReactive = 0.f;
 		if (GBuffer.ShadingModelID == SHADINGMODELID_CLEAR_COAT)
 		{
 			const float ClearCoat			= GBuffer.CustomData.x;
@@ -104,6 +110,11 @@ void MainCS(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_Group
 		{
 			Roughness = 1.0f;
 		}
+		
+		if (GBuffer.ShadingModelID == ReactiveShadingModelID)
+		{
+			ForceReactive = ForceLitReactiveValue > 0.f ? ForceLitReactiveValue : GBuffer.CustomData.x;
+		}
 
 		float3 Delta = abs(FullSceneColor - SceneColorNoAlpha).xyz;
 		float PreDOFTranslucency = saturate(ReactiveMaskPreDOFTranslucencyMax ? max(Delta.x, max(Delta.y, Delta.z)) : length(Delta)) * ReactiveMaskPreDOFTranslucencyScale;
@@ -111,7 +122,7 @@ void MainCS(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_Group
 		
 		// Add a falloff for roughness based on the largest capture radius, this is a cheat as we aren't using the actual capture position
 		float WorldDepth = ConvertFromDeviceZ(CurrentDepth);
-		float4 SvPosition = float4(ThreadId.xy + View.ViewRectMin.xy, CurrentDepth, WorldDepth);
+		float4 SvPosition = float4(ThreadId.xy, CurrentDepth, WorldDepth);
 		float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
 		float NormalizedDistanceToCapture = saturate(length(TranslatedWorldPosition) / FurthestReflectionCaptureDistance);
 		Roughness = (FurthestReflectionCaptureDistance > 0.f) ? lerp(Roughness, 1.f, NormalizedDistanceToCapture) : Roughness;
@@ -138,6 +149,6 @@ void MainCS(uint3 LocalThreadId : SV_GroupThreadID, uint3 WorkGroupId : SV_Group
 		Output.y = lerp(Output.y, 1.f, TranslucencyContribution.y);
 
 		CompositeMask[DispatchThreadId.xy] = Output.x;
-		ReactiveMask[DispatchThreadId.xy] = Output.y;
+		ReactiveMask[DispatchThreadId.xy] = max(ForceReactive, Output.y);
 	}
 }

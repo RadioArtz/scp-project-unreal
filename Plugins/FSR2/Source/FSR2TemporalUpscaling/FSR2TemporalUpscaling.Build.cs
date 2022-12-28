@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -53,6 +53,7 @@ public class FSR2TemporalUpscaling : ModuleRules
 				"RenderCore",
 				"Renderer",
 				"RHI",
+				"Landscape",
 				"CoreUObject",
 				"EngineSettings",
 				"DeveloperSettings",

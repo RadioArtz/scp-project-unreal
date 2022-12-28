@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -36,7 +36,7 @@ public:
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_lock_status)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_reactive_mask)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_lock_status)
-		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_reactive_max)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_dilated_reactive_masks)
 	END_SHADER_PARAMETER_STRUCT()
 
 	using FPermutationDomain = FFSR2GlobalShader::FPermutationDomain;
@@ -56,7 +56,7 @@ public:
 	}
 	static uint32* GetBoundUAVs()
 	{
-		static uint32 UAVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_LOCK_STATUS, FFX_FSR2_RESOURCE_IDENTIFIER_REACTIVE_MAX };
+		static uint32 UAVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_LOCK_STATUS, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS };
 		return UAVs;
 	}
 	static uint32 GetNumBoundSRVs()
@@ -81,7 +81,7 @@ public:
 		static uint32 Sizes[] = { sizeof(FFSR2PassParameters) / sizeof(uint32) };
 		return Sizes[Index];
 	}
-	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job, FParameters* Parameters)
+	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job, FParameters* Parameters)
 	{for (uint32 i = 0; i < job->computeJobDescriptor.pipeline.constCount; i++)
 		{
 			switch (job->computeJobDescriptor.pipeline.cbResourceBindings[i].resourceIdentifier)
@@ -137,9 +137,9 @@ public:
 					Parameters->rw_lock_status = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
-				case FFX_FSR2_RESOURCE_IDENTIFIER_REACTIVE_MAX:
+				case FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS:
 				{
-					Parameters->rw_reactive_max = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
+					Parameters->rw_dilated_reactive_masks = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
 				default:

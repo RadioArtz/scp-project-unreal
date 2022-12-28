@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -83,7 +83,7 @@ void FFSR2TemporalUpscalerEditor::SetupEditorViewFamily(FSceneViewFamily& ViewFa
 		if (FSR2ViewportData->bIsFSR2Enabled)
 		{
 			bEnabledInEditor = true;
-			ViewFamily.EngineShowFlags.ScreenPercentage = (CVarFSR2Enabled && CVarFSR2Enabled->GetValueOnAnyThread() && CVarFSR2EnabledInEditor && CVarFSR2EnabledInEditor->GetValueOnAnyThread());
+			ViewFamily.EngineShowFlags.ScreenPercentage = (CVarFSR2Enabled && CVarFSR2Enabled->GetValueOnAnyThread());
 			if (ViewFamily.EngineShowFlags.ScreenPercentage)
 			{
 				float ResFraction = TemporalUpscalingModule->GetResolutionFraction(FSR2ViewportData->FSR2Quality);
@@ -116,7 +116,7 @@ static void MakeFSR2SettingsMenu(UToolMenu* Menu, FFSR2TemporalUpscalerEditor* U
 	Section.AddMenuEntry(
 		"FSR2Enabled",
 		LOCTEXT("FSR2EnabledOption", "Enabled"),
-		LOCTEXT("FSR2EnabledToolTip", "Use FidelityFX Super Resolution 2.0 to upscale."),
+		LOCTEXT("FSR2EnabledToolTip", "Use FidelityFX Super Resolution 2.1 to upscale."),
 		FSlateIcon(),
 		FUIAction(
 			FExecuteAction::CreateLambda([Arguments]() {
@@ -197,8 +197,8 @@ bool FFSR2TemporalUpscalerEditor::GenerateEditorViewportOptionsMenuEntry(const I
 	{
 		Arguments.Section->AddSubMenu(
 			"FSR2Settings",
-			LOCTEXT("FSR2SettingsSubMenu", "FidelityFX Super Resolution 2.0"),
-			LOCTEXT("FSR2SettingsSubMenu_ToolTip", "Settings for FidelityFX Super Resolution 2.0 in the Editor viewport."),
+			LOCTEXT("FSR2SettingsSubMenu", "FidelityFX Super Resolution 2.1"),
+			LOCTEXT("FSR2SettingsSubMenu_ToolTip", "Settings for FidelityFX Super Resolution 2.1 in the Editor viewport."),
 			FNewToolMenuDelegate::CreateStatic(&MakeFSR2SettingsMenu, this, Arguments));
 	}
 	return false;

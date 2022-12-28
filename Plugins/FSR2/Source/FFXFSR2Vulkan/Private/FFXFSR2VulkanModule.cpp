@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -19,6 +19,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 #include "FFXFSR2VulkanModule.h"
+
+#include "VulkanPlatform.h"
+
 #include "FFXFSR2Vulkan.h"
 #include "CoreMinimal.h"
 #include "VulkanRHIBridge.h"

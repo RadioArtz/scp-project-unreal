@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -50,9 +50,31 @@ enum class EFSR2HistoryFormat : int32
 };
 
 //-------------------------------------------------------------------------------------
+// The support texture formats for the FSR2 history data.
+//-------------------------------------------------------------------------------------
+UENUM()
+enum class EFSR2DeDitherMode : int32
+{
+	Off UMETA(DisplayName = "Off"),
+	Full UMETA(DisplayName = "Full"),
+	HairOnly UMETA(DisplayName = "Hair Only"),
+};
+
+//-------------------------------------------------------------------------------------
+// The modes for forcing Landscape Hierachical Instance Static Model to not be Static.
+//-------------------------------------------------------------------------------------
+UENUM()
+enum class EFSR2LandscapeHISMMode : int32
+{
+	Off UMETA(DisplayName = "Off"),
+	AllStatic UMETA(DisplayName = "All Instances"),
+	StaticWPO UMETA(DisplayName = "Instances with World-Position-Offset"),
+};
+
+//-------------------------------------------------------------------------------------
 // Settings for FSR2 exposed through the Editor UI.
 //-------------------------------------------------------------------------------------
-UCLASS(Config = Engine, DefaultConfig, DisplayName = "FidelityFX Super Resolution 2.0")
+UCLASS(Config = Engine, DefaultConfig, DisplayName = "FidelityFX Super Resolution 2.1")
 class FSR2TEMPORALUPSCALING_API UFSR2Settings : public UDeveloperSettings
 {
 	GENERATED_UCLASS_BODY()
@@ -91,6 +113,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category = "Quality Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.HistoryFormat", DisplayName = "History Format", ToolTip = "Selects the bit-depth for the FSR2 history texture format, defaults to PF_FloatRGBA but can be set to PF_FloatR11G11B10 to reduce bandwidth at the expense of quality."))
 		EFSR2HistoryFormat HistoryFormat;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Quality Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.DeDither", DisplayName = "De-Dither Rendering", ToolTip = "Enable an extra pass to de-dither rendering before handing over to FSR2 to avoid over-thinning, defaults to Off but can be set to Full for all pixels or to Hair Only for just around Hair (requires Deffered Renderer)."))
+		EFSR2DeDitherMode DeDither;
+
 	UPROPERTY(Config, EditAnywhere, Category = "Quality Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.Sharpness", DisplayName = "Sharpness", ClampMin = 0, ClampMax = 1, ToolTip = "When greater than 0.0 this enables Robust Contrast Adaptive Sharpening Filter to sharpen the output image."))
 		float Sharpness;
 
@@ -102,6 +127,9 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Quality Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ForceVertexDeformationOutputsVelocity", DisplayName = "Force Vertex Deformation To Output Velocity", ToolTip = "Force enables materials with World Position Offset and/or World Displacement to output velocities during velocity pass even when the actor has not moved."))
 		bool ForceVertexDeformationOutputsVelocity;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Quality Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ForceLandscapeHISMMobility", DisplayName = "Force Landscape HISM Mobility", ToolTip = "Allow FSR2 to force the mobility of Landscape actors Hierarchical Instance Static Mesh components that use World-Position-Offset materials so they render valid velocities.\nSetting 'All Instances' is faster on the CPU, 'Instances with World-Position-Offset' is faster on the GPU."))
+		EFSR2LandscapeHISMMode ForceLandscapeHISMMobility;
 
 	UPROPERTY(Config, EditAnywhere, Category = "Reactive Mask Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ReactiveMaskReflectionScale", DisplayName = "Reflection Scale", ClampMin = 0, ClampMax = 1, ToolTip = "Scales the Unreal engine reflection contribution to the reactive mask, which can be used to control the amount of aliasing on reflective surfaces."))
 		float ReflectionScale;
@@ -135,4 +163,10 @@ public:
 
 	UPROPERTY(Config, EditAnywhere, Category = "Reactive Mask Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ReactiveMaskPreDOFTranslucencyMax", DisplayName = "Pre Depth-of-Field Translucency Max/Average", ToolTip = "Toggle to determine whether to use the max(SceneColorPostDepthOfField - SceneColorPreDepthOfField) or length(SceneColorPostDepthOfField - SceneColorPreDepthOfField) to determine the contribution of Pre-Depth-of-Field translucency."))
 		bool PreDOFTranslucencyMax;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Reactive Mask Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ReactiveMaskReactiveShadingModelID", DisplayName = "Reactive Shading Model", ToolTip = "Treat the specified shading model as reactive, taking the CustomData0.x value as the reactive value to write into the mask. Default is MSM_NUM (Off)."))
+		TEnumAsByte<enum EMaterialShadingModel> ReactiveShadingModelID;
+
+	UPROPERTY(Config, EditAnywhere, Category = "Reactive Mask Settings", meta = (ConsoleVariable = "r.FidelityFX.FSR2.ReactiveMaskForceReactiveMaterialValue", DisplayName = "Force value for Reactive Shading Model", ClampMin = 0, ClampMax = 1, ToolTip = "Force the reactive mask value for Reactive Shading Model materials, when > 0 this value can be used to override the value supplied in the Material Graph."))
+		float ForceReactiveMaterialValue;
 };

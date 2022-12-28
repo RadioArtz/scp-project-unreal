@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -36,6 +36,9 @@ static EPixelFormat GetUEFormat(FfxSurfaceFormat Format)
 			break;
 		case FFX_SURFACE_FORMAT_R16G16B16A16_FLOAT:
 			UEFormat = PF_FloatRGBA;
+			break;
+		case FFX_SURFACE_FORMAT_R16G16B16A16_UNORM:
+			UEFormat = PF_R16G16B16A16_UNORM;
 			break;
 		case FFX_SURFACE_FORMAT_R32G32_FLOAT:
 			UEFormat = PF_G32R32F;
@@ -76,6 +79,9 @@ static EPixelFormat GetUEFormat(FfxSurfaceFormat Format)
 		case FFX_SURFACE_FORMAT_R32_FLOAT:
 			UEFormat = PF_R32_FLOAT;
 			break;
+		case FFX_SURFACE_FORMAT_R8G8_UNORM:
+			UEFormat = PF_R8G8;
+			break;
 		default:
 			check(false);
 			break;
@@ -97,6 +103,9 @@ static FfxSurfaceFormat GetFFXFormat(EPixelFormat UEFormat)
 	case PF_FloatRGBA:
 		Format = FFX_SURFACE_FORMAT_R16G16B16A16_FLOAT;
 		break;
+	case PF_R16G16B16A16_UNORM:
+		Format = FFX_SURFACE_FORMAT_R16G16B16A16_UNORM;
+		break;
 	case PF_G32R32F:
 		Format = FFX_SURFACE_FORMAT_R32G32_FLOAT;
 		break;
@@ -111,6 +120,7 @@ static FfxSurfaceFormat GetFFXFormat(EPixelFormat UEFormat)
 		Format = FFX_SURFACE_FORMAT_R8G8B8A8_UNORM;
 		break;
 	case PF_FloatR11G11B10:
+	case PF_FloatRGB:
 		Format = FFX_SURFACE_FORMAT_R11G11B10_FLOAT;
 		break;
 	case PF_G16R16F:
@@ -139,6 +149,9 @@ static FfxSurfaceFormat GetFFXFormat(EPixelFormat UEFormat)
 		break;
 	case PF_DepthStencil:
 		Format = FFX_SURFACE_FORMAT_R32_FLOAT;
+		break;
+	case PF_R8G8:
+		Format = FFX_SURFACE_FORMAT_R8G8_UNORM;
 		break;
 	default:
 		check(false);
@@ -199,7 +212,7 @@ static FfxErrorCode CreateResource_UE(FfxFsr2Interface* backendInterface, const 
 {
 	FfxErrorCode Result = FFX_OK;
 	FFSR2BackendState* Context = (FFSR2BackendState*)backendInterface->scratchBuffer;
-	FFSR2TemporalUpscaler* Upscaler = (FFSR2TemporalUpscaler*)desc->device;
+	FFSR2TemporalUpscaler* Upscaler = (FFSR2TemporalUpscaler*)Context->device;
 	FRDGBuilder* GraphBuilder = Upscaler ? Upscaler->GetGraphBuilder() : nullptr;
 	
 	if (Context && GraphBuilder)
@@ -356,11 +369,12 @@ static FfxErrorCode CreateDevice_UE(FfxFsr2Interface* backendInterface, FfxDevic
 	FFSR2BackendState* backendContext = (FFSR2BackendState*)backendInterface->scratchBuffer;
 	FMemory::Memzero(backendInterface->scratchBuffer, backendInterface->scratchBufferSize);
 	backendContext->ResourceMask = 0xffffffffffffffff;
+	backendContext->device = device;
 
 	return FFX_OK;
 }
 
-static FfxErrorCode ReleaseDevice_UE(FfxFsr2Interface* backendInterface, FfxDevice device)
+static FfxErrorCode ReleaseDevice_UE(FfxFsr2Interface* backendInterface)
 {
 	FFSR2BackendState* backendContext = (FFSR2BackendState*)backendInterface->scratchBuffer;
 	for (int i = 0; i < FSR2_MAX_RESOURCE_COUNT; ++i)
@@ -412,7 +426,7 @@ static FfxErrorCode CreatePipeline_UE(FfxFsr2Interface* backendInterface, FfxFsr
 			}
 			case FFX_FSR2_PASS_RCAS:
 			{
-				outPipeline->pipeline = (FfxPipeline*)GetRCASPass(passId, desc, outPipeline, deviceCapabilities.fp16Supported);
+				outPipeline->pipeline = (FfxPipeline*)GetRCASPass(passId, desc, outPipeline, false);
 				break;
 			}
 			case FFX_FSR2_PASS_COMPUTE_LUMINANCE_PYRAMID:
@@ -439,11 +453,11 @@ static FfxErrorCode CreatePipeline_UE(FfxFsr2Interface* backendInterface, FfxFsr
 	return Result;
 }
 
-static FfxErrorCode ScheduleRenderJob_UE(FfxFsr2Interface* backendInterface, const FfxRenderJobDescription* job)
+static FfxErrorCode ScheduleRenderJob_UE(FfxFsr2Interface* backendInterface, const FfxGpuJobDescription* job)
 {
 	FFSR2BackendState* backendContext = (FFSR2BackendState*)backendInterface->scratchBuffer;
 	backendContext->Jobs[backendContext->NumJobs] = *job;
-	if (job->jobType == FFX_RENDER_JOB_COMPUTE)
+	if (job->jobType == FFX_GPU_JOB_COMPUTE)
 	{
 		// needs to copy SRVs and UAVs in case they are on the stack only
 		FfxComputeJobDescription* computeJob = &backendContext->Jobs[backendContext->NumJobs].computeJobDescriptor;
@@ -468,10 +482,10 @@ static FfxErrorCode FlushRenderJobs_UE( FfxFsr2Interface* backendInterface, FfxC
 	{
 		for (uint32 i = 0; i < Context->NumJobs; i++)
 		{
-			FfxRenderJobDescription* job = &Context->Jobs[i];
+			FfxGpuJobDescription* job = &Context->Jobs[i];
 			switch (job->jobType)
 			{
-				case FFX_RENDER_JOB_CLEAR_FLOAT:
+				case FFX_GPU_JOB_CLEAR_FLOAT:
 				{
 					FRDGTexture* RdgTex = Context->GetRDGTexture(*GraphBuilder, job->clearJobDescriptor.target.internalIndex);
 					if (RdgTex)
@@ -486,7 +500,7 @@ static FfxErrorCode FlushRenderJobs_UE( FfxFsr2Interface* backendInterface, FfxC
 					}
 					break;
 				}
-				case FFX_RENDER_JOB_COPY:
+				case FFX_GPU_JOB_COPY:
 				{
 					if ((Context->GetType(job->copyJobDescriptor.src.internalIndex) == FFX_RESOURCE_TYPE_BUFFER) && (Context->GetType(job->copyJobDescriptor.dst.internalIndex) == FFX_RESOURCE_TYPE_BUFFER))
 					{
@@ -504,7 +518,7 @@ static FfxErrorCode FlushRenderJobs_UE( FfxFsr2Interface* backendInterface, FfxC
 
 					break;
 				}
-				case FFX_RENDER_JOB_COMPUTE:
+				case FFX_GPU_JOB_COMPUTE:
 				{
 					IFSR2SubPass* Pipeline = (IFSR2SubPass*)job->computeJobDescriptor.pipeline.pipeline;
 					check(Pipeline);
@@ -610,16 +624,16 @@ static FfxErrorCode UnregisterResources_UE(FfxFsr2Interface* backendInterface)
 FfxErrorCode ffxFsr2GetInterfaceUE(FfxFsr2Interface* outInterface, class FFSR2TemporalUpscaler const* Upscaler, void* scratchBuffer, size_t scratchBufferSize)
 {
 	outInterface->fpGetDeviceCapabilities = GetDeviceCapabilities_UE;
-	outInterface->fpCreateDevice = CreateDevice_UE;
-	outInterface->fpDestroyDevice = ReleaseDevice_UE;
+	outInterface->fpCreateBackendContext = CreateDevice_UE;
+	outInterface->fpDestroyBackendContext = ReleaseDevice_UE;
 	outInterface->scratchBuffer = scratchBuffer;
 	outInterface->scratchBufferSize = scratchBufferSize;
 
 	outInterface->fpCreateResource = CreateResource_UE;
 	outInterface->fpCreatePipeline = CreatePipeline_UE;
 	outInterface->fpRegisterResource = RegisterResource_UE;
-	outInterface->fpScheduleRenderJob = ScheduleRenderJob_UE;
-	outInterface->fpExecuteRenderJobs = FlushRenderJobs_UE;
+	outInterface->fpScheduleGpuJob = ScheduleRenderJob_UE;
+	outInterface->fpExecuteGpuJobs = FlushRenderJobs_UE;
 	outInterface->fpDestroyResource = DestroyResource_UE;
 	outInterface->fpDestroyPipeline = DestroyPipeline_UE;
 	outInterface->fpGetResourceDescription = GetResourceDesc_UE;
@@ -653,6 +667,12 @@ FfxResource ffxGetResourceFromUEResource(FfxFsr2Interface* backendInterface, FRD
 		resources.description.flags = FFX_RESOURCE_FLAGS_NONE;
 	}
 	return resources;
+}
+
+void ffxFsr2SetFeatureLevel(FfxFsr2Interface* backendInterface, ERHIFeatureLevel::Type FeatureLevel)
+{
+	FFSR2BackendState* backendContext = (FFSR2BackendState*)backendInterface->scratchBuffer;
+	backendContext->FeatureLevel = FeatureLevel;
 }
 
 uint32 FFSR2BackendState::AddResource(FRHIResource* Resource, FfxResourceType Type, TRefCountPtr<IPooledRenderTarget>* RT, FRDGTexture* RDG, TRefCountPtr<FRDGPooledBuffer>* PooledBuffer)

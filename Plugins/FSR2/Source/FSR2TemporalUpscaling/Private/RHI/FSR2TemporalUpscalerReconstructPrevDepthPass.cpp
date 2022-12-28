@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -31,11 +31,15 @@ public:
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_STRUCT_REF(FFSR2PassParameters, cbFSR2)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_reactive_mask)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_transparency_and_composition_mask)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_prepared_input_color)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_motion_vectors)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_depth)
-		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_ReconstructedPrevNearestDepth)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_reconstructed_previous_nearest_depth)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_dilated_motion_vectors)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_dilatedDepth)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_dilated_reactive_masks)
 	END_SHADER_PARAMETER_STRUCT()
 
 	using FPermutationDomain = FFSR2GlobalShader::FPermutationDomain;
@@ -50,21 +54,21 @@ public:
 	}
 	static uint32* GetBoundSRVs()
 	{
-		static uint32 SRVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_DEPTH };
+		static uint32 SRVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_REACTIVE_MASK, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_TRANSPARENCY_AND_COMPOSITION_MASK, FFX_FSR2_RESOURCE_IDENTIFIER_PREPARED_INPUT_COLOR, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_DEPTH };
 		return SRVs;
 	}
 	static uint32* GetBoundUAVs()
 	{
-		static uint32 UAVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_RECONSTRUCTED_PREVIOUS_NEAREST_DEPTH, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_DEPTH };
+		static uint32 UAVs[] = { FFX_FSR2_RESOURCE_IDENTIFIER_RECONSTRUCTED_PREVIOUS_NEAREST_DEPTH, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_DEPTH, FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS };
 		return UAVs;
 	}
 	static uint32 GetNumBoundSRVs()
 	{
-		return 2;
+		return 5;
 	}
 	static uint32 GetNumBoundUAVs()
 	{
-		return 3;
+		return 4;
 	}
 	static uint32 GetNumConstants()
 	{
@@ -80,7 +84,7 @@ public:
 		static uint32 Sizes[] = { sizeof(FFSR2PassParameters) / sizeof(uint32) };
 		return Sizes[Index];
 	}
-	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job, FParameters* Parameters)
+	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job, FParameters* Parameters)
 	{
 		for (uint32 i = 0; i < job->computeJobDescriptor.pipeline.constCount; i++)
 		{
@@ -106,6 +110,21 @@ public:
 		{
 			switch (job->computeJobDescriptor.pipeline.srvResourceBindings[i].resourceIdentifier)
 			{
+				case FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_REACTIVE_MASK:
+				{
+					Parameters->r_reactive_mask = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
+					break;
+				}
+				case FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_TRANSPARENCY_AND_COMPOSITION_MASK:
+				{
+					Parameters->r_transparency_and_composition_mask = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
+					break;
+				}
+				case FFX_FSR2_RESOURCE_IDENTIFIER_PREPARED_INPUT_COLOR:
+				{
+					Parameters->r_prepared_input_color = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
+					break;
+				}
 				case FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_MOTION_VECTORS:
 				{
 					Parameters->r_motion_vectors = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
@@ -129,7 +148,7 @@ public:
 			{
 				case FFX_FSR2_RESOURCE_IDENTIFIER_RECONSTRUCTED_PREVIOUS_NEAREST_DEPTH:
 				{
-					Parameters->rw_ReconstructedPrevNearestDepth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
+					Parameters->rw_reconstructed_previous_nearest_depth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
 				case FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_MOTION_VECTORS:
@@ -140,6 +159,11 @@ public:
 				case FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_DEPTH:
 				{
 					Parameters->rw_dilatedDepth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
+					break;
+				}
+				case FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS:
+				{
+					Parameters->rw_dilated_reactive_masks = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
 				default:

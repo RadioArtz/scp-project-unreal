@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -45,9 +45,9 @@ public:
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_imgMips)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_reactive_mask)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_transparency_and_composition_mask)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_reactive_max)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_dilated_reactive_masks)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, r_upsample_maximum_bias_lut)
-		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_ReconstructedPrevNearestDepth)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_reconstructed_previous_nearest_depth)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_lock_status)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_upscaled_output)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D, rw_internal_upscaled_color)
@@ -70,7 +70,7 @@ public:
 			FFX_FSR2_RESOURCE_IDENTIFIER_INTERNAL_UPSCALED_COLOR, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_LANCZOS_LUT, 
 			FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_MOTION_VECTORS, FFX_FSR2_RESOURCE_IDENTIFIER_LUMA_HISTORY, FFX_FSR2_RESOURCE_IDENTIFIER_AUTO_EXPOSURE, 
 			FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_REACTIVE_MASK, FFX_FSR2_RESOURCE_IDENTIFIER_INPUT_TRANSPARENCY_AND_COMPOSITION_MASK,
-			FFX_FSR2_RESOURCE_IDENTIFIER_REACTIVE_MAX, FFX_FSR2_RESOURCE_IDENTITIER_UPSAMPLE_MAXIMUM_BIAS_LUT
+			FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS, FFX_FSR2_RESOURCE_IDENTITIER_UPSAMPLE_MAXIMUM_BIAS_LUT
 		};
 		return SRVs;
 	}
@@ -101,7 +101,7 @@ public:
 		static uint32 Sizes[] = { sizeof(FFSR2PassParameters) / sizeof(uint32) };
 		return Sizes[Index];
 	}
-	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxRenderJobDescription* job, FParameters* Parameters)
+	static void BindParameters(FRDGBuilder& GraphBuilder, FFSR2BackendState* Context, const FfxGpuJobDescription* job, FParameters* Parameters)
 	{
 		for (uint32 i = 0; i < job->computeJobDescriptor.pipeline.constCount; i++)
 		{
@@ -187,9 +187,9 @@ public:
 					Parameters->r_transparency_and_composition_mask = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
 					break;
 				}
-				case FFX_FSR2_RESOURCE_IDENTIFIER_REACTIVE_MAX:
+				case FFX_FSR2_RESOURCE_IDENTIFIER_DILATED_REACTIVE_MASKS:
 				{
-					Parameters->r_reactive_max = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
+					Parameters->r_dilated_reactive_masks = Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.srvs[i].internalIndex);
 					break;
 				}
 				case FFX_FSR2_RESOURCE_IDENTITIER_UPSAMPLE_MAXIMUM_BIAS_LUT:
@@ -210,7 +210,7 @@ public:
 			{
 				case FFX_FSR2_RESOURCE_IDENTIFIER_RECONSTRUCTED_PREVIOUS_NEAREST_DEPTH:
 				{
-					Parameters->rw_ReconstructedPrevNearestDepth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
+					Parameters->rw_reconstructed_previous_nearest_depth = GraphBuilder.CreateUAV(Context->GetRDGTexture(GraphBuilder, job->computeJobDescriptor.uavs[i].internalIndex));
 					break;
 				}
 				case FFX_FSR2_RESOURCE_IDENTIFIER_LOCK_STATUS:

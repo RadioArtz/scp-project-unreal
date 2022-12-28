@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -28,7 +28,7 @@ IMPLEMENT_UNIFORM_BUFFER_STRUCT(FFSR2RCASParameters, "cbRCAS");
 
 bool FFSR2GlobalShader::ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
 {
-	return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5);
+	return IsFeatureLevelSupported(Parameters.Platform, ERHIFeatureLevel::SM5) && IsPCPlatform(Parameters.Platform);
 }
 
 void FFSR2GlobalShader::ModifyCompilationEnvironment(const FGlobalShaderPermutationParameters& Parameters, FShaderCompilerEnvironment& OutEnvironment)
@@ -45,9 +45,12 @@ void FFSR2GlobalShader::ModifyCompilationEnvironment(const FGlobalShaderPermutat
 	OutEnvironment.SetDefine(TEXT("FFX_GPU"), 1);
 	OutEnvironment.SetDefine(TEXT("FFX_HLSL"), 1);
 
-	OutEnvironment.SetDefine(TEXT("OPT_USE_EVAL_ACCUMULATION_REACTIVENESS"), 0);
-	OutEnvironment.SetDefine(TEXT("OPT_PRECOMPUTE_REACTIVE_MAX"), 1);
-	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_USE_LANCZOS_LUT"), 1);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_UPSAMPLE_SAMPLERS_USE_DATA_HALF"), 0);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_ACCUMULATE_SAMPLERS_USE_DATA_HALF"), 0);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_REPROJECT_SAMPLERS_USE_DATA_HALF"), 1);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_POSTPROCESSLOCKSTATUS_SAMPLERS_USE_DATA_HALF"), 0);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_UPSAMPLE_USE_LANCZOS_TYPE"), 2);
+	OutEnvironment.SetDefine(TEXT("FFX_FSR2_OPTION_REPROJECT_USE_LANCZOS_TYPE"), 1);
 	OutEnvironment.SetDefine(TEXT("FFX_FSR2_PREFER_WAVE64"), TEXT(""));
 
 	// Rmove the unorm attribute when compiling with DX to avoid an fxc error.

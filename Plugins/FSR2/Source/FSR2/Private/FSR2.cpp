@@ -1,4 +1,4 @@
-// This file is part of the FidelityFX Super Resolution 2.0 Unreal Engine Plugin.
+// This file is part of the FidelityFX Super Resolution 2.1 Unreal Engine Plugin.
 //
 // Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 //
@@ -23,7 +23,7 @@
 
 #include "Runtime/Launch/Resources/Version.h"
 
-static_assert((ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27 && ENGINE_PATCH_VERSION >= 0), "FSR 2.0 plugin requires UE4.27.x");
+static_assert((ENGINE_MAJOR_VERSION == 4 && ENGINE_MINOR_VERSION == 27 && ENGINE_PATCH_VERSION >= 0), "FSR 2.1 plugin requires UE4.27.x");
 
 IMPLEMENT_MODULE(FFSR2Module, FSR2)
 

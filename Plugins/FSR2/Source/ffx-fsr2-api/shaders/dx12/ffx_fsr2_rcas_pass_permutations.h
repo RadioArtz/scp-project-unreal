@@ -3,7 +3,7 @@
 
 typedef union ffx_fsr2_rcas_pass_PermutationKey {
     struct {
-        uint32_t FFX_FSR2_OPTION_USE_LANCZOS_LUT : 1;
+        uint32_t FFX_FSR2_OPTION_REPROJECT_USE_LANCZOS_TYPE : 1;
         uint32_t FFX_FSR2_OPTION_HDR_COLOR_INPUT : 1;
         uint32_t FFX_FSR2_OPTION_LOW_RESOLUTION_MOTION_VECTORS : 1;
         uint32_t FFX_FSR2_OPTION_JITTERED_MOTION_VECTORS : 1;
