@@ -48,16 +48,6 @@ bool UExtendedGameUserSettings::IsTextureStreamingEnabled() const
 	return this->bUseTextureStreaming;
 }
 
-void UExtendedGameUserSettings::SetMaxFPS(int Value)
-{
-	this->MaxFPS = Value;
-}
-
-int UExtendedGameUserSettings::GetMaxFPS() const
-{
-	return this->MaxFPS;
-}
-
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 {
 	Super::ApplyNonResolutionSettings();
@@ -139,27 +129,6 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 		{
 			static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.TextureStreaming"));
 			CVar->Set(this->IsTextureStreamingEnabled(), ECVF_SetByGameSetting);
-		}
-	}
-
-	// Update Max FPS CVar
-	{
-		FString ConfigSection = TEXT("SystemSettings");
-#if WITH_EDITOR
-		if (GIsEditor)
-		{
-			ConfigSection = TEXT("SystemSettingsEditor");
-		}
-#endif
-		int MaxFpsValue = 0;
-		if (GConfig->GetInt(*ConfigSection, TEXT("t.MaxFPS"), MaxFpsValue, GEngineIni))
-		{
-			// Max FPS was already set by system settings. We are capable of setting it here.
-		}
-		else
-		{
-			static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("t.MaxFPS"));
-			CVar->Set(this->GetMaxFPS(), ECVF_SetByGameSetting);
 		}
 	}
 }

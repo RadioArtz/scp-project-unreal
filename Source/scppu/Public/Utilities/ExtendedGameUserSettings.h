@@ -35,10 +35,6 @@ protected:
 	UPROPERTY(config)
 		bool bUseTextureStreaming = true;
 
-	// If above 0, sets the fps limit to the value
-	UPROPERTY(config)
-		int MaxFPS = 120;
-
 	//// Functions ////	
 public:
 	// Returns the game local machine settings (resolution, windowing mode, scalability settings, etc...), but it's extended and has more settings
@@ -77,14 +73,6 @@ public:
 	// Returns the user setting for texture streaming
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		bool IsTextureStreamingEnabled() const;
-
-	// Sets the user setting for the fps limit (disabled if <= 0)
-	UFUNCTION(BlueprintCallable, Category = Settings)
-		void SetMaxFPS(int Value);
-
-	// Returns the user setting for the fps limit (disabled if <= 0)
-	UFUNCTION(BlueprintCallable, Category = Settings)
-		int GetMaxFPS() const;
 
 	virtual void ApplyNonResolutionSettings() override;
 };
