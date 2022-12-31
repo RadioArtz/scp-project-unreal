@@ -27,6 +27,8 @@ void PerformanceDataGrabberInternal::ProcessFrame(const FFrameData& FrameData)
 	Parent->RenderThreadTimeSeconds = FrameData.RenderThreadTimeSeconds;
 	Parent->RHIThreadTimeSeconds = FrameData.RHIThreadTimeSeconds;
 	Parent->GPUTimeSeconds = FrameData.GPUTimeSeconds;
+	Parent->NumDrawCalls = GNumDrawCallsRHI[0];
+	Parent->NumPrimitivesDrawn = GNumPrimitivesDrawnRHI[0];
 	Parent->DynamicResolutionScreenPercentage = FrameData.DynamicResolutionScreenPercentage;
 	Parent->FlushAsyncLoadingTime = FrameData.FlushAsyncLoadingTime;
 	Parent->FlushAsyncLoadingCount = FrameData.FlushAsyncLoadingCount;

@@ -100,6 +100,12 @@ public:
 		float GPUTimeSeconds;
 
 	UPROPERTY(BlueprintReadOnly)
+		int NumDrawCalls;
+
+	UPROPERTY(BlueprintReadOnly)
+		int NumPrimitivesDrawn;
+
+	UPROPERTY(BlueprintReadOnly)
 		float DynamicResolutionScreenPercentage;
 
 	UPROPERTY(BlueprintReadOnly)
