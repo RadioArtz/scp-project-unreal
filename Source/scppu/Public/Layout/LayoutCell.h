@@ -10,7 +10,7 @@
 
 class ULevelStreamingDynamic;
 
-UCLASS(Within="Layout")
+UCLASS(BlueprintType, Within="Layout")
 class SCPPU_API ULayoutCell : public UObject
 {
 	GENERATED_BODY()
@@ -90,6 +90,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors);
+
+	UFUNCTION(BlueprintCallable)
+		bool TransferSublevelActorToPresistentLevel(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable)
+		bool TransferPresistentLevelActorToSublevel(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable)
 		bool IsPointInSublevelBounds(FVector Point);

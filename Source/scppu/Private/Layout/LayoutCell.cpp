@@ -5,6 +5,7 @@
 #include "Layout/BaseLayoutSpawnValidator.h"
 #include "Layout/LayoutSublevelInterface.h"
 #include "Engine/LevelStreamingDynamic.h"
+#include "Engine/LevelActorContainer.h"
 #include "DrawDebugHelpers.h"
 
 FLayoutCellSides ULayoutCell::GetRequiredConnections()
@@ -240,6 +241,64 @@ void ULayoutCell::GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, 
 			}
 		}
 	}
+}
+
+bool ULayoutCell::TransferSublevelActorToPresistentLevel(AActor* Actor)
+{
+	if (!IsValid(Actor))
+	{
+		return false;
+	}
+
+	if (Actor->GetRootComponent()->Mobility != EComponentMobility::Movable)
+	{
+		return false;
+	}
+
+	if (!IsValid(this->Sublevel) || !this->Sublevel->HasLoadedLevel())
+	{
+		return false;
+	}
+
+	bool bWasRemoved = (bool)this->Sublevel->GetLoadedLevel()->Actors.RemoveSingle(Actor);
+	if (!bWasRemoved)
+	{
+		return false;
+	}
+
+	FString ActorName;
+	Actor->GetName(ActorName);
+	Actor->Rename(*ActorName, this->GetWorld()->PersistentLevel);
+	return true;
+}
+
+bool ULayoutCell::TransferPresistentLevelActorToSublevel(AActor* Actor)
+{
+	if (!IsValid(Actor))
+	{
+		return false;
+	}
+
+	if (Actor->GetRootComponent()->Mobility != EComponentMobility::Movable)
+	{
+		return false;
+	}
+
+	if (!IsValid(this->Sublevel) || !this->Sublevel->HasLoadedLevel())
+	{
+		return false;
+	}
+
+	if (!Actor->IsInPersistentLevel())
+	{
+		return false;
+	}
+
+	this->Sublevel->GetLoadedLevel()->Actors.Add(Actor);
+	FString ActorName;
+	Actor->GetName(ActorName);
+	Actor->Rename(*ActorName, this->Sublevel->GetLoadedLevel());
+	return true;
 }
 
 void ULayoutCell::OnSublevelLoadedCallback()

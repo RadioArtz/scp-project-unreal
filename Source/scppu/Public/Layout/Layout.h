@@ -15,7 +15,7 @@ class ULayoutSpawnValidator;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLayout, Log, All);
 
-UCLASS()
+UCLASS(BlueprintType)
 class SCPPU_API ALayout : public AActor
 {
 	GENERATED_BODY()
