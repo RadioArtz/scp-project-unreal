@@ -88,20 +88,11 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 #if WITH_EDITOR
 void ARotatingBoxReflectionCapture::UpdateCapture()
 {
-	// Only allow updates every two seconds (to avoid performance problems)
-	if ((FDateTime::UtcNow() - this->LastUpdate).GetTotalSeconds() < 0.5f)
-	{
-		UE_LOG(LogRotatingRefCap, Warning, TEXT("%s: Not updating, last update was at least 0.5s ago"), *this->GetName());
-		return;
-	}
-
 	if (this->GetWorld()->WorldType != EWorldType::Editor)
 	{
 		UE_LOG(LogRotatingRefCap, Error, TEXT("%s: Cannot update inside a non-editor mode"), *this->GetName());
 		return;
 	}
-
-	this->LastUpdate = FDateTime::UtcNow();
 
 	// Dispose old render target and static texture
 	if (IsValid(this->RenderTarget))
@@ -115,37 +106,36 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	}
 
 	// Create new render target
+	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Creating new render target..."), *this->GetName());
 	this->RenderTarget = NewObject<UTextureRenderTargetCube>(this, FName(), RF_Transient);
 	this->RenderTarget->ClearColor = FLinearColor::Green;
 	this->RenderTarget->Init(256, EPixelFormat::PF_FloatRGBA);
 	this->RenderTarget->UpdateResourceImmediate(true);
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Created new render target"), *this->GetName());
 
 	// Capture scence
+	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Capturing scene"), *this->GetName());
 	this->SceneCaptureCube->TextureTarget = this->RenderTarget;
 	this->SceneCaptureCube->CaptureScene();
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Captured scene"), *this->GetName());
 
 	// Create new static texture
 	this->StaticTexture = NewObject<UTextureCube>(this, FName(), RF_Transient);
 
 	// Draw render target to static texture
+	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Creating new static texture"), *this->GetName());
 	this->StaticTexture = this->RenderTarget->ConstructTextureCube(this->StaticTexture->GetOuter(), this->StaticTexture->GetName(), this->RenderTarget->GetMaskedFlags());
 	this->StaticTexture->Modify();
 	this->StaticTexture->MarkPackageDirty();
 	this->StaticTexture->PostEditChange();
 	this->StaticTexture->UpdateResource();
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Created new static texture"), *this->GetName());
 
 	// Apply new static texture to reflection capture
 	this->RefCap0->Cubemap = this->StaticTexture;
 	this->RefCap90->Cubemap = this->StaticTexture;
 	this->RefCap180->Cubemap = this->StaticTexture;
 	this->RefCap270->Cubemap = this->StaticTexture;
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
-	GEngine->SetTimeUntilNextGarbageCollection(0.25);
-}
 
+	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
+}
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 {
@@ -154,7 +144,29 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 		return;
 	}
 
-	this->UpdateCapture();
+	// Set brightness level
+	this->RefCap0->Brightness = this->Brightness;
+	this->RefCap90->Brightness = this->Brightness;
+	this->RefCap180->Brightness = this->Brightness;
+	this->RefCap270->Brightness = this->Brightness;
+
+	// If we open the level run update capture instantly, else defer the update to prevent massive render target/static texture creation
+	if (this->GetWorld()->UnpausedTimeSeconds < 1.0)
+	{
+		this->UpdateCapture();
+	}
+	else
+	{
+		if (this->DeferredUpdateTimer.IsValid())
+		{
+			this->GetWorld()->GetTimerManager().ClearTimer(this->DeferredUpdateTimer);
+		}
+
+		FTimerDelegate Delegate;
+		Delegate.BindUObject(this, &ARotatingBoxReflectionCapture::UpdateCapture);
+		this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, 0.25f, false);
+	}
+
 	this->PlacedRotation = this->GetActorRotation();
 }
 #endif

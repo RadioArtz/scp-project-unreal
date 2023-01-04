@@ -46,6 +46,8 @@ public:
 	UPROPERTY()
 		USceneCaptureComponentCube* SceneCaptureCube;
 
+	UPROPERTY(EditAnywhere, Category = "Custom Reflection Capture", meta = (UIMin = "0", UIMAX = "4"))
+		float Brightness = 1.f;
 
 	UPROPERTY(VisibleAnywhere, Category = "Custom Reflection Capture")
 		UTextureRenderTargetCube* RenderTarget = nullptr;
@@ -54,7 +56,7 @@ public:
 		UTextureCube* StaticTexture = nullptr;
 
 	UPROPERTY()
-		FDateTime LastUpdate;
+		FTimerHandle DeferredUpdateTimer;
 
 	UPROPERTY()
 		FRotator PlacedRotation;
