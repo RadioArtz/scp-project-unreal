@@ -48,6 +48,26 @@ bool UExtendedGameUserSettings::IsTextureStreamingEnabled() const
 	return this->bUseTextureStreaming;
 }
 
+void UExtendedGameUserSettings::SetCameraShakeEnabled(bool bEnabled)
+{
+	this->bAllowCameraShake = bEnabled;
+}
+
+bool UExtendedGameUserSettings::IsCameraShakeEnabled() const
+{
+	return this->bAllowCameraShake;
+}
+
+void UExtendedGameUserSettings::SetViewbobStrength(float Value)
+{
+	this->ViewBobStrength = Value;
+}
+
+float UExtendedGameUserSettings::GetViewbobStrength() const
+{
+	return this->ViewBobStrength;
+}
+
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 {
 	Super::ApplyNonResolutionSettings();

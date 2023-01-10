@@ -35,6 +35,15 @@ protected:
 	UPROPERTY(config)
 		bool bUseTextureStreaming = true;
 
+	// If true camera shake triggered by Elevators for example can play.
+	UPROPERTY(config)
+		bool bAllowCameraShake = true;
+
+	// Controls amount of viewbobbing
+	UPROPERTY(config)
+		float ViewBobStrength = 1;
+
+
 	//// Functions ////	
 public:
 	// Returns the game local machine settings (resolution, windowing mode, scalability settings, etc...), but it's extended and has more settings
@@ -73,6 +82,22 @@ public:
 	// Returns the user setting for texture streaming
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		bool IsTextureStreamingEnabled() const;
+
+	// Sets if Camera shake such as from Elevators is enabled.
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		void SetCameraShakeEnabled(bool bEnabled);
+
+	// Returns if Camera shake such as from Elevators is enabled.
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		bool IsCameraShakeEnabled() const;
+
+	// Sets the user setting for how strong viewbob can be.
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		void SetViewbobStrength(float Value);
+
+	// Returns the user setting for how strong viewbob can be.
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		float GetViewbobStrength() const;
 
 	virtual void ApplyNonResolutionSettings() override;
 };
