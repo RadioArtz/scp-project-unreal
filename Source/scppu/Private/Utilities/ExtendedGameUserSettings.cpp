@@ -93,6 +93,8 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 		}
 	}
 
+// FSR2 only supports windows
+#if PLATFORM_WINDOWS 
 	// Update FSR2 CVar
 	{
 		FString ConfigSection = TEXT("SystemSettings");
@@ -120,6 +122,7 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 			}
 		}
 	}
+#endif
 
 	// Update Gamma
 	if (GEngine == nullptr || GIsEditor)

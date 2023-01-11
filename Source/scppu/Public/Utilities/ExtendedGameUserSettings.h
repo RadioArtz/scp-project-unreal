@@ -43,7 +43,6 @@ protected:
 	UPROPERTY(config)
 		float ViewBobStrength = 1.f;
 
-
 	//// Functions ////	
 public:
 	// Returns the game local machine settings (resolution, windowing mode, scalability settings, etc...), but it's extended and has more settings
