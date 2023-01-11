@@ -95,8 +95,7 @@ UPerformanceDataGrabber::UPerformanceDataGrabber()
 #elif PLATFORM_LINUX
 	FPlatformMisc::GetDiskTotalAndFreeSpace("/sys/", DiskTotalSpace, DiskFreeSpace);
 #elif PLATFORM_MAC
-	// idk about that one
-	FPlatformMisc::GetDiskTotalAndFreeSpace("/sys/", DiskTotalSpace, DiskFreeSpace);
+	FPlatformMisc::GetDiskTotalAndFreeSpace("/System/", DiskTotalSpace, DiskFreeSpace);
 #endif
 	this->SystemDriveFreeSpace = DiskFreeSpace / (1024 * 1024);
 
