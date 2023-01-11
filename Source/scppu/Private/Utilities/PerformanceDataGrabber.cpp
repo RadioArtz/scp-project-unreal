@@ -93,7 +93,7 @@ UPerformanceDataGrabber::UPerformanceDataGrabber()
 #if PLATFORM_WINDOWS
 	FPlatformMisc::GetDiskTotalAndFreeSpace("C:/", DiskTotalSpace, DiskFreeSpace);
 #elif PLATFORM_LINUX
-	FPlatformMisc::GetDiskTotalAndFreeSpace("/sys/", DiskTotalSpace, DiskFreeSpace);
+	FPlatformMisc::GetDiskTotalAndFreeSpace("/", DiskTotalSpace, DiskFreeSpace);
 #elif PLATFORM_MAC
 	FPlatformMisc::GetDiskTotalAndFreeSpace("/System/", DiskTotalSpace, DiskFreeSpace);
 #endif
