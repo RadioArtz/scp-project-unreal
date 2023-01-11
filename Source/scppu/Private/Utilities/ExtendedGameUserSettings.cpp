@@ -50,12 +50,12 @@ bool UExtendedGameUserSettings::IsTextureStreamingEnabled() const
 
 void UExtendedGameUserSettings::SetCameraShakeEnabled(bool bEnabled)
 {
-	this->bAllowCameraShake = bEnabled;
+	this->bUseCameraShake = bEnabled;
 }
 
 bool UExtendedGameUserSettings::IsCameraShakeEnabled() const
 {
-	return this->bAllowCameraShake;
+	return this->bUseCameraShake;
 }
 
 void UExtendedGameUserSettings::SetViewbobStrength(float Value)
