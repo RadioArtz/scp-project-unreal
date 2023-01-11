@@ -111,73 +111,80 @@ public:
 
 	TSharedPtr<PerformanceDataGrabberInternal> Grabber;
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = Default)
 		FPerformanceDataGrabberDataUpdated OnFrameDataUpdated;
 
-
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = Default)
 		bool bIsCapturing = false;
 
 	// Initialized in constructor //
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
 		FString OSVersionLabel;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
 		FString OSVersionID;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
 		FCPUInformation CPUInformation;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
 		FGPUInformation GPUInformation;
 
 	// In MiB
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
 		int32 TotalPhysicalMemory;
+
+	// In MiB
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
+		int32 SystemDriveFreeSpace;
+
+	// In MiB
+	UPROPERTY(BlueprintReadOnly, Category = ConstantData)
+		int32 GameDriveFreeSpace;
 
 	// Updated per frame //
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		int FrameIndex;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float DeltaSeconds;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float GameThreadTimeSeconds;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float RenderThreadTimeSeconds;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float RHIThreadTimeSeconds;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float GPUTimeSeconds;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		int NumDrawCalls;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		int NumPrimitivesDrawn;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float DynamicResolutionScreenPercentage;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		float FlushAsyncLoadingTime;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		int FlushAsyncLoadingCount;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		int SyncLoadCount;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		EFrameHitchTypeBlueprintExposed HitchStatus;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = FrameData)
 		EFrameBoundThread FrameBound;
 
 	//// Functions ////	

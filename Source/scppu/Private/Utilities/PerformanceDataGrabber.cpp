@@ -3,6 +3,8 @@
 
 #include "Utilities/PerformanceDataGrabber.h"
 #include "HardwareInfo.h"
+#include "HAL/PlatformMemory.h"
+#include "HAL/PlatformMisc.h"
 #include "GenericPlatform/GenericPlatformDriver.h"
 
 PerformanceDataGrabberInternal::PerformanceDataGrabberInternal(UPerformanceDataGrabber* Parent)
@@ -67,8 +69,11 @@ void PerformanceDataGrabberInternal::StopCharting()
 
 UPerformanceDataGrabber::UPerformanceDataGrabber()
 {
-	FPlatformMisc::GetOSVersions(this->OSVersionLabel, this->OSVersionID);
-	this->OSVersionID = FPlatformMisc::GetOSVersion();
+	FString OSVer;
+	FString OSVerSub;
+	FPlatformMisc::GetOSVersions(OSVer, OSVerSub);
+	this->OSVersionLabel = OSVer.TrimStartAndEnd();
+	this->OSVersionID = FPlatformMisc::GetOSVersion().TrimStartAndEnd();
 	this->CPUInformation.Name = FPlatformMisc::GetCPUBrand().TrimStartAndEnd();
 	this->CPUInformation.NumCores = FPlatformMisc::NumberOfCores();
 	this->CPUInformation.NumThreads = FPlatformMisc::NumberOfCoresIncludingHyperthreads();
@@ -80,8 +85,23 @@ UPerformanceDataGrabber::UPerformanceDataGrabber()
 	FTextureMemoryStats TexMemStats;
 	RHIGetTextureMemoryStats(TexMemStats);
 	this->GPUInformation.DedicatedVideoMemory = TexMemStats.DedicatedVideoMemory / (1024 * 1024);
+	this->TotalPhysicalMemory = FPlatformMemory::GetConstants().TotalPhysical / (1024 * 1024);
 
-		this->TotalPhysicalMemory = FPlatformMemory::GetConstants().TotalPhysical / (1024 * 1024);
+	uint64 DiskTotalSpace;
+	uint64 DiskFreeSpace;
+
+#if PLATFORM_WINDOWS
+	FPlatformMisc::GetDiskTotalAndFreeSpace("C:/", DiskTotalSpace, DiskFreeSpace);
+#elif PLATFORM_LINUX
+	FPlatformMisc::GetDiskTotalAndFreeSpace("/sys/", DiskTotalSpace, DiskFreeSpace);
+#elif PLATFORM_MAC
+	// idk about that one
+	FPlatformMisc::GetDiskTotalAndFreeSpace("/sys/", DiskTotalSpace, DiskFreeSpace);
+#endif
+	this->SystemDriveFreeSpace = DiskFreeSpace / (1024 * 1024);
+
+	FPlatformMisc::GetDiskTotalAndFreeSpace(FPaths::ProjectDir(), DiskTotalSpace, DiskFreeSpace);
+	this->GameDriveFreeSpace = DiskFreeSpace / (1024 * 1024);
 }
 
 void UPerformanceDataGrabber::StartCapture()
