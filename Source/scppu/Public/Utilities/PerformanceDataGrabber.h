@@ -10,7 +10,7 @@
 UDELEGATE(BlueprintCallable)
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPerformanceDataGrabberDataUpdated);
 
-UENUM()
+UENUM(BlueprintType)
 enum class EFrameHitchTypeBlueprintExposed : uint8
 {
 	// We didn't hitch
@@ -32,7 +32,7 @@ enum class EFrameHitchTypeBlueprintExposed : uint8
 	GPU
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EFrameBoundThread : uint8
 {
 	// We are not bound
@@ -49,6 +49,42 @@ enum class EFrameBoundThread : uint8
 
 	// We are bound by the GPU 
 	GPU
+};
+
+USTRUCT(BlueprintType)
+struct FCPUInformation
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+		FString Name;
+
+	UPROPERTY(BlueprintReadOnly)
+		int NumCores;
+
+	UPROPERTY(BlueprintReadOnly)
+		int NumThreads;
+};
+
+USTRUCT(BlueprintType)
+struct FGPUInformation
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadOnly)
+		FString Name;
+
+	UPROPERTY(BlueprintReadOnly)
+		FString DriverVersion;
+
+	UPROPERTY(BlueprintReadOnly)
+		FString RHIName;
+
+	// In MiB
+	UPROPERTY(BlueprintReadOnly)
+		int DedicatedVideoMemory;
 };
 
 class SCPPU_API PerformanceDataGrabberInternal : public IPerformanceDataConsumer
@@ -75,11 +111,32 @@ public:
 
 	TSharedPtr<PerformanceDataGrabberInternal> Grabber;
 
+	UPROPERTY(BlueprintAssignable)
+		FPerformanceDataGrabberDataUpdated OnFrameDataUpdated;
+
+
 	UPROPERTY(BlueprintReadOnly)
 		bool bIsCapturing = false;
 
-	UPROPERTY(BlueprintAssignable)
-		FPerformanceDataGrabberDataUpdated OnFrameDataUpdated;
+	// Initialized in constructor //
+
+	UPROPERTY(BlueprintReadOnly)
+		FString OSVersionLabel;
+
+	UPROPERTY(BlueprintReadOnly)
+		FString OSVersionID;
+
+	UPROPERTY(BlueprintReadOnly)
+		FCPUInformation CPUInformation;
+
+	UPROPERTY(BlueprintReadOnly)
+		FGPUInformation GPUInformation;
+
+	// In MiB
+	UPROPERTY(BlueprintReadOnly)
+		int32 TotalPhysicalMemory;
+
+	// Updated per frame //
 
 	UPROPERTY(BlueprintReadOnly)
 		int FrameIndex;
@@ -125,6 +182,8 @@ public:
 
 	//// Functions ////	
 public:
+	UPerformanceDataGrabber();
+
 	UFUNCTION(BlueprintCallable)
 		void StartCapture();
 

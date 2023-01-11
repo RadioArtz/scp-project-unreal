@@ -2,6 +2,8 @@
 
 
 #include "Utilities/PerformanceDataGrabber.h"
+#include "HardwareInfo.h"
+#include "GenericPlatform/GenericPlatformDriver.h"
 
 PerformanceDataGrabberInternal::PerformanceDataGrabberInternal(UPerformanceDataGrabber* Parent)
 {
@@ -61,6 +63,25 @@ void PerformanceDataGrabberInternal::ProcessFrame(const FFrameData& FrameData)
 
 void PerformanceDataGrabberInternal::StopCharting()
 {
+}
+
+UPerformanceDataGrabber::UPerformanceDataGrabber()
+{
+	FPlatformMisc::GetOSVersions(this->OSVersionLabel, this->OSVersionID);
+	this->OSVersionID = FPlatformMisc::GetOSVersion();
+	this->CPUInformation.Name = FPlatformMisc::GetCPUBrand().TrimStartAndEnd();
+	this->CPUInformation.NumCores = FPlatformMisc::NumberOfCores();
+	this->CPUInformation.NumThreads = FPlatformMisc::NumberOfCoresIncludingHyperthreads();
+	
+	this->GPUInformation.Name = GRHIAdapterName.TrimStartAndEnd();
+	this->GPUInformation.DriverVersion = GRHIAdapterUserDriverVersion.TrimStartAndEnd();
+	this->GPUInformation.RHIName = FHardwareInfo::GetHardwareInfo(NAME_RHI).TrimStartAndEnd();
+	
+	FTextureMemoryStats TexMemStats;
+	RHIGetTextureMemoryStats(TexMemStats);
+	this->GPUInformation.DedicatedVideoMemory = TexMemStats.DedicatedVideoMemory / (1024 * 1024);
+
+		this->TotalPhysicalMemory = FPlatformMemory::GetConstants().TotalPhysical / (1024 * 1024);
 }
 
 void UPerformanceDataGrabber::StartCapture()
