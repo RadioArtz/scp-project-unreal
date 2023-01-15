@@ -13,9 +13,6 @@
 	"EngineVersion": "4.27.0",
 	"CanContainContent": true,
 	"Installed": true,
-	"SupportedTargetPlatforms": [
-		"Win64"
-	],
 	"Modules": [
 		{
 			"Name": "FSR2",
