@@ -68,6 +68,16 @@ float UExtendedGameUserSettings::GetViewbobStrength() const
 	return this->ViewBobStrength;
 }
 
+void UExtendedGameUserSettings::SetFOV(int Value)
+{
+	this->FOV = Value;
+}
+
+int UExtendedGameUserSettings::GetFOV() const
+{
+	return this->FOV;
+}
+
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 {
 	Super::ApplyNonResolutionSettings();

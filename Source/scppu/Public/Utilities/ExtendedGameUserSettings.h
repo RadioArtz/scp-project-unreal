@@ -43,6 +43,9 @@ protected:
 	UPROPERTY(config)
 		float ViewBobStrength = 1.f;
 
+	UPROPERTY(config)
+		int FOV = 80;
+
 	//// Functions ////	
 public:
 	// Returns the game local machine settings (resolution, windowing mode, scalability settings, etc...), but it's extended and has more settings
@@ -97,6 +100,12 @@ public:
 	// Returns the user setting for how strong viewbob can be.
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		float GetViewbobStrength() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
+		int GetFOV() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
+		void SetFOV(int Value);
 
 	virtual void ApplyNonResolutionSettings() override;
 };

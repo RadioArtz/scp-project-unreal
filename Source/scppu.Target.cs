@@ -9,7 +9,6 @@ public class scppuTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
-
 		ExtraModuleNames.AddRange( new string[] { "scppu" } );
 
 		bUseAdaptiveUnityBuild = true;
