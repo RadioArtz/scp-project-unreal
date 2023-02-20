@@ -8,7 +8,7 @@ public class scppu : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "DeveloperSettings", "RHI" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "DeveloperSettings", "RHI", "AudioMixer" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
