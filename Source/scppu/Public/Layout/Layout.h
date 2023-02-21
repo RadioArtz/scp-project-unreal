@@ -22,6 +22,8 @@ class SCPPU_API ALayout : public AActor
 	
 	//// Properties ////
 public:
+	static TArray<ALayout*> ActiveLayouts;
+
 	UPROPERTY()
 		USceneComponent* Root;
 
@@ -51,6 +53,12 @@ public:
 
 	//// Functions ////
 public:
+	UFUNCTION(BlueprintCallable)
+		static void FindLayoutAndCellFromWorldLocation(ALayout*& OutLayout, ULayoutCell*& OutCell, FVector WorldLocation, float ZTolerance = -1.0f);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		static FORCEINLINE TArray<ALayout*> GetActiveLayouts() { return ActiveLayouts; }
+
 	// Sets default values for this actor's properties
 	ALayout();
 
@@ -64,10 +72,13 @@ public:
 		bool Clear();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE int GetSeed() { return this->RStream.GetInitialSeed(); }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 		FORCEINLINE ULayoutCell* GetCell(FIntVector2 Location) { return this->Grid.FindRef(Location); }
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		ULayoutCell* GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance = -1.0f);
+		ULayoutCell* FindCellFromWorldLocation(FVector WorldLocation, float ZTolerance = -1.0f);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 		void GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY);

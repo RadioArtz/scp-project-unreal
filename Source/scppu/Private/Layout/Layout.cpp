@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 
 DEFINE_LOG_CATEGORY(LogLayout);
+TArray<ALayout*> ALayout::ActiveLayouts;
 
 // Sets default values
 ALayout::ALayout()
@@ -102,6 +103,7 @@ bool ALayout::Initialize(int32 NewSeed)
 	}
 
 	UE_LOG(LogLayout, Log, TEXT("%s: Successfully created new layout"), *this->GetName());
+	ActiveLayouts.Add(this);
 	return true;
 }
 
@@ -128,10 +130,11 @@ bool ALayout::Clear()
 	this->Grid.Empty();
 	bIsLayoutPresent = false;
 	UE_LOG(LogLayout, Log, TEXT("%s: Successfully cleared layout"), *this->GetName());
+	ActiveLayouts.Remove(this);
 	return true;
 }
 
-ULayoutCell* ALayout::GetCellFromWorldLocation(FVector WorldLocation, float ZTolerance)
+ULayoutCell* ALayout::FindCellFromWorldLocation(FVector WorldLocation, float ZTolerance)
 {
 	if (ZTolerance >= 0 && (this->GetActorLocation().Z > WorldLocation.Z + ZTolerance || this->GetActorLocation().Z < WorldLocation.Z - ZTolerance))
 	{
@@ -233,6 +236,22 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells, bool bShowText) //Chang
 			Kvp.Value->DrawDebug(Duration, bShowText);
 		}
 	}
+}
+
+void ALayout::FindLayoutAndCellFromWorldLocation(ALayout*& OutLayout, ULayoutCell*& OutCell, FVector WorldLocation, float ZTolerance)
+{
+	for (int i = 0; i < ActiveLayouts.Num(); i++)
+	{
+		ULayoutCell* Cell = ActiveLayouts[i]->FindCellFromWorldLocation(WorldLocation, ZTolerance);
+		if (IsValid(Cell))
+		{
+			OutLayout = ActiveLayouts[i];
+			OutCell = Cell;
+			return;
+		}
+	}
+
+	return;
 }
 
 // Called when the game starts or when spawned

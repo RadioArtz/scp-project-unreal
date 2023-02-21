@@ -3,6 +3,9 @@
 
 #include "Inventory/BaseItem.h"
 #include "Inventory/InventoryComponent.h"
+#include "Layout/Layout.h"
+#include "Layout/LayoutCell.h"
+#include "Engine/LevelStreamingDynamic.h"
 
 TArray<ABaseItem*> ABaseItem::RegisteredItems;
 
@@ -95,6 +98,16 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->SetOwner(nullptr);
 		this->OnRemovedFromInventory(PrevOwningInventoryComponent);
 		ABaseItem::RegisteredItems.Add(this);
+
+		// Subscribe to layout cell events to enable/disable physics
+		ALayout* EnclosedLayout;
+		ULayoutCell* EnclosedCell;
+		ALayout::FindLayoutAndCellFromWorldLocation(EnclosedLayout, EnclosedCell, this->GetActorLocation(), 500.f);
+		if (IsValid(EnclosedLayout) && IsValid(EnclosedCell) && IsValid(EnclosedCell->Sublevel))
+		{
+			EnclosedCell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			EnclosedCell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+		}
 	}
 	else // Item has been added/moved
 	{
@@ -104,6 +117,16 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->SetOwner(this->OwningInventoryComponent->GetOwner());
 		this->OnAddedToInventory(this->OwningInventoryComponent);
 		ABaseItem::RegisteredItems.Remove(this);
+
+		// Unubscribe to layout cell events
+		ALayout* EnclosedLayout;
+		ULayoutCell* EnclosedCell;
+		ALayout::FindLayoutAndCellFromWorldLocation(EnclosedLayout, EnclosedCell, this->GetActorLocation(), 500.f);
+		if (IsValid(EnclosedLayout) && IsValid(EnclosedCell) && IsValid(EnclosedCell->Sublevel))
+		{
+			EnclosedCell->Sublevel->OnLevelShown.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			EnclosedCell->Sublevel->OnLevelHidden.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+		}
 	}
 }
 
@@ -112,6 +135,7 @@ void ABaseItem::BeginPlay()
 {
 	Super::BeginPlay();
 	ABaseItem::RegisteredItems.Add(this);
+	ABaseItem::SetOwningInventory(nullptr);
 }
 
 void ABaseItem::EndPlay(EEndPlayReason::Type EndPlayReason)
@@ -123,6 +147,16 @@ void ABaseItem::EndPlay(EEndPlayReason::Type EndPlayReason)
 	}
 
 	ABaseItem::RegisteredItems.Remove(this);
+}
+
+void ABaseItem::OnEnclosingSublevelShownCallback()
+{
+	this->ItemMesh->SetSimulatePhysics(true);
+}
+
+void ABaseItem::OnEnclosingSublevelHiddenCallback()
+{
+	this->ItemMesh->SetSimulatePhysics(false);
 }
 
 // Called every frame

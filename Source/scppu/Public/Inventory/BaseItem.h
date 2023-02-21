@@ -56,6 +56,12 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 		void OnRemovedFromInventory(UInventoryComponent* PreviousOwningInventoryComponent);
 
+	UFUNCTION()
+		void OnEnclosingSublevelShownCallback();
+
+	UFUNCTION()
+		void OnEnclosingSublevelHiddenCallback();
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
