@@ -118,36 +118,42 @@ struct FLayoutCellGenerationSettings : public FTableRowBase
 
 public:
 	/* Diffrent level variations for more varaity (chooses one randomly).*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation)
 		TArray< TSoftObjectPtr<UWorld> > Levels;
 
 	/* Minimum instances that will be generated. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation, meta = (ClampMin = "0"))
 		int32 RequiredInstances = 0;
 
 	/* Maximum instances that will be generated. Must be >= 'Required Instances'. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "-1"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation, meta = (ClampMin = "-1"))
 		int32 MaximumInstances = -1;
 
 	/* How present this row is inside the spawn pool (higher value => higer chance to generate). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "1"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation, meta = (ClampMin = "1"))
 		int32 SpawnPoolEntries = 10;
 
 	/* The sides where the cell can connect to other cells. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation)
 		FLayoutCellSides HasConnections;
 
 	/* The sides where the neighbouring cells are not alloweed to generate. Must not conflict with 'Has Connections'. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation)
 		FLayoutCellSides DisableNeighbouringCells;
 
 	/* Validates a spawn location before setting the cell to this row. Not all cells have been generated during this time. They are AND gated. Must not contain 'None'. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation)
 		TArray< TSubclassOf<UBaseLayoutSpawnValidator> > PreSpawnValidators;
 
 	/* Validates a spawn location after all cells have been generated. They are AND gated. Must not contain 'None'. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Generation)
 		TArray< TSubclassOf<UBaseLayoutSpawnValidator> > PostSpawnValidators;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Runtime)
+		bool bLevelAlwaysVisible;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Runtime)
+		bool bLevelAlwaysLoaded;
 
 	bool PassedSanityCheck()
 	{

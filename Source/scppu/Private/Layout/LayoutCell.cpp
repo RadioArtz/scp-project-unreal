@@ -145,8 +145,10 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		this->DisableNeighbouringCells = FLayoutCellSides();
 		this->Rotation = NewRotation % 4;
 		this->LevelAsset = nullptr;
-		this->UnloadSublevel();
+		this->UnloadSublevel(true);
 		this->bIsGenerated = true;
+		this->bLevelAlwaysVisible = false;
+		this->bLevelAlwaysLoaded = false;
 		return;
 	}
 
@@ -179,8 +181,10 @@ void ULayoutCell::SetRowName(FName NewRowName, int NewRotation)
 		this->LevelAsset = Row.Levels[RStream.RandRange(0, Row.Levels.Num() - 1)];
 	}
 
-	this->UnloadSublevel();
-	bIsGenerated = true;
+	this->UnloadSublevel(true);
+	this->bIsGenerated = true;
+	this->bLevelAlwaysVisible = Row.bLevelAlwaysVisible;
+	this->bLevelAlwaysLoaded = Row.bLevelAlwaysLoaded;
 }
 
 void ULayoutCell::ResetRowName()
@@ -190,11 +194,11 @@ void ULayoutCell::ResetRowName()
 	this->DisableNeighbouringCells = FLayoutCellSides();
 	this->Rotation = 0;
 	this->LevelAsset = nullptr;
-	this->UnloadSublevel();
+	this->UnloadSublevel(true);
 	this->bIsGenerated = false;
 }
 
-void ULayoutCell::LoadSublevel()
+void ULayoutCell::LoadSublevel(bool bShowSublevel)
 {
 	if (IsValid(this->Sublevel))
 	{
@@ -213,20 +217,55 @@ void ULayoutCell::LoadSublevel()
 		this->Sublevel->bShouldBlockOnLoad = false;
 		this->Sublevel->bShouldBlockOnUnload = false;
 		this->Sublevel->bDisableDistanceStreaming = true;
-		this->Sublevel->SetShouldBeVisible(false);
+		this->Sublevel->bInitiallyVisible = false;
 		this->Sublevel->OnLevelLoaded.AddDynamic(this, &ULayoutCell::OnSublevelLoadedCallback);
+
+		if (bShowSublevel)
+		{
+			this->ShowSublevel();
+		}
 	}
 }
 
-void ULayoutCell::UnloadSublevel()
+void ULayoutCell::UnloadSublevel(bool bForce)
 {
 	if (!IsValid(this->Sublevel))
 	{
 		return;
 	}
 
+	if (!bForce && this->bLevelAlwaysLoaded) 
+	{
+		return;
+	}
+
 	this->Sublevel->SetIsRequestingUnloadAndRemoval(true);
 	this->Sublevel = nullptr;
+}
+
+void ULayoutCell::ShowSublevel()
+{
+	if (!IsValid(this->Sublevel))
+	{
+		return;
+	}
+
+	this->Sublevel->SetShouldBeVisible(true);
+}
+
+void ULayoutCell::HideSublevel(bool bForce)
+{
+	if (!IsValid(this->Sublevel))
+	{
+		return;
+	}
+
+	if (!bForce && this->bLevelAlwaysVisible)
+	{
+		return;
+	}
+
+	this->Sublevel->SetShouldBeVisible(false);
 }
 
 void ULayoutCell::GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors)
@@ -260,15 +299,10 @@ bool ULayoutCell::TransferSublevelActorToPresistentLevel(AActor* Actor)
 		return false;
 	}
 
-	bool bWasRemoved = (bool)this->Sublevel->GetLoadedLevel()->Actors.RemoveSingle(Actor);
-	if (!bWasRemoved)
-	{
-		return false;
-	}
-
+	Actor->Modify(true);
 	FString ActorName;
 	Actor->GetName(ActorName);
-	Actor->Rename(*ActorName, this->GetWorld()->PersistentLevel);
+	Actor->Rename(*ActorName, this->GetWorld()->PersistentLevel, REN_NonTransactional);
 	return true;
 }
 
@@ -294,10 +328,9 @@ bool ULayoutCell::TransferPresistentLevelActorToSublevel(AActor* Actor)
 		return false;
 	}
 
-	this->Sublevel->GetLoadedLevel()->Actors.Add(Actor);
 	FString ActorName;
 	Actor->GetName(ActorName);
-	Actor->Rename(*ActorName, this->Sublevel->GetLoadedLevel());
+	Actor->Rename(*ActorName, this->Sublevel->GetLoadedLevel(), REN_NonTransactional);
 	return true;
 }
 
@@ -416,5 +449,5 @@ void ULayoutCell::DrawDebug(float Duration, bool bShowText) //Change this into a
 void ULayoutCell::BeginDestroy()
 {
 	Super::BeginDestroy();
-	this->UnloadSublevel();
+	this->UnloadSublevel(true);
 }

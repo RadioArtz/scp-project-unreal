@@ -44,6 +44,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		FLayoutCellSides DisableNeighbouringCells; // get private set
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bLevelAlwaysVisible; // get private set
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bLevelAlwaysLoaded; // get private set
+
 	//// Functions ////
 public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -80,10 +86,16 @@ public:
 		void ResetRowName();
 
 	UFUNCTION(BlueprintCallable)
-		void LoadSublevel();
+		void LoadSublevel(bool bShowSublevel);
 
 	UFUNCTION(BlueprintCallable)
-		void UnloadSublevel();
+		void UnloadSublevel(bool bForce);
+
+	UFUNCTION(BlueprintCallable)
+		void ShowSublevel();
+
+	UFUNCTION(BlueprintCallable)
+		void HideSublevel(bool bForce);
 
 	UFUNCTION()
 		void OnSublevelLoadedCallback();
@@ -91,10 +103,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta = (DeprecatedFunction))
 		bool TransferSublevelActorToPresistentLevel(AActor* Actor);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, meta = (DeprecatedFunction))
 		bool TransferPresistentLevelActorToSublevel(AActor* Actor);
 
 	UFUNCTION(BlueprintCallable)

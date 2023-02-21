@@ -121,7 +121,7 @@ bool ALayout::Clear()
 
 	for (auto Kvp : this->Grid)
 	{
-		Kvp.Value->UnloadSublevel();
+		Kvp.Value->UnloadSublevel(true);
 		Kvp.Value->ConditionalBeginDestroy();
 	}
 
@@ -205,12 +205,7 @@ void ALayout::LoadAllSublevels(bool bShowAllSublevels)
 {
 	for (auto Kvp : this->Grid)
 	{
-		Kvp.Value->LoadSublevel();
-		
-		if (IsValid(Kvp.Value->Sublevel))
-		{
-			Kvp.Value->Sublevel->SetShouldBeVisible(bShowAllSublevels);
-		}
+		Kvp.Value->LoadSublevel(bShowAllSublevels);
 	}
 }
 
@@ -218,7 +213,7 @@ void ALayout::UnloadAllSublevels()
 {
 	for (auto Kvp : this->Grid)
 	{
-		Kvp.Value->UnloadSublevel();
+		Kvp.Value->UnloadSublevel(true);
 	}
 }
 
