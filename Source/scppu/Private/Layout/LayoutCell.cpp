@@ -7,6 +7,8 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LevelActorContainer.h"
 #include "DrawDebugHelpers.h"
+#include "PrecomputedLightVolume.h"
+#include "Engine/MapBuildDataRegistry.h"
 
 FLayoutCellSides ULayoutCell::GetRequiredConnections()
 {
@@ -219,6 +221,7 @@ void ULayoutCell::LoadSublevel(bool bShowSublevel)
 		this->Sublevel->bDisableDistanceStreaming = true;
 		this->Sublevel->bInitiallyVisible = false;
 		this->Sublevel->OnLevelLoaded.AddDynamic(this, &ULayoutCell::OnSublevelLoadedCallback);
+		this->Sublevel->OnLevelShown.AddDynamic(this, &ULayoutCell::OnSublevelShownCallback);
 
 		if (bShowSublevel)
 		{
@@ -345,6 +348,70 @@ void ULayoutCell::OnSublevelLoadedCallback()
 		if (Elem->Implements<ULayoutSublevelInterface>())
 		{
 			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->GetLayout(), this, RStream.RandRange(0, MAX_int32 - 1));
+		}
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("%s: %s"), *this->GetName(), *this->GetWorldLocation().ToString());
+}
+
+void ULayoutCell::OnSublevelShownCallback()
+{
+	/*
+	// Apply offset to precomuted lightning volume
+	*/
+
+	UE_LOG(LogTemp, Error, TEXT("%s: Room: %s"), *this->GetName(), *this->RowName.ToString());
+	if (this->Sublevel->GetLoadedLevel()->MapBuildData != nullptr)
+	{
+		FSceneInterface* Scene = this->GetWorld()->Scene;
+		FGuid BuildDataId = this->Sublevel->GetLoadedLevel()->LevelBuildDataId;
+		UMapBuildDataRegistry* Registry = this->Sublevel->GetLoadedLevel()->MapBuildData;
+		FPrecomputedLightVolume* Volume = this->Sublevel->GetLoadedLevel()->PrecomputedLightVolume;
+
+		FPrecomputedLightVolumeData* OriginalLightVolumeData = Registry->GetLevelPrecomputedLightVolumeBuildData(BuildDataId);
+		if (OriginalLightVolumeData && OriginalLightVolumeData->IsInitialized())
+		{
+			FExposedPrecomputedLightVolumeData* ExposedLightVolumeData = reinterpret_cast<FExposedPrecomputedLightVolumeData*>(OriginalLightVolumeData);
+			FPrecomputedLightVolumeData* NewLightVolumeData = new FPrecomputedLightVolumeData();
+			FTransform LevelTransform = FTransform(this->GetWorldRotation(), this->GetWorldLocation(), FVector::OneVector);
+
+			Volume->RemoveFromScene(Scene);
+			NewLightVolumeData->Initialize(OriginalLightVolumeData->GetBounds().MoveTo(LevelTransform.GetLocation()));
+			ExposedLightVolumeData->HighQualityLightmapOctree.FindAllElements([NewLightVolumeData, LevelTransform](const FVolumeLightingSample& VolumeSample)
+				{
+					FVolumeLightingSample NewSample = FVolumeLightingSample();
+					NewSample.DirectionalLightShadowing = VolumeSample.DirectionalLightShadowing;
+					NewSample.Lighting = VolumeSample.Lighting;
+					NewSample.PackedSkyBentNormal = VolumeSample.PackedSkyBentNormal;
+					NewSample.Position = LevelTransform.TransformPosition(VolumeSample.Position);
+					NewSample.Radius = VolumeSample.Radius;
+					NewLightVolumeData->AddHighQualityLightingSample(NewSample);
+
+			//FColor DebugColor = NewSample.Lighting.CalcIntegral().ToFColor(false);
+			//DrawDebugPoint(this->GetWorld(), NewSample.Position, 5.f, DebugColor, true);
+				});
+
+			ExposedLightVolumeData->LowQualityLightmapOctree.FindAllElements([NewLightVolumeData, LevelTransform](const FVolumeLightingSample& VolumeSample)
+				{
+					FVolumeLightingSample NewSample = FVolumeLightingSample();
+					NewSample.DirectionalLightShadowing = VolumeSample.DirectionalLightShadowing;
+					NewSample.Lighting = VolumeSample.Lighting;
+					NewSample.PackedSkyBentNormal = VolumeSample.PackedSkyBentNormal;
+					NewSample.Position = LevelTransform.TransformPosition(VolumeSample.Position);
+					NewSample.Radius = VolumeSample.Radius;
+					NewLightVolumeData->AddLowQualityLightingSample(NewSample);
+				});
+
+			NewLightVolumeData->FinalizeSamples();
+			Registry->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, NewLightVolumeData);
+			Volume->AddToScene(Scene, Registry, BuildDataId);
+			Registry->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, OriginalLightVolumeData);
+
+			FBoxSphereBounds LevelBounds = FBoxSphereBounds(300.f);
+			LevelBounds.Origin = LevelTransform.GetLocation();
+			UE_LOG(LogTemp, Error, TEXT("Octree bounds center: Original: %s New: %s"), *OriginalLightVolumeData->GetBounds().GetCenter().ToString(), *NewLightVolumeData->GetBounds().GetCenter().ToString());
+			UE_LOG(LogTemp, Error, TEXT("Octree intersects with Level bounds: %i"), Volume->IntersectBounds(LevelBounds));
+			UE_LOG(LogTemp, Error, TEXT("I tried my best rotating!"));
 		}
 	}
 }

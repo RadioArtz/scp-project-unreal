@@ -262,6 +262,11 @@ void ALayout::BeginPlay()
 	GEngine->Exec(this->GetWorld(), TEXT("r.DebugSafeZone.MaxDebugTextStringsPerActor 0"));
 }
 
+void ALayout::EndPlay(EEndPlayReason::Type EndPlayReason)
+{
+	this->Clear();
+}
+
 // Called every frame
 void ALayout::Tick(float DeltaTime)
 {

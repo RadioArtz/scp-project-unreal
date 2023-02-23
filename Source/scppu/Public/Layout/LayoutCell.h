@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Utilities/ExtendedPrecomputedLightVolume.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutStructs.h"
 #include "LayoutCell.generated.h"
@@ -99,6 +100,9 @@ public:
 
 	UFUNCTION()
 		void OnSublevelLoadedCallback();
+
+	UFUNCTION()
+		void OnSublevelShownCallback();
 
 	UFUNCTION(BlueprintCallable)
 		void GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors);
