@@ -13,7 +13,7 @@ class UBoxReflectionCaptureComponent;
 class USceneCaptureComponentCube;
 class UTextureRenderTargetCube;
 
-DECLARE_LOG_CATEGORY_EXTERN(LogRotatingRefCap, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogRotatingReflectionCapture, Log, All);
 
 UCLASS(hidecategories = (Collision, Attachment, Actor))
 class SCPPU_API ARotatingBoxReflectionCapture : public AActor

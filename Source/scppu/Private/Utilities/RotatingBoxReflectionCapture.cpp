@@ -10,7 +10,7 @@
 #include "Engine/MapBuildDataRegistry.h"
 #include "DrawDebugHelpers.h"
 
-DEFINE_LOG_CATEGORY(LogRotatingRefCap);
+DEFINE_LOG_CATEGORY(LogRotatingReflectionCapture);
 
 // Sets default values
 ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
@@ -90,7 +90,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 {
 	if (this->GetWorld()->WorldType != EWorldType::Editor)
 	{
-		UE_LOG(LogRotatingRefCap, Error, TEXT("%s: Cannot update inside a non-editor mode"), *this->GetName());
+		UE_LOG(LogRotatingReflectionCapture, Error, TEXT("%s: Cannot update inside a non-editor mode"), *this->GetName());
 		return;
 	}
 
@@ -106,14 +106,14 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	}
 
 	// Create new render target
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Creating new render target..."), *this->GetName());
+	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Creating new render target..."), *this->GetName());
 	this->RenderTarget = NewObject<UTextureRenderTargetCube>(this, FName(), RF_Transient);
 	this->RenderTarget->ClearColor = FLinearColor::Green;
 	this->RenderTarget->Init(256, EPixelFormat::PF_FloatRGBA);
 	this->RenderTarget->UpdateResourceImmediate(true);
 
 	// Capture scence
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Capturing scene"), *this->GetName());
+	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Capturing scene..."), *this->GetName());
 	this->SceneCaptureCube->TextureTarget = this->RenderTarget;
 	this->SceneCaptureCube->CaptureScene();
 
@@ -121,7 +121,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	this->StaticTexture = NewObject<UTextureCube>(this, FName(), RF_Transient);
 
 	// Draw render target to static texture
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Creating new static texture"), *this->GetName());
+	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Creating new static texture..."), *this->GetName());
 	this->StaticTexture = this->RenderTarget->ConstructTextureCube(this->StaticTexture->GetOuter(), this->StaticTexture->GetName(), this->RenderTarget->GetMaskedFlags());
 	this->StaticTexture->Modify();
 	this->StaticTexture->MarkPackageDirty();
@@ -134,7 +134,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 	this->RefCap180->Cubemap = this->StaticTexture;
 	this->RefCap270->Cubemap = this->StaticTexture;
 
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
+	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
 }
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
@@ -183,8 +183,7 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 
 	// Delete reflection captures based on our "new" rotation
     int Rotation = FMath::DivideAndRoundNearest((this->GetActorRotation() - this->PlacedRotation).GetDenormalized().Yaw, 90.0f);
-	UE_LOG(LogRotatingRefCap, Log, TEXT("%s: Detected rotation %d"), *this->GetName(), Rotation);
-	UE_LOG(LogRotatingRefCap, Warning, TEXT("%s: Map build data id: %s"), *this->GetName(), *this->RefCap0->MapBuildDataId.ToString());
+	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Detected rotation %d"), *this->GetName(), Rotation);
 
 	switch (Rotation)
 	{
@@ -217,7 +216,7 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 		this->bRemovedUnnecessaryComponents = true;
 		break;
 	default:
-		UE_LOG(LogRotatingRefCap, Error, TEXT("%s: Rotation is invalid (%d)"), *this->GetName(), Rotation)
+		UE_LOG(LogRotatingReflectionCapture, Error, TEXT("%s: Rotation is invalid (%d)"), *this->GetName(), Rotation)
 	}
 }
 
