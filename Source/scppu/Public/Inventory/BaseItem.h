@@ -4,12 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Layout/LayoutSublevelInterface.h"
 #include "BaseItem.generated.h"
 
 class UInventoryComponent;
+class ULayoutCell;
 
 UCLASS()
-class SCPPU_API ABaseItem : public AActor
+class SCPPU_API ABaseItem : public AActor, public ILayoutSublevelInterface
 {
 	GENERATED_BODY()
 
@@ -34,6 +36,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 		UInventoryComponent* OwningInventoryComponent = nullptr;
+
+	UPROPERTY(BlueprintReadOnly)
+		ULayoutCell* EnclosingCell = nullptr;
 	
 	//// Functions ////	
 public:
@@ -61,6 +66,8 @@ public:
 
 	UFUNCTION()
 		void OnEnclosingSublevelHiddenCallback();
+
+		void OnLayoutDataReceived_Implementation(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandomStream) override;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

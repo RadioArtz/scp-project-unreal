@@ -99,33 +99,34 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->OnRemovedFromInventory(PrevOwningInventoryComponent);
 		ABaseItem::RegisteredItems.Add(this);
 
+		/*
 		// Subscribe to layout cell events to enable/disable physics
-		ALayout* EnclosedLayout;
-		ULayoutCell* EnclosedCell;
-		ALayout::FindLayoutAndCellFromWorldLocation(EnclosedLayout, EnclosedCell, this->GetActorLocation(), 500.f);
-		if (IsValid(EnclosedLayout) && IsValid(EnclosedCell) && IsValid(EnclosedCell->Sublevel))
+		ALayout* Layout;
+		ULayoutCell* Cell;
+		ALayout::FindLayoutAndCellFromWorldLocation(Layout, Cell, this->GetActorLocation(), 500.f);
+		if (IsValid(Layout) && IsValid(Cell) && IsValid(Cell->Sublevel))
 		{
-			EnclosedCell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
-			EnclosedCell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+			Cell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			Cell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+			this->EnclosingCell = Cell;
 		}
+		*/
 	}
 	else // Item has been added/moved
 	{
 		this->SetActorHiddenInGame(true);
 		this->SetActorEnableCollision(false);
 		this->ItemMesh->SetSimulatePhysics(false);
+		this->ItemMesh->RecreatePhysicsState();
 		this->SetOwner(this->OwningInventoryComponent->GetOwner());
 		this->OnAddedToInventory(this->OwningInventoryComponent);
 		ABaseItem::RegisteredItems.Remove(this);
 
-		// Unubscribe to layout cell events
-		ALayout* EnclosedLayout;
-		ULayoutCell* EnclosedCell;
-		ALayout::FindLayoutAndCellFromWorldLocation(EnclosedLayout, EnclosedCell, this->GetActorLocation(), 500.f);
-		if (IsValid(EnclosedLayout) && IsValid(EnclosedCell) && IsValid(EnclosedCell->Sublevel))
+		// Unubscribe from layout cell events
+		if (IsValid(this->EnclosingCell))
 		{
-			EnclosedCell->Sublevel->OnLevelShown.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
-			EnclosedCell->Sublevel->OnLevelHidden.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+			this->EnclosingCell->Sublevel->OnLevelShown.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			this->EnclosingCell->Sublevel->OnLevelHidden.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
 		}
 	}
 }
@@ -152,11 +153,20 @@ void ABaseItem::EndPlay(EEndPlayReason::Type EndPlayReason)
 void ABaseItem::OnEnclosingSublevelShownCallback()
 {
 	this->ItemMesh->SetSimulatePhysics(true);
+	this->ItemMesh->RecreatePhysicsState();
 }
 
 void ABaseItem::OnEnclosingSublevelHiddenCallback()
 {
 	this->ItemMesh->SetSimulatePhysics(false);
+	this->ItemMesh->RecreatePhysicsState();
+}
+
+void ABaseItem::OnLayoutDataReceived_Implementation(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandomStream)
+{
+	Cell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+	Cell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+	this->EnclosingCell = Cell;
 }
 
 // Called every frame
