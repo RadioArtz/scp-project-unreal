@@ -12,6 +12,6 @@ public class scppuTarget : TargetRules
 		ExtraModuleNames.AddRange( new string[] { "scppu" } );
 
 		bUseAdaptiveUnityBuild = true;
-		WindowsPlatform.PCHMemoryAllocationFactor = 1000; // Heap memory allocation. 1000x => 750 MB
+		WindowsPlatform.PCHMemoryAllocationFactor = 2000; // Heap memory allocation. 2000x => 1500 MB
 	}
 }
