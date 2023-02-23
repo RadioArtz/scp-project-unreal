@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Utilities/ExtendedPrecomputedLightVolume.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutStructs.h"
 #include "LayoutCell.generated.h"
