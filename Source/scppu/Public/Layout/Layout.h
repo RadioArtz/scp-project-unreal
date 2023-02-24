@@ -93,7 +93,13 @@ public:
 		void LoadAllSublevels(bool bShowAllSublevels);
 
 	UFUNCTION(BlueprintCallable)
-		void UnloadAllSublevels();
+		void UnloadAllSublevels(bool bForce);
+
+	UFUNCTION(BlueprintCallable)
+		void ShowAllSublevels();
+
+	UFUNCTION(BlueprintCallable)
+		void HideAllSublevels(bool bForce);
 
 	UFUNCTION(BlueprintCallable)
 		void DrawDebug(float Duration = 5.0f, bool bDrawCells = true, bool bShowText = true);

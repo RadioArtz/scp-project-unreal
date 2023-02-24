@@ -6,9 +6,13 @@
 #include "UObject/NoExportTypes.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutStructs.h"
+#include "Engine/LevelStreamingDynamic.h"
 #include "LayoutCell.generated.h"
 
 class ULevelStreamingDynamic;
+
+UDELEGATE(BlueprintCallable)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FLayoutCellSublevelStatusUpdate);
 
 UCLASS(BlueprintType, Within="Layout")
 class SCPPU_API ULayoutCell : public UObject
@@ -49,6 +53,18 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bLevelAlwaysLoaded; // get private set
+
+	UPROPERTY(BlueprintAssignable)
+		FLayoutCellSublevelStatusUpdate OnSublevelLoaded;
+
+	UPROPERTY(BlueprintAssignable)
+		FLayoutCellSublevelStatusUpdate OnSublevelUnloaded;
+
+	UPROPERTY(BlueprintAssignable)
+		FLayoutCellSublevelStatusUpdate OnSublevelShown;
+
+	UPROPERTY(BlueprintAssignable)
+		FLayoutCellSublevelStatusUpdate OnSublevelHidden;
 
 	//// Functions ////
 public:
@@ -97,11 +113,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void HideSublevel(bool bForce);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE bool IsSublevelLoaded() { return this->Sublevel && this->Sublevel->IsLevelLoaded(); }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+		FORCEINLINE bool IsSublevelVisible() { return this->Sublevel && this->Sublevel->IsLevelLoaded() && this->Sublevel->IsLevelVisible(); }
+
 	UFUNCTION()
 		void OnSublevelLoadedCallback();
 
 	UFUNCTION()
+		void OnSublevelUnloadedCallback();
+
+	UFUNCTION()
 		void OnSublevelShownCallback();
+
+	UFUNCTION()
+		void OnSublevelHiddenCallback();
 
 	UFUNCTION(BlueprintCallable)
 		void GetAllActorsOfClassInSublevel(TSubclassOf<AActor> ActorClass, TArray<AActor*>& OutActors);

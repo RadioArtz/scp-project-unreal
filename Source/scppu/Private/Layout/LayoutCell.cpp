@@ -4,7 +4,6 @@
 #include "Layout/LayoutCell.h"
 #include "Layout/BaseLayoutSpawnValidator.h"
 #include "Layout/LayoutSublevelInterface.h"
-#include "Engine/LevelStreamingDynamic.h"
 #include "Engine/LevelActorContainer.h"
 #include "DrawDebugHelpers.h"
 
@@ -219,7 +218,9 @@ void ULayoutCell::LoadSublevel(bool bShowSublevel)
 		this->Sublevel->bDisableDistanceStreaming = true;
 		this->Sublevel->bInitiallyVisible = false;
 		this->Sublevel->OnLevelLoaded.AddDynamic(this, &ULayoutCell::OnSublevelLoadedCallback);
+		this->Sublevel->OnLevelUnloaded.AddDynamic(this, &ULayoutCell::OnSublevelUnloadedCallback);
 		this->Sublevel->OnLevelShown.AddDynamic(this, &ULayoutCell::OnSublevelShownCallback);
+		this->Sublevel->OnLevelHidden.AddDynamic(this, &ULayoutCell::OnSublevelHiddenCallback);
 
 		if (bShowSublevel)
 		{
@@ -348,11 +349,23 @@ void ULayoutCell::OnSublevelLoadedCallback()
 			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->GetLayout(), this, RStream.RandRange(0, MAX_int32 - 1));
 		}
 	}
+
+	this->OnSublevelLoaded.Broadcast();
+}
+
+void ULayoutCell::OnSublevelUnloadedCallback()
+{
+	this->OnSublevelUnloaded.Broadcast();
 }
 
 void ULayoutCell::OnSublevelShownCallback()
 {
-	return;
+	this->OnSublevelShown.Broadcast();
+}
+
+void ULayoutCell::OnSublevelHiddenCallback()
+{
+	this->OnSublevelHidden.Broadcast();
 }
 
 bool ULayoutCell::IsPointInSublevelBounds(FVector Point)

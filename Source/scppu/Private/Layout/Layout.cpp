@@ -148,6 +148,15 @@ ULayoutCell* ALayout::FindCellFromWorldLocation(FVector WorldLocation, float ZTo
 
 void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY)
 {
+	if (!IsValid(Origin))
+	{
+		OutCellPX = nullptr;
+		OutCellPY = nullptr;
+		OutCellNX = nullptr;
+		OutCellPY = nullptr;
+		return;
+	}
+
 	OutCellPX = this->GetCell(FIntVector2(Origin->Location.X + 1, Origin->Location.Y));
 	OutCellPY = this->GetCell(FIntVector2(Origin->Location.X, Origin->Location.Y + 1));
 	OutCellNX = this->GetCell(FIntVector2(Origin->Location.X - 1, Origin->Location.Y));
@@ -212,11 +221,27 @@ void ALayout::LoadAllSublevels(bool bShowAllSublevels)
 	}
 }
 
-void ALayout::UnloadAllSublevels()
+void ALayout::UnloadAllSublevels(bool bForce)
 {
 	for (auto Kvp : this->Grid)
 	{
-		Kvp.Value->UnloadSublevel(true);
+		Kvp.Value->UnloadSublevel(bForce);
+	}
+}
+
+void ALayout::ShowAllSublevels()
+{
+	for (auto Kvp : this->Grid)
+	{
+		Kvp.Value->ShowSublevel();
+	}
+}
+
+void ALayout::HideAllSublevels(bool bForce)
+{
+	for (auto Kvp : this->Grid)
+	{
+		Kvp.Value->HideSublevel(bForce);
 	}
 }
 
@@ -240,6 +265,9 @@ void ALayout::DrawDebug(float Duration, bool bDrawCells, bool bShowText) //Chang
 
 void ALayout::FindLayoutAndCellFromWorldLocation(ALayout*& OutLayout, ULayoutCell*& OutCell, FVector WorldLocation, float ZTolerance)
 {
+	OutLayout = nullptr;
+	OutCell = nullptr;
+
 	for (int i = 0; i < ActiveLayouts.Num(); i++)
 	{
 		ULayoutCell* Cell = ActiveLayouts[i]->FindCellFromWorldLocation(WorldLocation, ZTolerance);

@@ -5,7 +5,6 @@
 #include "Inventory/InventoryComponent.h"
 #include "Layout/Layout.h"
 #include "Layout/LayoutCell.h"
-#include "Engine/LevelStreamingDynamic.h"
 
 TArray<ABaseItem*> ABaseItem::RegisteredItems;
 
@@ -76,7 +75,6 @@ ABaseItem::ABaseItem()
 	this->PrimaryActorTick.bCanEverTick = true;
 	this->ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>("ItemMesh", false);
 	this->ItemMesh->SetMobility(EComponentMobility::Movable);
-	this->ItemMesh->SetSimulatePhysics(true);
 	this->ItemMesh->SetCollisionProfileName("Item");
 	this->SetRootComponent(this->ItemMesh);
 	this->SetActorHiddenInGame(false);
@@ -99,18 +97,19 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		this->OnRemovedFromInventory(PrevOwningInventoryComponent);
 		ABaseItem::RegisteredItems.Add(this);
 
-		/*
 		// Subscribe to layout cell events to enable/disable physics
 		ALayout* Layout;
 		ULayoutCell* Cell;
 		ALayout::FindLayoutAndCellFromWorldLocation(Layout, Cell, this->GetActorLocation(), 500.f);
-		if (IsValid(Layout) && IsValid(Cell) && IsValid(Cell->Sublevel))
+		if (IsValid(Layout) && IsValid(Cell))
 		{
-			Cell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
-			Cell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+			UE_LOG(LogTemp, Error, TEXT("UH OH"));
+			this->ItemMesh->SetSimulatePhysics(Cell->IsSublevelVisible());
+			this->ItemMesh->RecreatePhysicsState();
+			Cell->OnSublevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			Cell->OnSublevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
 			this->EnclosingCell = Cell;
 		}
-		*/
 	}
 	else // Item has been added/moved
 	{
