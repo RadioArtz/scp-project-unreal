@@ -42,7 +42,6 @@ bool USparseLightmapTransformManager::DoesSupportWorldType(EWorldType::Type Worl
 void USparseLightmapTransformManager::UpdateLevelSparseLightmap(ULevel* Level, UWorld* World)
 {
 	FString LevelPathName = Level->GetPathName();
-	FTransform LevelTransform;
 
 	if (this->GetWorld() != World)
 	{
@@ -56,12 +55,19 @@ void USparseLightmapTransformManager::UpdateLevelSparseLightmap(ULevel* Level, U
 		return;
 	}
 
-	bool bStreamingLevelFound = false;
-	for (int i = 0; i < World->GetStreamingLevels().Num(); i++)
+	if (Level->MapBuildData == nullptr)
 	{
-		if (World->GetStreamingLevels()[i]->GetLoadedLevel() == Level)
+		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' has no build data and will be ignored"), *this->GetName(), *LevelPathName);
+		return;
+	}
+
+	FTransform LevelTransform;
+	bool bStreamingLevelFound = false;
+	for (auto StreamingLevel : World->GetStreamingLevels())
+	{
+		if (StreamingLevel->GetLoadedLevel() == Level)
 		{
-			LevelTransform = World->GetStreamingLevels()[i]->LevelTransform;
+			LevelTransform = StreamingLevel->LevelTransform;
 			bStreamingLevelFound = true;
 			break;
 		}
@@ -73,17 +79,10 @@ void USparseLightmapTransformManager::UpdateLevelSparseLightmap(ULevel* Level, U
 		return;
 	}
 
-	if (Level->MapBuildData == nullptr)
-	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' has no build data and will be ignored"), *this->GetName(), *LevelPathName);
-		return;
-	}
-
-	FSceneInterface* Scene = World->Scene;
 	FGuid BuildDataId = Level->LevelBuildDataId;
-	UMapBuildDataRegistry* BuildData = Level->MapBuildData;
+	UMapBuildDataRegistry* BuildDataRegistry = Level->MapBuildData;
 	FPrecomputedLightVolume* Volume = Level->PrecomputedLightVolume;
-	FPrecomputedLightVolumeData* OriginalLightVolumeData = BuildData->GetLevelPrecomputedLightVolumeBuildData(BuildDataId);
+	FPrecomputedLightVolumeData* OriginalLightVolumeData = BuildDataRegistry->GetLevelPrecomputedLightVolumeBuildData(BuildDataId);
 
 	if (!Volume->IsAddedToScene())
 	{
@@ -99,6 +98,7 @@ void USparseLightmapTransformManager::UpdateLevelSparseLightmap(ULevel* Level, U
 
 	FPrecomputedLightVolumeDataExposed* OrginalLightVolumeDataExposed = reinterpret_cast<FPrecomputedLightVolumeDataExposed*>(OriginalLightVolumeData);
 	FPrecomputedLightVolumeData* NewLightVolumeData = new FPrecomputedLightVolumeData();
+	FSceneInterface* Scene = World->Scene;
 
 	Volume->RemoveFromScene(Scene);
 	NewLightVolumeData->Initialize(OriginalLightVolumeData->GetBounds().TransformBy(LevelTransform.ToMatrixNoScale()));
@@ -126,8 +126,8 @@ void USparseLightmapTransformManager::UpdateLevelSparseLightmap(ULevel* Level, U
 		});
 
 	NewLightVolumeData->FinalizeSamples();
-	BuildData->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, NewLightVolumeData);
-	Volume->AddToScene(Scene, BuildData, BuildDataId);
-	BuildData->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, OriginalLightVolumeData);
+	BuildDataRegistry->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, NewLightVolumeData);
+	Volume->AddToScene(Scene, BuildDataRegistry, BuildDataId);
+	BuildDataRegistry->AddLevelPrecomputedLightVolumeBuildData(BuildDataId, OriginalLightVolumeData);
 	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Successfully moved lightmap of level '%s' to: %s"), *this->GetName(), *LevelPathName, *LevelTransform.ToString());
 }
