@@ -29,9 +29,9 @@ bool UInventoryComponent::AddItem(ABaseItem* Item, int32 Slot)
 		return false;
 	}
 
+	Item->SetOwningInventory(this);
 	Item->AttachToActor(this->GetOwner(), FAttachmentTransformRules::KeepWorldTransform);
 	Item->SetActorLocation(this->GetOwner()->GetActorLocation());
-	Item->SetOwningInventory(this);
 	this->ItemArray[Slot] = Item;
 	this->OnInventoryChanged.Broadcast();
 	return true;

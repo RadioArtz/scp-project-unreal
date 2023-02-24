@@ -103,7 +103,6 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		ALayout::FindLayoutAndCellFromWorldLocation(Layout, Cell, this->GetActorLocation(), 500.f);
 		if (IsValid(Layout) && IsValid(Cell))
 		{
-			UE_LOG(LogTemp, Error, TEXT("UH OH"));
 			this->ItemMesh->SetSimulatePhysics(Cell->IsSublevelVisible());
 			this->ItemMesh->RecreatePhysicsState();
 			Cell->OnSublevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
@@ -124,8 +123,8 @@ void ABaseItem::SetOwningInventory(UInventoryComponent* NewOwningInventoryCompon
 		// Unubscribe from layout cell events
 		if (IsValid(this->EnclosingCell))
 		{
-			this->EnclosingCell->Sublevel->OnLevelShown.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
-			this->EnclosingCell->Sublevel->OnLevelHidden.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
+			this->EnclosingCell->OnSublevelShown.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
+			this->EnclosingCell->OnSublevelHidden.RemoveDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
 		}
 	}
 }
