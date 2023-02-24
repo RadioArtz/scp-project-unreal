@@ -160,13 +160,6 @@ void ABaseItem::OnEnclosingSublevelHiddenCallback()
 	this->ItemMesh->RecreatePhysicsState();
 }
 
-void ABaseItem::OnLayoutDataReceived_Implementation(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandomStream)
-{
-	Cell->Sublevel->OnLevelShown.AddDynamic(this, &ABaseItem::OnEnclosingSublevelShownCallback);
-	Cell->Sublevel->OnLevelHidden.AddDynamic(this, &ABaseItem::OnEnclosingSublevelHiddenCallback);
-	this->EnclosingCell = Cell;
-}
-
 // Called every frame
 void ABaseItem::Tick(float DeltaTime)
 {

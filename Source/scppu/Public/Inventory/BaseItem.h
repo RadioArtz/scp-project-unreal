@@ -11,8 +11,9 @@ class UInventoryComponent;
 class ULayoutCell;
 
 UCLASS()
-class SCPPU_API ABaseItem : public AActor, public ILayoutSublevelInterface
+class SCPPU_API ABaseItem : public AActor
 {
+
 	GENERATED_BODY()
 
 	//// Properties ////
@@ -66,8 +67,6 @@ public:
 
 	UFUNCTION()
 		void OnEnclosingSublevelHiddenCallback();
-
-		void OnLayoutDataReceived_Implementation(ALayout* Layout, ULayoutCell* Cell, FRandomStream RandomStream) override;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
