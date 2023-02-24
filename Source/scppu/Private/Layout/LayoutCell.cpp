@@ -226,6 +226,10 @@ void ULayoutCell::LoadSublevel(bool bShowSublevel)
 		{
 			this->ShowSublevel();
 		}
+		else
+		{
+			this->HideSublevel(true);
+		}
 	}
 }
 
