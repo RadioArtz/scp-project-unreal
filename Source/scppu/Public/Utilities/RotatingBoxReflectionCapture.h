@@ -26,34 +26,41 @@ public:
 		USceneComponent* Root;
 
 	UPROPERTY()
-		UBillboardComponent* Sprite;
+		UBillboardComponent* EditorSprite;
 
 	UPROPERTY()
-		UBoxComponent* Box;
+		UBoxComponent* EditorBox;
 
 	UPROPERTY()
-		UBoxReflectionCaptureComponent* RefCap0;
+		UBoxReflectionCaptureComponent* ReflectionCapture0Deg;
 
 	UPROPERTY()
-		UBoxReflectionCaptureComponent* RefCap90;
+		UBoxReflectionCaptureComponent* ReflectionCapture90Deg;
 
 	UPROPERTY()
-		UBoxReflectionCaptureComponent* RefCap180;
+		UBoxReflectionCaptureComponent* ReflectionCapture180Deg;
 
 	UPROPERTY()
-		UBoxReflectionCaptureComponent* RefCap270;
+		UBoxReflectionCaptureComponent* ReflectionCapture270Deg;
 
 	UPROPERTY()
 		USceneCaptureComponentCube* SceneCaptureCube;
 
-	UPROPERTY(EditAnywhere, Category = "Custom Reflection Capture", meta = (UIMin = "0", UIMAX = "4"))
+	// Number of recaptures to capture is own reflection
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CustomReflectionCapture, meta = (ClampMin = 0, ClampMax = 10))
+		int NumReflectiveCaputures = 2;
+
+	// Brighness of the capture
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CustomReflectionCapture, meta = (UIMin = 0, UIMAX = 4))
 		float Brightness = 1.f;
 
-	UPROPERTY(VisibleAnywhere, Category = "Custom Reflection Capture")
-		UTextureRenderTargetCube* RenderTarget = nullptr;
+	// Last element is applied
+	UPROPERTY(VisibleAnywhere, Category = CustomReflectionCapture)
+		TArray<UTextureRenderTargetCube*> RenderTargets;
 
-	UPROPERTY(VisibleAnywhere, Category = "Custom Reflection Capture")
-		UTextureCube* StaticTexture = nullptr;
+	// Last element is applied
+	UPROPERTY(VisibleAnywhere, Category = CustomReflectionCapture)
+		TArray<UTextureCube*> StaticTextures;
 
 	UPROPERTY()
 		FTimerHandle DeferredUpdateTimer;
@@ -70,7 +77,7 @@ public:
 	ARotatingBoxReflectionCapture();
 
 #if WITH_EDITOR
-	UFUNCTION(CallInEditor, Category = "Custom Reflection Capture")
+	UFUNCTION(CallInEditor, Category = CustomReflectionCapture)
 		void UpdateCapture();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
