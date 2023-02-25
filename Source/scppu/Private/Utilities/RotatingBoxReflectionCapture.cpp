@@ -15,7 +15,7 @@ DEFINE_LOG_CATEGORY(LogRotatingReflectionCapture);
 // Sets default values
 ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	this->PrimaryActorTick.bCanEverTick = false;
 
 	// Root component
@@ -162,7 +162,7 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 	}
 
 	FTimerDelegate Delegate;
-	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.001f : 0.25f;
+	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.01f : 0.25f;
 	Delegate.BindUObject(this, &ARotatingBoxReflectionCapture::UpdateCapture);
 	this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, 0.25f, false);
 
@@ -181,7 +181,7 @@ void ARotatingBoxReflectionCapture::BeginPlay()
 	}
 
 	// Delete reflection captures based on our "new" rotation
-    int Rotation = FMath::DivideAndRoundNearest((this->GetActorRotation() - this->PlacedRotation).GetDenormalized().Yaw, 90.0f);
+	int Rotation = FMath::DivideAndRoundNearest((this->GetActorRotation() - this->PlacedRotation).GetDenormalized().Yaw, 90.0f);
 	
 	switch (Rotation)
 	{
