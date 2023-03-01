@@ -84,10 +84,13 @@ public:
 		void GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnectedCells, ULayoutCell*& OutCellPX, ULayoutCell*& OutCellPY, ULayoutCell*& OutCellNX, ULayoutCell*& OutCellNY);
 
 	UFUNCTION(BlueprintCallable)
+		ULayoutCell* FindCellWithRowName(FName RowName);
+
+	UFUNCTION(BlueprintCallable)
 		void FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells);
 	
-	UFUNCTION(BlueprintCallable)
-		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal);
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = CellsToAvoid, AdvancedDisplay = CellsToAvoid))
+		bool DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal, TArray<ULayoutCell*> CellsToAvoid);
 
 	UFUNCTION(BlueprintCallable)
 		void LoadAllSublevels(bool bShowAllSublevels);

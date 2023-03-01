@@ -171,6 +171,19 @@ void ALayout::GetNeighbouringCells(ULayoutCell* Origin, bool bOnlyReturnConnecte
 	}
 }
 
+ULayoutCell* ALayout::FindCellWithRowName(FName RowName)
+{
+	for (auto Kvp : this->Grid)
+	{
+		if (Kvp.Value->RowName == RowName)
+		{
+			return Kvp.Value;
+		}
+	}
+
+	return nullptr;
+}
+
 void ALayout::FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells)
 {
 	for (auto Kvp : this->Grid)
@@ -182,32 +195,55 @@ void ALayout::FindCellsWithRowName(FName RowName, TArray<ULayoutCell*>& OutCells
 	}
 }
 
-bool ALayout::DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal)
+bool ALayout::DoesPathExist(ULayoutCell* Start, ULayoutCell* Goal, TArray<ULayoutCell*> CellsToAvoid)
 {
 	if (!IsValid(Start) || !IsValid(Goal))
 	{
 		return false;
 	}
 
-	ULayoutCell* CellPX;
-	ULayoutCell* CellPY;
-	ULayoutCell* CellNX;
-	ULayoutCell* CellNY;
-	TArray<ULayoutCell*> Queue;
-	Queue.AddUnique(Start);
+	// Cells that have been evaluated already will be ignored, thus we can initialize it with cells to avoid to have them ignored too
+	TSet<ULayoutCell*> EvaluatedCells = TSet<ULayoutCell*>(CellsToAvoid); 
+	TQueue<ULayoutCell*, EQueueMode::Spsc> QueuedCells;
+	QueuedCells.Enqueue(Start);
 
-	for (int i = 0; i < Queue.Num(); i++)
+	while (!QueuedCells.IsEmpty())
 	{
-		if (Queue[i] == Goal)
+		ULayoutCell* ThisCell;
+		QueuedCells.Dequeue(ThisCell);
+
+		if (ThisCell == Goal)
 		{
 			return true;
 		}
 
-		this->GetNeighbouringCells(Queue[i], true, CellPX, CellPY, CellNX, CellNY);
-		Queue.AddUnique(CellPX);
-		Queue.AddUnique(CellPY);
-		Queue.AddUnique(CellNX);
-		Queue.AddUnique(CellNY);
+		ULayoutCell* CellPX;
+		ULayoutCell* CellPY;
+		ULayoutCell* CellNX;
+		ULayoutCell* CellNY;
+		this->GetNeighbouringCells(ThisCell, true, CellPX, CellPY, CellNX, CellNY);
+
+		if (IsValid(CellPX) && !EvaluatedCells.Contains(CellPX))
+		{
+			QueuedCells.Enqueue(CellPX);
+		}
+
+		if (IsValid(CellPY) && !EvaluatedCells.Contains(CellPY))
+		{
+			QueuedCells.Enqueue(CellPY);
+		}
+
+		if (IsValid(CellNX) && !EvaluatedCells.Contains(CellNX))
+		{
+			QueuedCells.Enqueue(CellNX);
+		}
+
+		if (IsValid(CellNY) && !EvaluatedCells.Contains(CellNY))
+		{
+			QueuedCells.Enqueue(CellNY);
+		}
+
+		EvaluatedCells.Add(ThisCell);
 	}
 	
 	return false;
