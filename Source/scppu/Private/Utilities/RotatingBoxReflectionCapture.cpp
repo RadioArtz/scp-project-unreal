@@ -155,15 +155,15 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 	this->ReflectionCapture180Deg->Brightness = this->Brightness;
 	this->ReflectionCapture270Deg->Brightness = this->Brightness;
 
-	// If we open the level run defer update by one tick, else defer the update longer to prevent massive render target/static texture creation
 	if (this->DeferredUpdateTimer.IsValid())
 	{
 		this->GetWorld()->GetTimerManager().ClearTimer(this->DeferredUpdateTimer);
 	}
 
+	// If we open the level defer update by some ticks, else defer the update longer to prevent massive render target/static texture creation
 	FTimerDelegate Delegate;
-	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.01f : 0.25f;
 	Delegate.BindUObject(this, &ARotatingBoxReflectionCapture::UpdateCapture);
+	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.01f : 0.25f;
 	this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, 0.25f, false);
 
 	this->PlacedRotation = this->GetActorRotation();
