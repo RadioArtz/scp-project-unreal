@@ -46,6 +46,9 @@ protected:
 	UPROPERTY(config)
 		int FOV = 80;
 
+	UPROPERTY(config)
+		bool bUseTesselation = true;
+
 	//// Functions ////	
 public:
 	// Returns the game local machine settings (resolution, windowing mode, scalability settings, etc...), but it's extended and has more settings
@@ -106,6 +109,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		void SetFOV(int Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
+		void SetTesselation(bool Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
+		bool GetTesselation() const;
 
 	virtual void ApplyNonResolutionSettings() override;
 };

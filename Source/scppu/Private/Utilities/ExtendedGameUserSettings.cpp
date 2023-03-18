@@ -1,6 +1,3 @@
-
-
-
 #include "Utilities/ExtendedGameUserSettings.h"
 
 UExtendedGameUserSettings* UExtendedGameUserSettings::GetExtendedGameUserSettings()
@@ -76,6 +73,16 @@ void UExtendedGameUserSettings::SetFOV(int Value)
 int UExtendedGameUserSettings::GetFOV() const
 {
 	return this->FOV;
+}
+
+void UExtendedGameUserSettings::SetTesselation(bool Value)
+{
+	this->bUseTesselation = Value;
+}
+
+bool UExtendedGameUserSettings::GetTesselation() const
+{
+	return this->bUseTesselation;
 }
 
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
