@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
-#include "IOBlueprintLibrary.generated.h"
+#include "FileIOBlueprintLibrary.generated.h"
 
-UCLASS()
-class SCPPU_API UIOBlueprintLibrary : public UBlueprintFunctionLibrary
+UCLASS(meta = (DisplayName = "File IO Blueprint Library"))
+class SCPPU_API UFileIOBlueprintLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	
