@@ -48,7 +48,7 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		FRandomStream RStream; // get private set
 
-	UPROPERTY(VisibleAnywhere, Category = "Debug")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		TMap<FIntVector2, ULayoutCell*> Grid; // get private set
 
 	//// Functions ////
