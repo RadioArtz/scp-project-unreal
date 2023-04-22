@@ -121,8 +121,7 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 
 		// Create and draw render target to static texture
 		UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Creating new static texture [%i]..."), *this->GetName(), i);
-		UTextureCube* StaticTexture = NewObject<UTextureCube>(this, FName(), RF_Transient);
-		StaticTexture = RenderTarget->ConstructTextureCube(StaticTexture->GetOuter(), StaticTexture->GetName(), RenderTarget->GetMaskedFlags());
+		UTextureCube* StaticTexture = RenderTarget->ConstructTextureCube(this, FString(), RF_Transient);
 		StaticTexture->Modify();
 		StaticTexture->MarkPackageDirty();
 		StaticTexture->PostEditChange();
@@ -163,7 +162,7 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 	// If we open the level defer update by some ticks, else defer the update longer to prevent massive render target/static texture creation
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &ARotatingBoxReflectionCapture::UpdateCapture);
-	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.01f : 0.25f;
+	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.025f : 0.25f;
 	this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, 0.25f, false);
 
 	this->PlacedRotation = this->GetActorRotation();
