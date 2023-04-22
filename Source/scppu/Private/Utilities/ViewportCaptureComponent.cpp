@@ -56,13 +56,13 @@ void UViewportCaptureComponent::CaptureViewportDeferred()
 	ENQUEUE_RENDER_COMMAND(CopyViewportTexture)(
 		[ViewportTextureRHILambda, TargetTextureRHILambda, ComponentNameLambda](FRHICommandListImmediate& RHICmdList)
 		{
-			if (TargetTextureRHILambda == nullptr)
+			if (TargetTextureRHILambda == nullptr || !TargetTextureRHILambda->IsValid())
 			{
 				UE_LOG(LogViewportCapture, Error, TEXT("%s: Invalid texture target on render thread (did the texture change?), aborting..."), *ComponentNameLambda);
 				return;
 			}
 
-			if (ViewportTextureRHILambda == nullptr)
+			if (ViewportTextureRHILambda == nullptr || !ViewportTextureRHILambda->IsValid())
 			{
 				UE_LOG(LogViewportCapture, Error, TEXT("%s: Invalid viewport texture on render thread (did the texture change?), aborting..."), *ComponentNameLambda);
 				return;
@@ -77,8 +77,8 @@ void UViewportCaptureComponent::CaptureViewportDeferred()
 			RHICmdList.TransitionResource(ERHIAccess::CopySrc & ~ERHIAccess::DSVWrite, ViewportTextureRHILambda);
 			RHICmdList.TransitionResource(ERHIAccess::CopyDest & ~ERHIAccess::DSVWrite, TargetTextureRHILambda);
 			RHICmdList.CopyTexture(ViewportTextureRHILambda, TargetTextureRHILambda, FRHICopyTextureInfo());
-			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, ViewportTextureRHILambda);
-			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, TargetTextureRHILambda);
+			RHICmdList.TransitionResource(ERHIAccess::SRVMask, ViewportTextureRHILambda);
+			RHICmdList.TransitionResource(ERHIAccess::SRVMask, TargetTextureRHILambda);
 		});
 
 	UE_LOG(LogViewportCapture, Verbose, TEXT("%s: Drawn viewport texture to texture target."), *this->GetName());
