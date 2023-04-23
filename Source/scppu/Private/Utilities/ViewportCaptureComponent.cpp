@@ -77,8 +77,8 @@ void UViewportCaptureComponent::CaptureViewportDeferred()
 			RHICmdList.TransitionResource(ERHIAccess::CopySrc & ~ERHIAccess::DSVWrite, ViewportTextureRHILambda);
 			RHICmdList.TransitionResource(ERHIAccess::CopyDest & ~ERHIAccess::DSVWrite, TargetTextureRHILambda);
 			RHICmdList.CopyTexture(ViewportTextureRHILambda, TargetTextureRHILambda, FRHICopyTextureInfo());
-			RHICmdList.TransitionResource(ERHIAccess::SRVMask, ViewportTextureRHILambda);
-			RHICmdList.TransitionResource(ERHIAccess::SRVMask, TargetTextureRHILambda);
+			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, ViewportTextureRHILambda);
+			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, TargetTextureRHILambda);
 		});
 
 	UE_LOG(LogViewportCapture, Verbose, TEXT("%s: Drawn viewport texture to texture target."), *this->GetName());
@@ -133,8 +133,9 @@ void UViewportCaptureComponent::OnBackBufferReadyToPresentCallback(SWindow& Slat
 {
 	if (SlateWindow.IsActive())
 	{
-		this->ViewportTextureRHI = Backbuffer.GetReference();
+		this->ViewportTextureRHI = Backbuffer;
 		this->TextureTarget->ResizeTarget(this->ViewportTextureRHI->GetSizeX(), this->ViewportTextureRHI->GetSizeY());
 		UE_LOG(LogViewportCapture, VeryVerbose, TEXT("%s: Updated viewport texture pointer to new back buffer of slate."), *this->GetName());
 	}
+
 }
