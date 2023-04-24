@@ -42,12 +42,15 @@ void USparseLightmapTransformManager::Initialize(FSubsystemCollectionBase& Colle
 
 void USparseLightmapTransformManager::Deinitialize()
 {
-	UE_LOG(LogSparseLightmapManager, Warning, TEXT("%s: Forcefully cleaning up transformed lightmaps of %i levels"), *this->GetName(), LightVolumeDataByLevel.Num());
-
-	TMap<ULevel*, FPrecomputedLightVolumeData*> LightVolumeDataByLevelCopy = LightVolumeDataByLevel;
-	for (auto Kvp : LightVolumeDataByLevelCopy)
+	if (LightVolumeDataByLevel.Num() > 0)
 	{
-		this->OnLevelRemovedFromWorldCallback(Kvp.Key, this->GetWorld());
+		UE_LOG(LogSparseLightmapManager, Warning, TEXT("%s: Forcefully cleaning up transformed lightmaps of %i levels"), *this->GetName(), LightVolumeDataByLevel.Num());
+
+		TMap<ULevel*, FPrecomputedLightVolumeData*> LightVolumeDataByLevelCopy = LightVolumeDataByLevel;
+		for (auto Kvp : LightVolumeDataByLevelCopy)
+		{
+			this->OnLevelRemovedFromWorldCallback(Kvp.Key, this->GetWorld());
+		}
 	}
 
 	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Deinitialized!"), *this->GetName());
