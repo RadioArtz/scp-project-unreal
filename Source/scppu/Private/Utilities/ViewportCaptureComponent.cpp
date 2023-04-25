@@ -74,9 +74,9 @@ void UViewportCaptureComponent::CaptureViewportDeferred()
 				return;
 			}
 
-			RHICmdList.TransitionResource(ERHIAccess::CopySrc & ~ERHIAccess::DSVWrite, ViewportTextureRHILambda);
-			RHICmdList.TransitionResource(ERHIAccess::CopyDest & ~ERHIAccess::DSVWrite, TargetTextureRHILambda);
-			RHICmdList.CopyTexture(ViewportTextureRHILambda, TargetTextureRHILambda, FRHICopyTextureInfo());
+			RHICmdList.TransitionResource(ERHIAccess::CopySrc, ViewportTextureRHILambda);
+			RHICmdList.TransitionResource(ERHIAccess::CopyDest, TargetTextureRHILambda);
+			RHICmdList.CopyToResolveTarget(ViewportTextureRHILambda, TargetTextureRHILambda, FResolveParams());
 			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, ViewportTextureRHILambda);
 			RHICmdList.TransitionResource(ERHIAccess::ReadOnlyMask, TargetTextureRHILambda);
 		});
@@ -135,7 +135,6 @@ void UViewportCaptureComponent::OnBackBufferReadyToPresentCallback(SWindow& Slat
 	{
 		this->ViewportTextureRHI = Backbuffer;
 		this->TextureTarget->ResizeTarget(this->ViewportTextureRHI->GetSizeX(), this->ViewportTextureRHI->GetSizeY());
-		UE_LOG(LogViewportCapture, VeryVerbose, TEXT("%s: Updated viewport texture pointer to new back buffer of slate."), *this->GetName());
+		UE_LOG(LogViewportCapture, Verbose, TEXT("%s: Updated viewport texture pointer to new back buffer of slate."), *this->GetName());
 	}
-
 }

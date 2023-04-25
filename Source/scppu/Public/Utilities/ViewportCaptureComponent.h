@@ -31,7 +31,7 @@ public:
 		UTextureRenderTarget2D* TextureTarget;
 
 private:
-	FRHITexture2D* ViewportTextureRHI;
+	FTexture2DRHIRef ViewportTextureRHI;
 	FDelegateHandle OnBackBufferReadyToPresentHandle;
 
 	FTransform LastActiveCameraTransform;

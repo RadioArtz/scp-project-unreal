@@ -10,27 +10,9 @@ DEFINE_LOG_CATEGORY(LogSparseLightmapManager);
 
 bool USparseLightmapTransformManager::DoesSupportWorldType(EWorldType::Type WorldType) const
 {
-	switch (WorldType)
-	{
-	case EWorldType::None:
-		return false;
-	case EWorldType::Game:
-		return true;
-	case EWorldType::Editor:
-		return false;
-	case EWorldType::PIE:
-		return true;
-	case EWorldType::EditorPreview:
-		return false;
-	case EWorldType::GamePreview:
-		return true;
-	case EWorldType::GameRPC:
-		return false;
-	case EWorldType::Inactive:
-		return false;
-	default:
-		return false;
-	}
+	TSet<EWorldType::Type> SupportedWorlds;
+	SupportedWorlds.Append({ EWorldType::Game, EWorldType::PIE, EWorldType::GamePreview });
+	return SupportedWorlds.Contains(WorldType);
 }
 
 void USparseLightmapTransformManager::Initialize(FSubsystemCollectionBase& Collection)
