@@ -57,7 +57,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Called when component gets destroyed
-	virtual void BeginDestroy() override;
+	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	void OnBackBufferReadyToPresentCallback(SWindow& SlateWindow, const FTexture2DRHIRef& Backbuffer);

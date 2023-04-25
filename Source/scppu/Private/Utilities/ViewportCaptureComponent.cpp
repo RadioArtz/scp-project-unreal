@@ -112,9 +112,9 @@ void UViewportCaptureComponent::BeginPlay()
 	}
 }
 
-void UViewportCaptureComponent::BeginDestroy()
+void UViewportCaptureComponent::EndPlay(EEndPlayReason::Type EndPlayReason)
 {
-	Super::BeginDestroy();
+	Super::EndPlay(EndPlayReason);
 
 	// Don't execute for default objects etc.
 	if (!IsValid(this->GetOwner()))
