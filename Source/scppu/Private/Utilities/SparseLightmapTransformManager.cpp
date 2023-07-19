@@ -136,7 +136,7 @@ FPrecomputedLightVolumeData* USparseLightmapTransformManager::CopyAndTransformLi
 
 	// This operation is considerd undefined behavior (violating strict type aliasing).
 	// We do this to read otherwise private variables of FPrecomputedLightVolumeData to be able to properly copy and transform the light samples for transformed levels.
-	// The use of memcpy leads to assertions further down the call line, We may check it out later again.
+	// The use of memcpy leads to assertions further down the call line. We may check it out later again.
 	// For now, it seems to do fine.
 	FPrecomputedLightVolumeDataExposed* DataExposed = reinterpret_cast<FPrecomputedLightVolumeDataExposed*>(Data);
 
