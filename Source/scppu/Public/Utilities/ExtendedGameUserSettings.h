@@ -111,7 +111,7 @@ public:
 		void SetFOV(int Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
-		void SetTesselation(bool Value);
+		void SetTesselation(bool bEnabled);
 
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		bool GetTesselation() const;

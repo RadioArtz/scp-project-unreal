@@ -75,9 +75,9 @@ int UExtendedGameUserSettings::GetFOV() const
 	return this->FOV;
 }
 
-void UExtendedGameUserSettings::SetTesselation(bool Value)
+void UExtendedGameUserSettings::SetTesselation(bool bEnabled)
 {
-	this->bUseTesselation = Value;
+	this->bUseTesselation = bEnabled;
 }
 
 bool UExtendedGameUserSettings::GetTesselation() const
