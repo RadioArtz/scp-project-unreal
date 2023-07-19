@@ -17,16 +17,25 @@ bool USparseLightmapTransformManager::DoesSupportWorldType(EWorldType::Type Worl
 
 void USparseLightmapTransformManager::Initialize(FSubsystemCollectionBase& Collection)
 {
+	Super::Initialize(Collection);
 	FWorldDelegates::LevelAddedToWorld.AddUObject(this, &USparseLightmapTransformManager::OnLevelAddedToWorldCallback);
 	FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &USparseLightmapTransformManager::OnLevelRemovedFromWorldCallback);
 	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Initialized!"), *this->GetName());
+}
+
+void USparseLightmapTransformManager::Tick(float DeltaTime)
+{
+	if (this->HangingLightVolumeData.Num() > this->NumMaxAllowedHangingLightVolumeData)
+	{
+		this->ClearHangingLightVolumeData();
+	}
 }
 
 void USparseLightmapTransformManager::Deinitialize()
 {
 	if (LightVolumeDataByLevel.Num() > 0)
 	{
-		UE_LOG(LogSparseLightmapManager, Warning, TEXT("%s: Forcefully cleaning up transformed lightmaps of %i levels"), *this->GetName(), LightVolumeDataByLevel.Num());
+		UE_LOG(LogSparseLightmapManager, Warning, TEXT("%s: Forcefully marking transformed lightmaps of %i levels as hanging and ready for deletion"), *this->GetName(), LightVolumeDataByLevel.Num());
 
 		TMap<ULevel*, FPrecomputedLightVolumeData*> LightVolumeDataByLevelCopy = LightVolumeDataByLevel;
 		for (auto Kvp : LightVolumeDataByLevelCopy)
@@ -35,6 +44,8 @@ void USparseLightmapTransformManager::Deinitialize()
 		}
 	}
 
+	this->ClearHangingLightVolumeData();
+	Super::Deinitialize();
 	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Deinitialized!"), *this->GetName());
 }
 
@@ -75,7 +86,6 @@ void USparseLightmapTransformManager::OnLevelAddedToWorldCallback(ULevel* Level,
 	FPrecomputedLightVolumeData* OriginalVolumeData = Level->MapBuildData->GetLevelPrecomputedLightVolumeBuildData(Level->LevelBuildDataId);
 	FPrecomputedLightVolumeData* TransformedVolumeData = this->CopyAndTransformLightVolumeData(OriginalVolumeData, LevelTransform);
 	LightVolumeDataByLevel.Add(Level, TransformedVolumeData);
-
 	Volume->RemoveFromScene(this->GetWorld()->Scene);
 	Level->MapBuildData->AddLevelPrecomputedLightVolumeBuildData(Level->LevelBuildDataId, TransformedVolumeData);
 	Volume->AddToScene(this->GetWorld()->Scene, Level->MapBuildData, Level->LevelBuildDataId);
@@ -100,9 +110,9 @@ void USparseLightmapTransformManager::OnLevelRemovedFromWorldCallback(ULevel* Le
 	check(!Level->PrecomputedLightVolume->IsAddedToScene());
 
 	FPrecomputedLightVolumeData* TransformedVolumeData;
-	LightVolumeDataByLevel.RemoveAndCopyValue(Level, TransformedVolumeData);
-	this->DeleteLightVolumeData(TransformedVolumeData);
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Successfully cleaned up transformed lightmap of level '%s'"), *this->GetName(), *Level->GetPathName());
+	this->LightVolumeDataByLevel.RemoveAndCopyValue(Level, TransformedVolumeData);
+	this->HangingLightVolumeData.Add(TransformedVolumeData);
+	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Marked transformed lightmap of level '%s' as hanging and ready for deletion"), *this->GetName(), *Level->GetPathName());
 }
 
 FTransform USparseLightmapTransformManager::FindLevelTransform(ULevel* Level)
@@ -121,11 +131,13 @@ FTransform USparseLightmapTransformManager::FindLevelTransform(ULevel* Level)
 FPrecomputedLightVolumeData* USparseLightmapTransformManager::CopyAndTransformLightVolumeData(FPrecomputedLightVolumeData* Data, FTransform Transform)
 {
 	check(Data != nullptr);
-
 	FPrecomputedLightVolumeData* TransformedData = new FPrecomputedLightVolumeData();
 	TransformedData->Initialize(Data->GetBounds().TransformBy(Transform.ToMatrixNoScale()));
 
-	// Undefined behavior (type aliasing), but I don't really have a choice here (maybe memcpy it?)
+	// This operation is considerd undefined behavior (violating strict type aliasing).
+	// We do this to read otherwise private variables of FPrecomputedLightVolumeData to be able to properly copy and transform the light samples for transformed levels.
+	// The use of memcpy leads to assertions further down the call line, We may check it out later again.
+	// For now, it seems to do fine.
 	FPrecomputedLightVolumeDataExposed* DataExposed = reinterpret_cast<FPrecomputedLightVolumeDataExposed*>(Data);
 
 	DataExposed->HighQualityLightmapOctree.FindAllElements([TransformedData, Transform](const FVolumeLightingSample& OriginalSample)
@@ -154,9 +166,31 @@ FPrecomputedLightVolumeData* USparseLightmapTransformManager::CopyAndTransformLi
 	return TransformedData;
 }
 
+void USparseLightmapTransformManager::ClearHangingLightVolumeData()
+{
+	if (this->HangingLightVolumeData.Num() <= 0)
+	{
+		return;
+	}
+
+	FlushRenderingCommands(); // We don't want the render thread to still use the data while we delete it.
+	int NumHangingLightVolumeDataRemoved = 0;
+	while (this->HangingLightVolumeData.Num() > 0)
+	{
+		FPrecomputedLightVolumeData* TransformedVolumeData = HangingLightVolumeData[0];
+		HangingLightVolumeData.RemoveAt(0);
+		this->DeleteLightVolumeData(TransformedVolumeData);
+		NumHangingLightVolumeDataRemoved++;
+	}
+
+	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Successfully cleaned up %i hanging transformed lightmaps"), *this->GetName(), NumHangingLightVolumeDataRemoved);
+}
+
 void USparseLightmapTransformManager::DeleteLightVolumeData(FPrecomputedLightVolumeData* Data)
 {
 	check(Data != nullptr);
+
+	// The deconstructor of FPrecomutedLightVolumeData is not exported, so we have to it this way
 	Data->InvalidateLightingCache();
 	operator delete(Data);
 }
