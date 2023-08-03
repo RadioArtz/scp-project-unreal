@@ -27,7 +27,7 @@ public class scppu : ModuleRules
 				Process Proc;
 
 				// Determin commit hash
-				Console.WriteLine("Using 'git show' to determin commit hash to be used in engine");
+				Console.WriteLine("Using 'git show' to determine commit hash to be used in engine");
 				StartInfo.Arguments = "show --quiet --format=%H";
 				Proc = Process.Start(StartInfo);
 				Proc.WaitForExit();
@@ -35,7 +35,7 @@ public class scppu : ModuleRules
 				Console.WriteLine("Detected git commit hash: " + GitCommitHash);
 
 				// Determin if local changes exist
-				Console.WriteLine("Using 'git status' to determin commit hash to be used in engine");
+				Console.WriteLine("Using 'git status' to determine commit hash to be used in engine");
 				StartInfo.Arguments = "status --porcelain";
 				Proc = Process.Start(StartInfo);
 				Proc.WaitForExit();
@@ -44,7 +44,7 @@ public class scppu : ModuleRules
 
 				// Add definitions to be used in cpp code
 				PublicDefinitions.Add("PROJECT_GIT_COMMIT_HASH=\"" + GitCommitHash + "\"");
-				PublicDefinitions.Add("PROJECT_GIT_HAS_LOCAL_CHANGES=" + (bHasLocalChanges ? "1" : "0"));
+				PublicDefinitions.Add("PROJECT_GIT_HAS_COMMIT_LOCAL_CHANGES=" + (bHasLocalChanges ? "1" : "0"));
 			}
 			catch (Exception Exp)
 			{

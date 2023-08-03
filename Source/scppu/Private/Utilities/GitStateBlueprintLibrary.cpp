@@ -12,9 +12,9 @@ FString UGitStateBlueprintLibrary::GetActiveGitCommitHash()
 #endif
 }
 
-bool UGitStateBlueprintLibrary::HasActiveGitLocalChanges()
+bool UGitStateBlueprintLibrary::HasActiveGitCommitLocalChanges()
 {
-#if PROJECT_GIT_HAS_LOCAL_CHANGES
+#if PROJECT_GIT_HAS_COMMIT_LOCAL_CHANGES
     return true;
 #else
     return false;

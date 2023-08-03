@@ -20,5 +20,5 @@ public:
 		static FString GetActiveGitCommitHash();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-		static bool HasActiveGitLocalChanges();
+		static bool HasActiveGitCommitLocalChanges();
 };
