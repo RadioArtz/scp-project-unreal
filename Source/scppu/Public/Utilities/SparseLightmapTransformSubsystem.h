@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "PrecomputedLightVolume.h"
-#include "SparseLightmapTransformManager.generated.h"
+#include "SparseLightmapTransformSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSparseLightmapManager, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSparseLightmapSubsystem, Log, All);
 
 // Used to properly handle transforming sparse lightmaps of levels added to the world with different transforms
 UCLASS(Transient)
-class SCPPU_API USparseLightmapTransformManager : public UTickableWorldSubsystem
+class SCPPU_API USparseLightmapTransformSubsystem : public UTickableWorldSubsystem
 {
 	GENERATED_BODY()
 

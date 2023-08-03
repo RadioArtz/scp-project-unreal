@@ -1,29 +1,29 @@
 
 
 
-#include "Utilities/SparseLightmapTransformManager.h"
+#include "Utilities/SparseLightmapTransformSubsystem.h"
 #include "Engine/Level.h"
 #include "Engine/MapBuildDataRegistry.h"
 #include "Engine/LevelStreaming.h"
 
-DEFINE_LOG_CATEGORY(LogSparseLightmapManager);
+DEFINE_LOG_CATEGORY(LogSparseLightmapSubsystem);
 
-bool USparseLightmapTransformManager::DoesSupportWorldType(EWorldType::Type WorldType) const
+bool USparseLightmapTransformSubsystem::DoesSupportWorldType(EWorldType::Type WorldType) const
 {
 	TSet<EWorldType::Type> SupportedWorlds;
 	SupportedWorlds.Append({ EWorldType::Game, EWorldType::PIE, EWorldType::GamePreview });
 	return SupportedWorlds.Contains(WorldType);
 }
 
-void USparseLightmapTransformManager::Initialize(FSubsystemCollectionBase& Collection)
+void USparseLightmapTransformSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-	FWorldDelegates::LevelAddedToWorld.AddUObject(this, &USparseLightmapTransformManager::OnLevelAddedToWorldCallback);
-	FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &USparseLightmapTransformManager::OnLevelRemovedFromWorldCallback);
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Initialized!"), *this->GetName());
+	FWorldDelegates::LevelAddedToWorld.AddUObject(this, &USparseLightmapTransformSubsystem::OnLevelAddedToWorldCallback);
+	FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &USparseLightmapTransformSubsystem::OnLevelRemovedFromWorldCallback);
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Initialized!"), *this->GetName());
 }
 
-void USparseLightmapTransformManager::Tick(float DeltaTime)
+void USparseLightmapTransformSubsystem::Tick(float DeltaTime)
 {
 	if (this->HangingLightVolumeData.Num() > this->NumMaxAllowedHangingLightVolumeData)
 	{
@@ -31,11 +31,11 @@ void USparseLightmapTransformManager::Tick(float DeltaTime)
 	}
 }
 
-void USparseLightmapTransformManager::Deinitialize()
+void USparseLightmapTransformSubsystem::Deinitialize()
 {
 	if (LightVolumeDataByLevel.Num() > 0)
 	{
-		UE_LOG(LogSparseLightmapManager, Warning, TEXT("%s: Forcefully marking transformed lightmaps of %i levels as hanging and ready for deletion"), *this->GetName(), LightVolumeDataByLevel.Num());
+		UE_LOG(LogSparseLightmapSubsystem, Warning, TEXT("%s: Forcefully marking transformed lightmaps of %i levels as hanging and ready for deletion"), *this->GetName(), LightVolumeDataByLevel.Num());
 
 		TMap<ULevel*, FPrecomputedLightVolumeData*> LightVolumeDataByLevelCopy = LightVolumeDataByLevel;
 		for (auto Kvp : LightVolumeDataByLevelCopy)
@@ -46,40 +46,40 @@ void USparseLightmapTransformManager::Deinitialize()
 
 	this->ClearHangingLightVolumeData();
 	Super::Deinitialize();
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Deinitialized!"), *this->GetName());
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Deinitialized!"), *this->GetName());
 }
 
-void USparseLightmapTransformManager::OnLevelAddedToWorldCallback(ULevel* Level, UWorld* World)
+void USparseLightmapTransformSubsystem::OnLevelAddedToWorldCallback(ULevel* Level, UWorld* World)
 {
 	if (this->GetWorld() != World)
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' was not added to our world and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' was not added to our world and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
 	if (this->GetWorld()->PersistentLevel == Level)
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' is the persistent level and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' is the persistent level and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
 	if (Level->MapBuildData == nullptr)
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' has no build data and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' has no build data and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
 	FTransform LevelTransform = this->FindLevelTransform(Level);
 	if (LevelTransform.Equals(FTransform::Identity))
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' is not transformed and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' is not transformed and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
 	FPrecomputedLightVolume* Volume = Level->PrecomputedLightVolume;
 	if (!Volume->IsAddedToScene())
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' has no light volume added to the scene and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' has no light volume added to the scene and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 		
@@ -90,20 +90,20 @@ void USparseLightmapTransformManager::OnLevelAddedToWorldCallback(ULevel* Level,
 	Level->MapBuildData->AddLevelPrecomputedLightVolumeBuildData(Level->LevelBuildDataId, TransformedVolumeData);
 	Volume->AddToScene(this->GetWorld()->Scene, Level->MapBuildData, Level->LevelBuildDataId);
 	Level->MapBuildData->AddLevelPrecomputedLightVolumeBuildData(Level->LevelBuildDataId, OriginalVolumeData);
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Successfully transformed lightmap of level '%s' to: %s"), *this->GetName(), *Level->GetPathName(), *LevelTransform.ToString());
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Successfully transformed lightmap of level '%s' to: %s"), *this->GetName(), *Level->GetPathName(), *LevelTransform.ToString());
 }
 
-void USparseLightmapTransformManager::OnLevelRemovedFromWorldCallback(ULevel* Level, UWorld* World)
+void USparseLightmapTransformSubsystem::OnLevelRemovedFromWorldCallback(ULevel* Level, UWorld* World)
 {
 	if (this->GetWorld() != World)
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' was not removed from our world and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' was not removed from our world and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
 	if (!this->LightVolumeDataByLevel.Contains(Level))
 	{
-		UE_LOG(LogSparseLightmapManager, Verbose, TEXT("%s: Level '%s' was not touched by us and will be ignored"), *this->GetName(), *Level->GetPathName());
+		UE_LOG(LogSparseLightmapSubsystem, Verbose, TEXT("%s: Level '%s' was not touched by us and will be ignored"), *this->GetName(), *Level->GetPathName());
 		return;
 	}
 
@@ -112,10 +112,10 @@ void USparseLightmapTransformManager::OnLevelRemovedFromWorldCallback(ULevel* Le
 	FPrecomputedLightVolumeData* TransformedVolumeData;
 	this->LightVolumeDataByLevel.RemoveAndCopyValue(Level, TransformedVolumeData);
 	this->HangingLightVolumeData.Add(TransformedVolumeData);
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Marked transformed lightmap of level '%s' as hanging and ready for deletion"), *this->GetName(), *Level->GetPathName());
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Marked transformed lightmap of level '%s' as hanging and ready for deletion"), *this->GetName(), *Level->GetPathName());
 }
 
-FTransform USparseLightmapTransformManager::FindLevelTransform(ULevel* Level)
+FTransform USparseLightmapTransformSubsystem::FindLevelTransform(ULevel* Level)
 {
 	for (auto StreamingLevel : this->GetWorld()->GetStreamingLevels())
 	{
@@ -128,7 +128,7 @@ FTransform USparseLightmapTransformManager::FindLevelTransform(ULevel* Level)
 	return FTransform::Identity;
 }
 
-FPrecomputedLightVolumeData* USparseLightmapTransformManager::CopyAndTransformLightVolumeData(FPrecomputedLightVolumeData* Data, FTransform Transform)
+FPrecomputedLightVolumeData* USparseLightmapTransformSubsystem::CopyAndTransformLightVolumeData(FPrecomputedLightVolumeData* Data, FTransform Transform)
 {
 	check(Data != nullptr);
 	FPrecomputedLightVolumeData* TransformedData = new FPrecomputedLightVolumeData();
@@ -166,7 +166,7 @@ FPrecomputedLightVolumeData* USparseLightmapTransformManager::CopyAndTransformLi
 	return TransformedData;
 }
 
-void USparseLightmapTransformManager::ClearHangingLightVolumeData()
+void USparseLightmapTransformSubsystem::ClearHangingLightVolumeData()
 {
 	if (this->HangingLightVolumeData.Num() <= 0)
 	{
@@ -183,10 +183,10 @@ void USparseLightmapTransformManager::ClearHangingLightVolumeData()
 		NumHangingLightVolumeDataRemoved++;
 	}
 
-	UE_LOG(LogSparseLightmapManager, Log, TEXT("%s: Successfully cleaned up %i hanging transformed lightmaps"), *this->GetName(), NumHangingLightVolumeDataRemoved);
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Successfully cleaned up %i hanging transformed lightmaps"), *this->GetName(), NumHangingLightVolumeDataRemoved);
 }
 
-void USparseLightmapTransformManager::DeleteLightVolumeData(FPrecomputedLightVolumeData* Data)
+void USparseLightmapTransformSubsystem::DeleteLightVolumeData(FPrecomputedLightVolumeData* Data)
 {
 	check(Data != nullptr);
 
