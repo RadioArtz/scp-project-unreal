@@ -183,7 +183,7 @@ void USparseLightmapTransformSubsystem::ClearHangingLightVolumeData()
 		NumHangingLightVolumeDataRemoved++;
 	}
 
-	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Successfully cleaned up %i hanging transformed lightmaps"), *this->GetName(), NumHangingLightVolumeDataRemoved);
+	UE_LOG(LogSparseLightmapSubsystem, Log, TEXT("%s: Successfully cleaned up %i hanging transformed lightmaps"), *this->GetPathName(), NumHangingLightVolumeDataRemoved);
 }
 
 void USparseLightmapTransformSubsystem::DeleteLightVolumeData(FPrecomputedLightVolumeData* Data)
