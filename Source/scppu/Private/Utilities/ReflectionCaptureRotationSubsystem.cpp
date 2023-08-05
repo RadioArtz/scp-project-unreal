@@ -69,9 +69,13 @@ void UReflectionCaptureRotationSubsystem::OnLevelAddedToWorldCallback(ULevel* Le
 			FReflectionCaptureMapBuildData* Data = Level->MapBuildData->GetReflectionCaptureBuildData(RefComponent->MapBuildDataId);
 			UTextureRenderTargetCube* RenderTarget = NewObject<UTextureRenderTargetCube>(this, FName(), RF_Transient);
 			//UTextureRenderTarget2D* RenderTarget = NewObject<UTextureRenderTarget2D>(this, FName(), RF_Transient);
-			RenderTarget->ClearColor = FLinearColor::Green;
 			RenderTarget->Init(256, EPixelFormat::PF_FloatRGBA);
 			//RenderTarget->InitCustomFormat(2048, 256, EPixelFormat::PF_FloatRGBA, false);
+			RenderTarget->ClearColor = FLinearColor::Green;
+			RenderTarget->CompressionSettings = TC_HDR;
+			RenderTarget->CompressionQuality = TCQ_Highest;
+			RenderTarget->SRGB = false;
+			RenderTarget->Filter = TF_Trilinear;
 			RenderTarget->UpdateResourceImmediate(true);
 
 			UTextureCube* InTexture = NewObject<UTextureCube>(this);
