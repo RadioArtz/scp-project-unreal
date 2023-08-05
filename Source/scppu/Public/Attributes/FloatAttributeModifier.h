@@ -32,7 +32,7 @@ private:
 		FString Formula = "(Base value + Sum of all additon values) * (1 + Sum of all multiplications values) * (1 - Sum of all reduction values)";
 };
 
-UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Float Attribute Modifier Settings"))
+UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Float Attribute Modifier"))
 class SCPPU_API UFloatAttributeModifierSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
