@@ -50,23 +50,23 @@ public:
 		USceneCaptureComponentCube* SceneCaptureCube;
 
 	// Number of recaptures to capture is own reflection
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = CustomReflectionCapture, meta = (ClampMin = 0, ClampMax = 10))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "CustomReflectionCapture", meta = (ClampMin = 0, ClampMax = 10))
 		int NumReflectiveCaputures = 2;
 
 	// Brighness of the capture
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CustomReflectionCapture, meta = (UIMin = 0, UIMAX = 4))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CustomReflectionCapture", meta = (UIMin = 0, UIMAX = 4))
 		float Brightness = 1.f;
 
-	// Brighness of the capture
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CustomReflectionCapture)
+	// World space offset to apply before capturing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CustomReflectionCapture")
 		FVector CaptureOffset;
 
 	// Last element is applied
-	UPROPERTY(VisibleAnywhere, Category = CustomReflectionCapture)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		TArray<UTextureRenderTargetCube*> RenderTargets;
 
 	// Last element is applied
-	UPROPERTY(VisibleAnywhere, Category = CustomReflectionCapture)
+	UPROPERTY(VisibleAnywhere, Category = "Debug")
 		TArray<UTextureCube*> StaticTextures;
 
 	UPROPERTY()
@@ -84,11 +84,10 @@ public:
 	ARotatingBoxReflectionCapture();
 
 #if WITH_EDITOR
-	UFUNCTION(CallInEditor, Category = CustomReflectionCapture)
+	UFUNCTION(CallInEditor, Category = "CustomReflectionCapture")
 		void UpdateCapture();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 	// Called every frame
