@@ -32,6 +32,9 @@ public:
 		UBoxComponent* EditorBox;
 
 	UPROPERTY()
+		UBillboardComponent* CaptureOffsetSprite;
+
+	UPROPERTY()
 		UBoxReflectionCaptureComponent* ReflectionCapture0Deg;
 
 	UPROPERTY()
@@ -53,6 +56,10 @@ public:
 	// Brighness of the capture
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CustomReflectionCapture, meta = (UIMin = 0, UIMAX = 4))
 		float Brightness = 1.f;
+
+	// Brighness of the capture
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = CustomReflectionCapture)
+		FVector CaptureOffset;
 
 	// Last element is applied
 	UPROPERTY(VisibleAnywhere, Category = CustomReflectionCapture)
@@ -81,6 +88,7 @@ public:
 		void UpdateCapture();
 
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 	// Called every frame
