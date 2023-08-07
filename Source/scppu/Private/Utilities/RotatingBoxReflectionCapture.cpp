@@ -25,11 +25,12 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->SetRootComponent(this->Root);
 
 #if WITH_EDITOR
-	// Sprite component
+	// Main sprite component
 	this->EditorSprite = CreateDefaultSubobject<UBillboardComponent>("Sprite", false);
 	this->EditorSprite->SetSprite(ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/Engine/EditorResources/S_ReflActorIcon.S_ReflActorIcon'")).Object);
+	this->EditorSprite->SetRelativeScale3D_Direct(FVector(0.5f, 0.5f, 0.5f));
+	this->EditorSprite->SetUsingAbsoluteScale(true);
 	this->EditorSprite->bIsScreenSizeScaled = true;
-	this->EditorSprite->ScreenSize = 0.0025f;
 	this->EditorSprite->SetRelativeLocation(FVector(0, 0, 0));
 	this->EditorSprite->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 	
@@ -39,6 +40,15 @@ ARotatingBoxReflectionCapture::ARotatingBoxReflectionCapture()
 	this->EditorBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	this->EditorBox->SetRelativeLocation(FVector(0, 0, 0));
 	this->EditorBox->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
+
+	// Capture offset sprite component
+	this->CaptureOffsetSprite = CreateDefaultSubobject<UBillboardComponent>("CaptureOffsetSprite", false);
+	this->CaptureOffsetSprite->SetSprite(ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/Engine/EditorResources/S_ReflActorIcon.S_ReflActorIcon'")).Object);
+	this->CaptureOffsetSprite->SetRelativeScale3D_Direct(FVector(0.2f, 0.2f, 0.2f));
+	this->CaptureOffsetSprite->SetUsingAbsoluteScale(true);
+	this->CaptureOffsetSprite->bIsScreenSizeScaled = true;
+	this->CaptureOffsetSprite->SetRelativeLocation(FVector(0, 0, 0));
+	this->CaptureOffsetSprite->AttachToComponent(this->Root, FAttachmentTransformRules::KeepRelativeTransform);
 #endif
 
 	// Reflection capture rotation 0
@@ -92,10 +102,16 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 		UE_LOG(LogRotatingReflectionCapture, Error, TEXT("%s: Cannot update inside a non-editor world"), *this->GetName());
 		return;
 	}
-	
+
 	// Clear arrays
 	this->RenderTargets.Reset(this->NumReflectiveCaputures + 1);
 	this->StaticTextures.Reset(this->NumReflectiveCaputures + 1);
+
+	// Hide every except the "true" reflection so we don't end up with multiple reflections inside the reflective captures
+	this->ReflectionCapture0Deg->SetVisibility(true);
+	this->ReflectionCapture90Deg->SetVisibility(false);
+	this->ReflectionCapture180Deg->SetVisibility(false);
+	this->ReflectionCapture270Deg->SetVisibility(false);
 
 	for (int i = 0; i < this->NumReflectiveCaputures + 1; i++)
 	{
@@ -116,8 +132,11 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 		{
 			this->SceneCaptureCube->ShowFlags.ReflectionEnvironment = true;
 		}
+
 		this->SceneCaptureCube->TextureTarget = RenderTarget;
+		this->SceneCaptureCube->SetRelativeLocation(this->CaptureOffset / this->GetActorScale3D());
 		this->SceneCaptureCube->CaptureScene();
+		this->SceneCaptureCube->SetRelativeLocation(FVector::ZeroVector);
 
 		// Create and draw render target to static texture
 		UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Creating new static texture [%i]..."), *this->GetName(), i);
@@ -138,11 +157,18 @@ void ARotatingBoxReflectionCapture::UpdateCapture()
 		this->StaticTextures.Add(StaticTexture);
 	}
 
+	// Show every reflection again so they all get included into the light build
+	this->ReflectionCapture0Deg->SetVisibility(true);
+	this->ReflectionCapture90Deg->SetVisibility(true);
+	this->ReflectionCapture180Deg->SetVisibility(true);
+	this->ReflectionCapture270Deg->SetVisibility(true);
+
 	UE_LOG(LogRotatingReflectionCapture, Log, TEXT("%s: Updated reflection captures"), *this->GetName());
 }
 
 void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 {
+	Super::OnConstruction(Transform);
 	if (this->GetWorld()->WorldType != EWorldType::Editor)
 	{
 		return;
@@ -163,9 +189,10 @@ void ARotatingBoxReflectionCapture::OnConstruction(const FTransform& Transform)
 	FTimerDelegate Delegate;
 	Delegate.BindUObject(this, &ARotatingBoxReflectionCapture::UpdateCapture);
 	float DeferDelay = this->GetWorld()->UnpausedTimeSeconds < 1.0 ? 0.025f : 0.25f;
-	this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, 0.25f, false);
+	this->GetWorld()->GetTimerManager().SetTimer(this->DeferredUpdateTimer, Delegate, DeferDelay, false);
 
 	this->PlacedRotation = this->GetActorRotation();
+	this->CaptureOffsetSprite->SetRelativeLocation(this->CaptureOffset / this->GetActorScale3D());
 }
 #endif
 
