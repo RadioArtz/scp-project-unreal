@@ -54,6 +54,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 		bool bLevelAlwaysLoaded; // get private set
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+		bool bHasSendLayoutDataToLevelActors; // get private set
+
 	UPROPERTY(BlueprintAssignable)
 		FLayoutCellSublevelStatusUpdate OnSublevelLoaded;
 
