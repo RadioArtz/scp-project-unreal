@@ -247,6 +247,7 @@ void ULayoutCell::UnloadSublevel(bool bForce)
 
 	this->Sublevel->SetIsRequestingUnloadAndRemoval(true);
 	this->Sublevel = nullptr;
+	this->bHasSendLayoutDataToLevelActors = false;
 }
 
 void ULayoutCell::ShowSublevel()
@@ -342,18 +343,6 @@ bool ULayoutCell::TransferPresistentLevelActorToSublevel(AActor* Actor)
 
 void ULayoutCell::OnSublevelLoadedCallback()
 {
-	FRandomStream RStream = FRandomStream(this->UniqueSeed);
-	TArray<AActor*> LevelActors;
-	this->GetAllActorsOfClassInSublevel(AActor::StaticClass(), LevelActors);
-
-	for (auto Elem : LevelActors)
-	{
-		if (Elem->Implements<ULayoutSublevelInterface>())
-		{
-			ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->GetLayout(), this, RStream.RandRange(0, MAX_int32 - 1));
-		}
-	}
-
 	this->OnSublevelLoaded.Broadcast();
 }
 
@@ -364,6 +353,23 @@ void ULayoutCell::OnSublevelUnloadedCallback()
 
 void ULayoutCell::OnSublevelShownCallback()
 {
+	if (!this->bHasSendLayoutDataToLevelActors)
+	{
+		FRandomStream RStream = FRandomStream(this->UniqueSeed);
+		TArray<AActor*> LevelActors;
+		this->GetAllActorsOfClassInSublevel(AActor::StaticClass(), LevelActors);
+
+		for (auto Elem : LevelActors)
+		{
+			if (Elem->Implements<ULayoutSublevelInterface>())
+			{
+				ILayoutSublevelInterface::Execute_OnLayoutDataReceived(Elem, this->GetLayout(), this, RStream.RandRange(0, MAX_int32 - 1));
+			}
+		}
+
+		this->bHasSendLayoutDataToLevelActors = true;
+	}
+
 	this->OnSublevelShown.Broadcast();
 }
 
