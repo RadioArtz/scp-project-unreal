@@ -389,7 +389,7 @@ bool ULayoutCell::IsPointInSublevelBounds(FVector Point)
 		FVector Extend;
 		Elem->GetActorBounds(false, Origin, Extend, false);
 
-		if ((Point.X < Origin.X + Point.X && Point.X > Origin.X - Point.X) && (Point.Y < Origin.Y + Point.Y && Point.Y > Origin.Y - Point.Y) && (Point.Z < Origin.Z + Point.Z && Point.Z > Origin.Z - Point.Z))
+		if ((Point.X < Origin.X + Extend.X && Point.X > Origin.X - Extend.X) && (Point.Y < Origin.Y + Extend.Y && Point.Y > Origin.Y - Extend.Y) && (Point.Z < Origin.Z + Point.Z && Extend.Z > Origin.Z - Extend.Z))
 		{
 			return true;
 		}
