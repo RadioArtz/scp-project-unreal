@@ -208,6 +208,10 @@
 			"SupportedTargetPlatforms": [
 				"Win64"
 			]
+		},
+		{
+			"Name": "GPULightmass",
+			"Enabled": true
 		}
 	],
 	"TargetPlatforms": [
