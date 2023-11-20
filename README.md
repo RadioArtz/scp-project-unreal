@@ -12,8 +12,10 @@ The original version of this project was not set up with source control from the
 - When working on some major system, create an issue to inform others that you are working on it and keep it updated if you stop working on it. This is to avoid two people spending a lot of time just to find out that someone else has been working on the same thing. You can of course still work on things that others are already working on if you want to.
 - The project has C++ enabled.
 - **No external marketplace assets** are to be used!
-- Do **NOT** contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/License.txt)
+- Do **NOT** contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/License.txt).
 - Forks of the project are to follow the same License terms as this Project.
+- For more information, check our [Contribution]((https://github.com/RadioArtz/scp-project-unreal/blob/main/CONTRIBUTING.md)) doc.
+
 
  
 ### HELP MY PROJECT IS NOT COMPILING!!
