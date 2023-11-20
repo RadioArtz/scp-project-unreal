@@ -14,7 +14,7 @@ The original version of this project was not set up with source control from the
 - **No external marketplace assets** are to be used!
 - Do **NOT** contribute assets and/or code that don't fall under the [License](https://github.com/RadioArtz/scp-project-unreal/blob/main/License.txt).
 - Forks of the project are to follow the same License terms as this Project.
-- For more information, check our [Contribution]((https://github.com/RadioArtz/scp-project-unreal/blob/main/CONTRIBUTING.md)) doc.
+- For more information, check our [Contribution](https://github.com/RadioArtz/scp-project-unreal/blob/main/CONTRIBUTING.md) doc.
 
 
  
