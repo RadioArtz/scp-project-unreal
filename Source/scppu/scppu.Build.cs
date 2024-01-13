@@ -32,6 +32,17 @@ public class scppu : ModuleRules
 				StartInfo.Arguments = "show --quiet --format=%H";
 				Proc = Process.Start(StartInfo);
 				Proc.WaitForExit();
+
+				string GitError = Proc.StandardError.ReadToEnd().Trim();
+				if (GitError.Contains("fatal: not a git repository"))
+				{
+					throw new Exception("not a git project");
+				}
+				else if (GitError.Length > 0)
+				{
+					throw new Exception("git error: " + GitError);
+				}
+
 				string GitCommitHash = Proc.StandardOutput.ReadToEnd().Trim();
 				Console.WriteLine("Detected git commit hash: " + GitCommitHash);
 
@@ -49,7 +60,7 @@ public class scppu : ModuleRules
 			}
 			catch (Exception Exp)
 			{
-				Console.WriteLine("Something went wrong determining git status: " + Exp.Message);
+				Console.WriteLine("Something went wrong determining git status and will be aborted: " + Exp.Message);
 			}
 		}
 		else
