@@ -26,6 +26,7 @@ public class scppu : ModuleRules
 				StartInfo.RedirectStandardOutput = true;
 				StartInfo.RedirectStandardError = true;
 				Process Proc;
+				string GitError = "";
 
 				// Determin commit hash
 				Console.WriteLine("Using 'git show' to determine commit hash to be used in engine");
@@ -33,7 +34,7 @@ public class scppu : ModuleRules
 				Proc = Process.Start(StartInfo);
 				Proc.WaitForExit();
 
-				string GitError = Proc.StandardError.ReadToEnd().Trim();
+				GitError = Proc.StandardError.ReadToEnd().Trim();
 				if (GitError.Contains("fatal: not a git repository"))
 				{
 					throw new Exception("not a git project");
@@ -51,6 +52,13 @@ public class scppu : ModuleRules
 				StartInfo.Arguments = "status --porcelain";
 				Proc = Process.Start(StartInfo);
 				Proc.WaitForExit();
+
+				GitError = Proc.StandardError.ReadToEnd().Trim();
+				if (GitError.Length > 0)
+				{
+					throw new Exception("git error: " + GitError);
+				}
+
 				bool bHasLocalChanges = Proc.StandardOutput.ReadToEnd().Length > 0;
 				Console.WriteLine("Detected git has local changes: " + bHasLocalChanges);
 
@@ -67,5 +75,7 @@ public class scppu : ModuleRules
 		{
 			Console.WriteLine("Not determining git status to be used in engine");
 		}
+
+		// Do other stuff
 	}
 }
