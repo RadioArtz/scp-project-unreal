@@ -11,6 +11,7 @@ public class scppu : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "DeveloperSettings", "RenderCore", "Renderer", "RHI", "Http",  "Slate", "SlateCore"});
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
+		bEnableUndefinedIdentifierWarnings = false;
 		bool bShouldDeterminGitStatus = true;
 
 		// Determin git active commit hash and state to be used in engine (see UGitStateBlueprintLibrary for more information)
