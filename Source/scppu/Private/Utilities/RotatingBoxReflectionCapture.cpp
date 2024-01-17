@@ -9,6 +9,7 @@
 #include "Engine/TextureCube.h"
 #include "Engine/MapBuildDataRegistry.h"
 #include "DrawDebugHelpers.h"
+#include "UObject/ConstructorHelpers.h" 
 
 DEFINE_LOG_CATEGORY(LogRotatingReflectionCapture);
 

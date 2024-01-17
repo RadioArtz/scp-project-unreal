@@ -7,6 +7,7 @@
 #include "Engine/LevelStreamingDynamic.h"
 #include "Components/BillboardComponent.h"
 #include "DrawDebugHelpers.h"
+#include "UObject/ConstructorHelpers.h" 
 
 DEFINE_LOG_CATEGORY(LogLayout);
 TArray<ALayout*> ALayout::ActiveLayouts;

@@ -3,6 +3,7 @@
 #include "Utilities/ViewportCaptureComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Rendering/Texture2DResource.h"
+#include "GameFramework/PlayerController.h" 
 
 DEFINE_LOG_CATEGORY(LogViewportCapture);
 
