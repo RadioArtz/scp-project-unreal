@@ -6,9 +6,6 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "GitStateBlueprintLibrary.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class SCPPU_API UGitStateBlueprintLibrary : public UBlueprintFunctionLibrary
 {
