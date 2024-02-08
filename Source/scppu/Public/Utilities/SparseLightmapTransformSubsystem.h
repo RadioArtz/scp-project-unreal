@@ -7,7 +7,9 @@
 #include "PrecomputedLightVolume.h"
 #include "SparseLightmapTransformSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSparseLightmapSubsystem, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogSparseLightmapTransformSubsystem, Log, All);
+
+class FPrecomputedVolumetricLightmapData;
 
 // Used to properly handle transforming sparse lightmaps of levels added to the world with different transforms
 UCLASS(Transient)
@@ -44,12 +46,12 @@ private:
 private:
 
 	// Type punned version of FPrecomputedLightVolumeData. See CopyAndTransformLightVolumeData() for more info.
-	class FPrecomputedLightVolumeDataExposed
+	class FPunnedPrecomputedLightVolumeData
 	{
 	public:
 
-		FPrecomputedLightVolumeDataExposed() { return; }
-		~FPrecomputedLightVolumeDataExposed() { return; }
+		FPunnedPrecomputedLightVolumeData() { return; }
+		~FPunnedPrecomputedLightVolumeData() { return; }
 		
 		bool bInitialized;
 		FBox Bounds;
@@ -62,5 +64,5 @@ private:
 	};
 
 	// Used as a failsafe to catch bad type puns. See CopyAndTransformLightVolumeData() for more info.
-	static_assert(sizeof(FPrecomputedLightVolumeDataExposed) == sizeof(FPrecomputedLightVolumeData), "Memory layout of FPrecomputedLightVolumeDataExposed must exactly match FPrecomputedLightVolumeData");
+	static_assert(sizeof(FPunnedPrecomputedLightVolumeData) == sizeof(FPrecomputedLightVolumeData), "Memory layout of FPunnedPrecomputedLightVolumeData must exactly match FPrecomputedLightVolumeData");
 };

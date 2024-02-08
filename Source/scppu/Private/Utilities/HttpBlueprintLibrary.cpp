@@ -2,6 +2,7 @@
 
 #include "Utilities/HttpBlueprintLibrary.h"
 #include "Runtime/Online/HTTP/Public/Http.h"
+#include "Serialization/JsonSerializerMacros.h" 
 
 void UHttpBlueprintLibrary::MakeHttpGetRequest(FString Url, TArray<FHttpOption> Headers, TArray<FHttpOption> Options, FHttpReqeustDone OnDone)
 {

@@ -2,6 +2,7 @@
 
 
 #include "Utilities/FileIOBlueprintLibrary.h"
+#include "Misc/FileHelper.h" 
 
 bool UFileIOBlueprintLibrary::LoadFileToArray(FString Filename, TArray<uint8>& Result)
 {

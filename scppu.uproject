@@ -12,6 +12,15 @@
 				"Engine",
 				"CoreUObject"
 			]
+		},
+		{
+			"Name": "scppuEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"scppu",
+				"Engine"
+			]
 		}
 	],
 	"Plugins": [

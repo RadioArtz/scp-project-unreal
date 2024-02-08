@@ -5,6 +5,7 @@
 #include "Layout/Layout.h"
 #include "Layout/LayoutCell.h"
 #include "Layout/BaseLayoutSpawnValidator.h"
+#include "Async/Async.h" 
 
 bool ULayoutGeneratorWFC::Generate(ALayout* Layout, int32 NewSeed)
 {
