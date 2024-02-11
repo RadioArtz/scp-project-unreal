@@ -87,6 +87,17 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 				]
 		]);
 
+	this->HeaderRow->AddColumn(SHeaderRow::Column("OuterChain")
+		[
+			SNew(SBox)
+				.VAlign(EVerticalAlignment::VAlign_Fill)
+				.HAlign(EHorizontalAlignment::HAlign_Fill)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString("Outer Chain"))
+				]
+		]);
+
 	this->HeaderRow->AddColumn(SHeaderRow::Column("ReferencePath")
 		[
 			SNew(SBox)
@@ -284,7 +295,7 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 			.AutoHeight()
 			[
 				SNew(SBox)
-				.Padding(FMargin(4, 2, 4, 2))
+				.Padding(FMargin(6, 6, 6, 10))
 				[
 					this->InfoTextBlock.ToSharedRef()
 				]
@@ -335,7 +346,7 @@ void SObjectViewer::Refresh(bool bForce)
 			continue;
 		}
 
-		if (It->IsUnreachable() || It->IsPendingKill())
+		if (It->HasAnyInternalFlags(EInternalObjectFlags::Unreachable | EInternalObjectFlags::PendingKill))
 		{
 			NumVisibleObjectsPendingKill++;
 		}
@@ -344,7 +355,7 @@ void SObjectViewer::Refresh(bool bForce)
 		this->VisibleObjects.Add(MakeShared<FWeakObjectPtr>(FWeakObjectPtr(*It)));
 	}
 
-	this->InfoTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Displaying %i objects (%i of them are pending kill)"), NumVisibleObjects, NumVisibleObjectsPendingKill)));
+	this->InfoTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Displaying %i objects (%i pending kill)"), NumVisibleObjects, NumVisibleObjectsPendingKill)));
 	
 	// We do this to minimze refreshing the list because doing so resets tool tips and selection
 	// However this does not catch all changes, hence the force option

@@ -21,7 +21,20 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 		return SNullWidget::NullWidget;
 	}
 
-	bool bObjectIsPendingKill = Object->IsUnreachable() || Object->IsPendingKill();
+	FLinearColor TextColor = FLinearColor(1.f, 1.f, 1.f, 1.f);
+	if (Object->HasAnyInternalFlags(EInternalObjectFlags::RootSet))
+	{
+		TextColor = FLinearColor(0.25f, .95f, .95f, 1.f);
+	}
+	else if (Object->GetWorld() && Object->GetWorld()->WorldType == EWorldType::PIE)
+	{
+		TextColor = FLinearColor(.95f, .90f, .35f, 1.f);
+	}
+
+	if (Object->HasAnyInternalFlags(EInternalObjectFlags::Unreachable | EInternalObjectFlags::PendingKill))
+	{
+		TextColor.A = .5f;
+	}
 
 	if (ColumnName == "Name")
 	{
@@ -31,7 +44,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 				SNew(STextBlock)
 				.Text(FText::FromString(Object->GetName()))
 				.ToolTipText(FText::FromString(Object->GetName()))
-				.RenderOpacity(bObjectIsPendingKill ? .5f : 1.f)
+				.ColorAndOpacity(FSlateColor(TextColor))
 			];
 	}
 
@@ -43,7 +56,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 				SNew(STextBlock)
 				.Text(FText::FromString(Object->GetClass()->GetName()))
 				.ToolTipText(FText::FromString(Object->GetClass()->GetName()))
-				.RenderOpacity(bObjectIsPendingKill ? .5f : 1.f)
+				.ColorAndOpacity(FSlateColor(TextColor))
 			];
 	}
 
@@ -61,7 +74,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 				SNew(STextBlock)
 				.Text(FText::FromString(OuterName))
 				.ToolTipText(FText::FromString(OuterName))
-				.RenderOpacity(bObjectIsPendingKill ? .5f : 1.f)
+				.ColorAndOpacity(FSlateColor(TextColor))
 			];
 	}
 
@@ -73,7 +86,32 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 				SNew(STextBlock)
 				.Text(FText::FromString(FString::Printf(TEXT("0x%p"), Object)))
 				.ToolTipText(FText::FromString(FString::Printf(TEXT("0x%p"), Object)))
-				.RenderOpacity(bObjectIsPendingKill ? .5f : 1.f)
+				.ColorAndOpacity(FSlateColor(TextColor))
+			];
+	}
+
+	if (ColumnName == "OuterChain")
+	{
+		FString OuterPath = "<No Outer>";
+		if (Object->GetOuter())
+		{
+			if (Object->GetOuter()->IsA<UPackage>())
+			{
+				OuterPath = Object->GetOuter()->GetName();
+			}
+			else
+			{
+				OuterPath = Object->GetFullGroupName(true);
+			}
+		}
+
+		return SNew(SBox)
+			.Padding(FMargin(4, 2, 4, 2))
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(OuterPath))
+				.ToolTipText(FText::FromString(OuterPath))
+				.ColorAndOpacity(FSlateColor(TextColor))
 			];
 	}
 
@@ -85,7 +123,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 				SNew(STextBlock)
 				.Text(FText::FromString(Object->GetPathName()))
 				.ToolTipText(FText::FromString(Object->GetPathName()))
-				.RenderOpacity(bObjectIsPendingKill ? .5f : 1.f)
+				.ColorAndOpacity(FSlateColor(TextColor))
 			];
 	}
 
