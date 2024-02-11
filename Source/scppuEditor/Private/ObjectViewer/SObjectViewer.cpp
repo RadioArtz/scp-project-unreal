@@ -54,25 +54,25 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 			]
 		]);
 
-	this->HeaderRow->AddColumn(SHeaderRow::Column("Class")
+	this->HeaderRow->AddColumn(SHeaderRow::Column("ClassName")
 		[
 			SNew(SBox)
 				.VAlign(EVerticalAlignment::VAlign_Fill)
 				.HAlign(EHorizontalAlignment::HAlign_Fill)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString("Class"))
+					.Text(FText::FromString("Class Name"))
 				]
 		]);
 
-	this->HeaderRow->AddColumn(SHeaderRow::Column("Outer")
+	this->HeaderRow->AddColumn(SHeaderRow::Column("OuterName")
 		[
 			SNew(SBox)
 				.VAlign(EVerticalAlignment::VAlign_Fill)
 				.HAlign(EHorizontalAlignment::HAlign_Fill)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString("Outer"))
+					.Text(FText::FromString("Outer Name"))
 				]
 		]);
 
@@ -87,14 +87,14 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 				]
 		]);
 
-	this->HeaderRow->AddColumn(SHeaderRow::Column("Path")
+	this->HeaderRow->AddColumn(SHeaderRow::Column("ReferencePath")
 		[
 			SNew(SBox)
 				.VAlign(EVerticalAlignment::VAlign_Fill)
 				.HAlign(EHorizontalAlignment::HAlign_Fill)
 				[
 					SNew(STextBlock)
-					.Text(FText::FromString("Path"))
+					.Text(FText::FromString("Reference Path"))
 				]
 		]);
 

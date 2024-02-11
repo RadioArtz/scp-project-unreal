@@ -35,7 +35,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 			];
 	}
 
-	if (ColumnName == "Class")
+	if (ColumnName == "ClassName")
 	{
 		return SNew(SBox)
 			.Padding(FMargin(4, 2, 4, 2))
@@ -47,7 +47,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 			];
 	}
 
-	if (ColumnName == "Outer")
+	if (ColumnName == "OuterName")
 	{
 		FString OuterName = "<No Outer>";
 		if (Object->GetOuter())
@@ -77,7 +77,7 @@ TSharedRef<SWidget> SObjectListViewRow::GenerateWidgetForColumn(const FName& Col
 			];
 	}
 
-	if (ColumnName == "Path")
+	if (ColumnName == "ReferencePath")
 	{
 		return SNew(SBox)
 			.Padding(FMargin(4, 2, 4, 2))
