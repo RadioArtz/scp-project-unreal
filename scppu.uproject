@@ -16,10 +16,11 @@
 		{
 			"Name": "scppuEditor",
 			"Type": "Editor",
-			"LoadingPhase": "Default",
+			"LoadingPhase": "PostEngineInit",
 			"AdditionalDependencies": [
-				"scppu",
-				"Engine"
+				"Engine",
+				"CoreUObject",
+				"scppu"
 			]
 		}
 	],
