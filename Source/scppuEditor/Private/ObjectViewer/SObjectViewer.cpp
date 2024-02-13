@@ -5,7 +5,7 @@
 #include "PropertyCustomizationHelpers.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructureModule.h"
-#include "Widgets/Layout/SSeparator.h" 
+#include "Widgets/Layout/SSeparator.h"
 
 const FName SObjectViewer::TabId = "ObjectViewer";
 
@@ -242,6 +242,15 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 				.AutoWidth()
 				[
 					SNew(SButton)
+					.Text(FText::FromString("Force GC"))
+					.OnClicked(this, &SObjectViewer::OnForceGCClickedCallback)
+				]
+				+ SHorizontalBox::Slot()
+				.Padding(FMargin(4, 2, 4, 2))
+				.VAlign(EVerticalAlignment::VAlign_Center)
+				.AutoWidth()
+				[
+					SNew(SButton)
 					.Text(FText::FromString("Refresh"))
 					.OnClicked(this, &SObjectViewer::OnRefreshClickedCallback)
 				]
@@ -304,11 +313,29 @@ void SObjectViewer::Construct(const FArguments& InArgs)
 		]
 	];
 
-	this->Refresh(true);
+	this->RefreshInternal(true);
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-void SObjectViewer::Refresh(bool bForce)
+void SObjectViewer::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
+	if (this->bQueueRefreshNextTick)
+	{
+		this->RefreshInternal(true);
+		this->bQueueRefreshNextTick = false;
+	}
+	else if (this->bAutoRefresh && this->TimeSinceLastAutoRefresh > 1.f)
+	{
+		this->RefreshInternal(false);
+		this->TimeSinceLastAutoRefresh = 0.f;
+	}
+
+	this->TimeSinceLastAutoRefresh += InDeltaTime;
+}
+
+void SObjectViewer::RefreshInternal(bool bFullRefresh)
 {
 	uint32 NumLastVisibleObjects = this->VisibleObjects.Num();
 	this->VisibleObjects.Empty();
@@ -358,22 +385,10 @@ void SObjectViewer::Refresh(bool bForce)
 	this->InfoTextBlock->SetText(FText::FromString(FString::Printf(TEXT("Displaying %i objects (%i pending kill)"), NumVisibleObjects, NumVisibleObjectsPendingKill)));
 	
 	// We do this to minimze refreshing the list because doing so resets tool tips and selection
-	// However this does not catch all changes, hence the force option
-	if (NumVisibleObjects != NumLastVisibleObjects || bForce)
+	// However this does not catch all changes, hence the full refresh option
+	if (NumVisibleObjects != NumLastVisibleObjects || bFullRefresh)
 	{
 		this->ListView->RequestListRefresh();
-	}
-}
-
-void SObjectViewer::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
-{
-	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
-
-	this->TimeSinceLastAutoRefresh += InDeltaTime;
-	if (this->bAutoRefresh && this->TimeSinceLastAutoRefresh > 1.5f)
-	{
-		this->Refresh();
-		this->TimeSinceLastAutoRefresh = 0.f;
 	}
 }
 
@@ -391,7 +406,7 @@ TSharedRef<ITableRow> SObjectViewer::OnGenerateRowCallback(TSharedPtr<FWeakObjec
 void SObjectViewer::OnFilterTextCommittedCallback(const FText& Text, ETextCommit::Type)
 {
 	this->NameFilter = Text.ToString();
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 }
 
 void SObjectViewer::OnClassFilterSetCallback(const UClass* Class)
@@ -402,31 +417,43 @@ void SObjectViewer::OnClassFilterSetCallback(const UClass* Class)
 	}
 
 	this->ClassFilter = Class;
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 }
 
 void SObjectViewer::OnHideTemplatesStateChangedCallback(ECheckBoxState CheckboxState)
 {
 	this->bHideTemplates = CheckboxState == ECheckBoxState::Checked;
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 }
 
 void SObjectViewer::OnHideScriptClassesStateChangedCallback(ECheckBoxState CheckboxState)
 {
 	this->bHideScriptClasses = CheckboxState == ECheckBoxState::Checked;
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 }
 
 void SObjectViewer::OnHideEngineClassesStateChangedCallback(ECheckBoxState CheckboxState)
 {
 	this->bHideEngineClasses = CheckboxState == ECheckBoxState::Checked;
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 }
 
 void SObjectViewer::OnOnlyShowPIEStateChangedCallback(ECheckBoxState CheckboxState)
 {
 	this->bOnlyShowPIE = CheckboxState == ECheckBoxState::Checked;
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
+}
+
+FReply SObjectViewer::OnForceGCClickedCallback()
+{
+	if (!GEngine)
+	{
+		return FReply::Handled();
+	}
+
+	GEngine->ForceGarbageCollection(true);
+	this->bQueueRefreshNextTick = true;
+	return FReply::Handled();
 }
 
 void SObjectViewer::OnAutoRefreshStateChangedCallback(ECheckBoxState CheckboxState)
@@ -436,6 +463,6 @@ void SObjectViewer::OnAutoRefreshStateChangedCallback(ECheckBoxState CheckboxSta
 
 FReply SObjectViewer::OnRefreshClickedCallback()
 {
-	this->Refresh(true);
+	this->bQueueRefreshNextTick = true;
 	return FReply::Handled();
 }
