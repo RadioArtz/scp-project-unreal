@@ -55,14 +55,14 @@ EUpscalerQualityMode UExtendedGameUserSettings::GetUpscalerQualityMode() const
 	return this->UpscalerQualityMode;
 }
 
-void UExtendedGameUserSettings::SetScreenPercentage(float Value)
+void UExtendedGameUserSettings::SetScreenPercentage(int Value)
 {
-	this->ScreenPercentage = FMath::Clamp(Value, .25f, 2.f);
+	this->ScreenPercentage = FMath::Clamp(Value, 25, 200);
 }
 
-float UExtendedGameUserSettings::GetScreenPercentage() const
+int UExtendedGameUserSettings::GetScreenPercentage() const
 {
-	return FMath::Clamp(this->ScreenPercentage, .25f, 2.f);
+	return FMath::Clamp(this->ScreenPercentage, 25, 200);
 }
 
 void UExtendedGameUserSettings::SetScreenGamma(float Value)

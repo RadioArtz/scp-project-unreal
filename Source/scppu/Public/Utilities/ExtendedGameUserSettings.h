@@ -39,7 +39,7 @@ protected:
 		EUpscalerQualityMode UpscalerQualityMode = EUpscalerQualityMode::Quality;
 
 	UPROPERTY(config)
-		float ScreenPercentage = 1.f;
+		int ScreenPercentage = 100;
 
 	// Gamma level to use. Higher value = more brightness
 	UPROPERTY(config)
@@ -86,13 +86,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		EUpscalerQualityMode GetUpscalerQualityMode() const;
 
-	// Sets the user setting for screen percentage as a 0.25f..2.0f value
+	// Sets the user setting for screen percentage as a 25..200 value
 	UFUNCTION(BlueprintCallable, Category = Settings)
-		void SetScreenPercentage(float Value);
+		void SetScreenPercentage(int Value);
 
 	// Returns the user setting for screen percentage as a 0.25f..2.0f value
 	UFUNCTION(BlueprintCallable, Category = Settings)
-		float GetScreenPercentage() const;
+		int GetScreenPercentage() const;
 
 	// Sets the user setting for screen gamma as a 0.5f..5.0f value
 	UFUNCTION(BlueprintCallable, Category = Settings)
