@@ -1,4 +1,5 @@
 #include "Utilities/ExtendedGameUserSettings.h"
+#include "Engine/RendererSettings.h" 
 
 UExtendedGameUserSettings* UExtendedGameUserSettings::GetExtendedGameUserSettings()
 {
@@ -115,14 +116,14 @@ int UExtendedGameUserSettings::GetFOV() const
 	return FMath::Clamp(this->FOV, 10, 130);
 }
 
-void UExtendedGameUserSettings::SetTesselation(bool bEnabled)
+void UExtendedGameUserSettings::SetTessellationEnabled(bool bEnabled)
 {
-	this->bUseTesselation = bEnabled;
+	this->bUseTessellation = bEnabled;
 }
 
-bool UExtendedGameUserSettings::GetTesselation() const
+bool UExtendedGameUserSettings::IsTessellationEnabled() const
 {
-	return this->bUseTesselation;
+	return this->bUseTessellation;
 }
 
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
@@ -153,6 +154,17 @@ void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 	{
 		ConsoleManager.FindConsoleVariable(TEXT("r.TextureStreaming"))->Set(this->IsTextureStreamingEnabled(), ECVF_SetByGameSetting);
 	}
+
+	// Update tessellation (doesn't really work)
+	/*
+	float AdaptiveTesselationValue = GetDefault<URendererSettings>()->TessellationAdaptivePixelsPerTriangle;
+	if (!this->IsTessellationEnabled())
+	{
+		AdaptiveTesselationValue = 1e10f; // very big value means effectively no tesselation
+	}
+	
+	ConsoleManager.FindConsoleVariable(TEXT("r.TessellationAdaptivePixelsPerTriangle"))->Set(AdaptiveTesselationValue, ECVF_SetByGameSetting);
+	*/
 }
 
 void UExtendedGameUserSettings::DisableAllUpscalers()

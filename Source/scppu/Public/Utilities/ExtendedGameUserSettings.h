@@ -49,6 +49,10 @@ protected:
 	UPROPERTY(config)
 		bool bUseTextureStreaming = true;
 
+	// if true, tesselation will be used (currently not working)
+	UPROPERTY(config)
+		bool bUseTessellation = true;
+
 	// If true camera shakes can play
 	UPROPERTY(config)
 		bool bUseCameraShake = true;
@@ -60,10 +64,6 @@ protected:
 	// Controls the FOV
 	UPROPERTY(config)
 		int FOV = 80;
-
-	// if true, tesselation will be used (currently not working)
-	UPROPERTY(config)
-		bool bUseTesselation = true;
 
 	//// Functions ////	
 public:
@@ -110,6 +110,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		bool IsTextureStreamingEnabled() const;
 
+	// Sets the user setting for tessellation
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		void SetTessellationEnabled(bool bEnabled);
+
+	UFUNCTION(BlueprintCallable, Category = Settings)
+		bool IsTessellationEnabled() const;
+
 	// Sets if Camera shake such as from Elevators is enabled.
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		void SetCameraShakeEnabled(bool bEnabled);
@@ -133,12 +140,6 @@ public:
 	// Returns the user setting for FOV as a 10..130 value
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		int GetFOV() const;
-
-	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
-		void SetTesselation(bool bEnabled);
-
-	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
-		bool GetTesselation() const;
 
 	virtual void ApplyNonResolutionSettings() override;
 
