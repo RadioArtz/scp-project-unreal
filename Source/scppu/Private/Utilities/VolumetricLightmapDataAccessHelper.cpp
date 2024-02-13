@@ -19,7 +19,7 @@ const FVector FVolumetricLightmapDataAccessHelper::GetSkyBentNormal(const FVecto
 {
     if (this->Data->BrickData.SkyBentNormal.Data.Num() <= 0)
     {
-        return FLinearColor::Black;
+		return FVector::ZeroVector;
     }
 
     const FVector BrickTextureCoordinate = this->GetBrickTextureCoordinate(WorldLocation);
