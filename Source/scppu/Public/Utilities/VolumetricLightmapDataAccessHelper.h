@@ -12,13 +12,13 @@ class SCPPU_API FVolumetricLightmapDataAccessHelper
 public:
 	FVolumetricLightmapDataAccessHelper(FPrecomputedVolumetricLightmapData* InData);
 
-	const FVector GetAmbientVector(const FVector WorldLocation);
-	const FVector GetSkyBentNormal(const FVector WorldLocation);
-	const FSHVectorRGB3 GetLightColor(const FVector WorldLocation);
-	const float GetDirectionalLightShadowing(const FVector WorldLocation);
+	FVector GetAmbientVector(const FVector WorldLocation) const;
+	FVector GetSkyBentNormal(const FVector WorldLocation) const;
+	FSHVectorRGB3 GetLightColor(const FVector WorldLocation) const;
+	float GetDirectionalLightShadowing(const FVector WorldLocation) const;
 
 private:
-	const FVector GetBrickTextureCoordinate(const FVector WorldLocation);
+	FVector GetBrickTextureCoordinate(const FVector WorldLocation) const;
 
 	//// Properties ////
 private:

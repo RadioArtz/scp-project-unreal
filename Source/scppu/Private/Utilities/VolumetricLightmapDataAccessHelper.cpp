@@ -8,14 +8,14 @@ FVolumetricLightmapDataAccessHelper::FVolumetricLightmapDataAccessHelper(FPrecom
 	this->Data = InData;
 }
 
-const FVector FVolumetricLightmapDataAccessHelper::GetAmbientVector(const FVector WorldLocation)
+FVector FVolumetricLightmapDataAccessHelper::GetAmbientVector(const FVector WorldLocation) const
 {
     const FVector BrickTextureCoordinate = this->GetBrickTextureCoordinate(WorldLocation);
     const FVector AmbientVector = (FVector)FilteredVolumeLookup<FFloat3Packed>(BrickTextureCoordinate, this->Data->BrickDataDimensions, (const FFloat3Packed*)this->Data->BrickData.AmbientVector.Data.GetData());
     return AmbientVector;
 }
 
-const FVector FVolumetricLightmapDataAccessHelper::GetSkyBentNormal(const FVector WorldLocation)
+FVector FVolumetricLightmapDataAccessHelper::GetSkyBentNormal(const FVector WorldLocation) const
 {
     if (this->Data->BrickData.SkyBentNormal.Data.Num() <= 0)
     {
@@ -27,7 +27,7 @@ const FVector FVolumetricLightmapDataAccessHelper::GetSkyBentNormal(const FVecto
     return FVector(SkyBentNormal.R, SkyBentNormal.G, SkyBentNormal.B);
 }
 
-const FSHVectorRGB3 FVolumetricLightmapDataAccessHelper::GetLightColor(const FVector WorldLocation)
+FSHVectorRGB3 FVolumetricLightmapDataAccessHelper::GetLightColor(const FVector WorldLocation) const
 {
 	const FVector BrickTextureCoordinate = this->GetBrickTextureCoordinate(WorldLocation);
 	const FVector AmbientVector = this->GetAmbientVector(WorldLocation);
@@ -90,14 +90,14 @@ const FSHVectorRGB3 FVolumetricLightmapDataAccessHelper::GetLightColor(const FVe
 	return LQSH;
 }
 
-const float FVolumetricLightmapDataAccessHelper::GetDirectionalLightShadowing(const FVector WorldLocation)
+float FVolumetricLightmapDataAccessHelper::GetDirectionalLightShadowing(const FVector WorldLocation) const
 {
 	const FVector BrickTextureCoordinate = this->GetBrickTextureCoordinate(WorldLocation);
 	const FLinearColor DirectionalLightShadowing = FilteredVolumeLookup<uint8>(BrickTextureCoordinate, this->Data->BrickDataDimensions, (const uint8*)this->Data->BrickData.DirectionalLightShadowing.Data.GetData());
 	return DirectionalLightShadowing.R;
 }
 
-const FVector FVolumetricLightmapDataAccessHelper::GetBrickTextureCoordinate(const FVector WorldLocation)
+FVector FVolumetricLightmapDataAccessHelper::GetBrickTextureCoordinate(const FVector WorldLocation) const
 {
     const FVector IndirectionDataSourceCoordinate = ComputeIndirectionCoordinate(WorldLocation, this->Data->GetBounds(), this->Data->IndirectionTextureDimensions);
     
