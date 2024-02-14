@@ -1,38 +1,79 @@
 #include "Utilities/ExtendedGameUserSettings.h"
+#include "Engine/RendererSettings.h" 
 
 UExtendedGameUserSettings* UExtendedGameUserSettings::GetExtendedGameUserSettings()
 {
 	return Cast<UExtendedGameUserSettings>(UGameUserSettings::GetGameUserSettings());
 }
 
-void UExtendedGameUserSettings::SetFSR1Enabled(bool bEnable)
+TArray<EUpscalerType> UExtendedGameUserSettings::GetSupportedUpscalers() const
 {
-	this->bUseFSR1 = bEnable;
+	TArray<EUpscalerType> SupportedUpscalers = { EUpscalerType::None };
+	const TMap<FName, EUpscalerType> ModuleNamesToUpscalerTypes = {
+		{"FSR", EUpscalerType::FSR1},
+		{"FSR2", EUpscalerType::FSR2},
+		{"DLSS", EUpscalerType::DLSS3}
+	};
+
+	for (auto Kvp : ModuleNamesToUpscalerTypes)
+	{
+		if (FModuleManager::Get().IsModuleLoaded(Kvp.Key))
+		{
+			SupportedUpscalers.Add(Kvp.Value);
+		}
+	}
+
+	return SupportedUpscalers;
 }
 
-bool UExtendedGameUserSettings::IsFSR1Enabled() const
+void UExtendedGameUserSettings::SetActiveUpscaler(EUpscalerType NewActiveUpscaler)
 {
-	return this->bUseFSR1;
+	if (!this->GetSupportedUpscalers().Contains(NewActiveUpscaler))
+	{
+		return;
+	}
+
+	this->ActiveUpscaler = NewActiveUpscaler;
 }
 
-void UExtendedGameUserSettings::SetFSR2Quality(int32 Value)
+EUpscalerType UExtendedGameUserSettings::GetActiveUpscaler() const
 {
-	this->FSR2QualityLevel = FMath::Clamp(Value, 0, 4);
+	if (this->GetSupportedUpscalers().Contains(this->ActiveUpscaler))
+	{
+		return this->ActiveUpscaler;
+	}
+
+	return EUpscalerType::None;
 }
 
-int UExtendedGameUserSettings::GetFSR2Quality() const
+void UExtendedGameUserSettings::SetUpscalerQualityMode(EUpscalerQualityMode NewUpscalerQualityMode)
 {
-	return this->FSR2QualityLevel;
+	this->UpscalerQualityMode = NewUpscalerQualityMode;
+}
+
+EUpscalerQualityMode UExtendedGameUserSettings::GetUpscalerQualityMode() const
+{
+	return this->UpscalerQualityMode;
+}
+
+void UExtendedGameUserSettings::SetScreenPercentage(int Value)
+{
+	this->ScreenPercentage = FMath::Clamp(Value, 25, 200);
+}
+
+int UExtendedGameUserSettings::GetScreenPercentage() const
+{
+	return FMath::Clamp(this->ScreenPercentage, 25, 200);
 }
 
 void UExtendedGameUserSettings::SetScreenGamma(float Value)
 {
-	this->ScreenGammaLevel = FMath::Clamp(Value, 0.5f, 5.0f);
+	this->ScreenGammaLevel = FMath::Clamp(Value, .5f, 5.f);
 }
 
 float UExtendedGameUserSettings::GetScreenGamma() const
 {
-	return this->ScreenGammaLevel;
+	return FMath::Clamp(this->ScreenGammaLevel, .5f, 5.f);
 }
 
 void UExtendedGameUserSettings::SetTextureStreamingEnabled(bool bEnabled)
@@ -67,108 +108,158 @@ float UExtendedGameUserSettings::GetViewbobStrength() const
 
 void UExtendedGameUserSettings::SetFOV(int Value)
 {
-	this->FOV = Value;
+	this->FOV = FMath::Clamp(Value, 10, 130);
 }
 
 int UExtendedGameUserSettings::GetFOV() const
 {
-	return this->FOV;
+	return FMath::Clamp(this->FOV, 10, 130);
 }
 
-void UExtendedGameUserSettings::SetTesselation(bool bEnabled)
+void UExtendedGameUserSettings::SetTessellationEnabled(bool bEnabled)
 {
-	this->bUseTesselation = bEnabled;
+	this->bUseTessellation = bEnabled;
 }
 
-bool UExtendedGameUserSettings::GetTesselation() const
+bool UExtendedGameUserSettings::IsTessellationEnabled() const
 {
-	return this->bUseTesselation;
+	return this->bUseTessellation;
 }
 
 void UExtendedGameUserSettings::ApplyNonResolutionSettings()
 {
 	Super::ApplyNonResolutionSettings();
+	this->DisableAllUpscalers();
+	this->EnableActiveUpscaler(); // Also sets screen percentage if no upscaler is active
 
-	// Update FSR1 CVar
-	{
-		FString ConfigSection = TEXT("SystemSettings");
+	const IConsoleManager& ConsoleManager = IConsoleManager::Get();
+	FString ConfigSection = TEXT("SystemSettings");
+
 #if WITH_EDITOR
-		if (GIsEditor)
-		{
-			ConfigSection = TEXT("SystemSettingsEditor");
-		}
-#endif
-		int FSR1Value = 0;
-		if (GConfig->GetInt(*ConfigSection, TEXT("r.FidelityFX.FSR.Enabled"), FSR1Value, GEngineIni))
-		{
-			// FSR1 was already set by system settings. We are capable of setting it here.
-		}
-		else
-		{
-			static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"));
-			CVar->Set(this->IsFSR1Enabled(), ECVF_SetByGameSetting);
-		}
-	}
-
-// FSR2 only supports windows
-#if PLATFORM_WINDOWS 
-	// Update FSR2 CVar
+	if (GIsEditor)
 	{
-		FString ConfigSection = TEXT("SystemSettings");
-#if WITH_EDITOR
-		if (GIsEditor)
-		{
-			ConfigSection = TEXT("SystemSettingsEditor");
-		}
-#endif
-		int FSR2EnabledValue = 0;
-		int FSR2QualityValue = 0;
-		if (GConfig->GetInt(*ConfigSection, TEXT("r.FidelityFX.FSR2.Enabled"), FSR2EnabledValue, GEngineIni) || GConfig->GetInt(*ConfigSection, TEXT("r.FidelityFX.FSR2.QualityMode"), FSR2QualityValue, GEngineIni))
-		{
-			// FSR2 was already set by system settings. We are capable of setting it here.
-		}
-		else
-		{
-			{
-				static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"));
-				CVar->Set(this->FSR2QualityLevel != 0, ECVF_SetByGameSetting);
-			}
-			{
-				static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"));
-				CVar->Set(this->FSR2QualityLevel, ECVF_SetByGameSetting);
-			}
-		}
+		ConfigSection = TEXT("SystemSettingsEditor");
 	}
 #endif
 
-	// Update Gamma
-	if (GEngine == nullptr || GIsEditor)
+	// Update Gamma (Only when not in editor because it affects slate ui as well)
+	if (true || GEngine && !GIsEditor)
 	{
-		// Do not set gamma in PIE because the whole editor will be affected.
-	}
-	else
-	{
-		GEngine->Exec(nullptr, *FString::Printf(TEXT("gamma %f"), this->GetScreenGamma()));
+		GEngine->DisplayGamma = this->GetScreenGamma();
 	}
 
 	// Update Texture Streaming CVar
+	int TextureStreamingValue = 0;
+	if (!GConfig->GetInt(*ConfigSection, TEXT("r.TextureStreaming"), TextureStreamingValue, GEngineIni))
 	{
-		FString ConfigSection = TEXT("SystemSettings");
+		ConsoleManager.FindConsoleVariable(TEXT("r.TextureStreaming"))->Set(this->IsTextureStreamingEnabled(), ECVF_SetByGameSetting);
+	}
+
+	// Update tessellation (doesn't really work)
+	/*
+	float AdaptiveTesselationValue = GetDefault<URendererSettings>()->TessellationAdaptivePixelsPerTriangle;
+	if (!this->IsTessellationEnabled())
+	{
+		AdaptiveTesselationValue = 1e10f; // very big value means effectively no tesselation
+	}
+	
+	ConsoleManager.FindConsoleVariable(TEXT("r.TessellationAdaptivePixelsPerTriangle"))->Set(AdaptiveTesselationValue, ECVF_SetByGameSetting);
+	*/
+}
+
+void UExtendedGameUserSettings::DisableAllUpscalers()
+{
+	const TArray<EUpscalerType> SupportedUpscalers = this->GetSupportedUpscalers();
+	const IConsoleManager& ConsoleManager = IConsoleManager::Get();
+	FString ConfigSection = TEXT("SystemSettings");
+
 #if WITH_EDITOR
-		if (GIsEditor)
-		{
-			ConfigSection = TEXT("SystemSettingsEditor");
-		}
+	if (GIsEditor)
+	{
+		ConfigSection = TEXT("SystemSettingsEditor");
+	}
 #endif
-		int TextureStreamingValue = 0;
-		if (GConfig->GetInt(*ConfigSection, TEXT("r.TextureStreaming"), TextureStreamingValue, GEngineIni))
+
+	for (EUpscalerType Upscaler : SupportedUpscalers)
+	{
+		switch (Upscaler)
 		{
-			// Texture Streaming was already set by system settings. We are capable of setting it here.
+			case EUpscalerType::None:
+				break;
+
+			case EUpscalerType::FSR1:
+				ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				break;
+
+			case EUpscalerType::FSR2:
+				ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				break;
+
+			case EUpscalerType::DLSS3:
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				break;
+
+			default:
+				checkNoEntry();
 		}
-		else
+	}
+}
+
+void UExtendedGameUserSettings::EnableActiveUpscaler()
+{
+	const IConsoleManager& ConsoleManager = IConsoleManager::Get();
+	FString ConfigSection = TEXT("SystemSettings");
+
+#if WITH_EDITOR
+	if (GIsEditor)
+	{
+		ConfigSection = TEXT("SystemSettingsEditor");
+	}
+#endif
+
+	// sanity check
+	switch (this->GetActiveUpscaler())
+	{
+		case EUpscalerType::None:
+			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(this->GetScreenPercentage(), EConsoleVariableFlags::ECVF_SetByGameSetting);
+			break;
+
+		case EUpscalerType::FSR1:
 		{
-			static auto CVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.TextureStreaming"));
-			CVar->Set(this->IsTextureStreamingEnabled(), ECVF_SetByGameSetting);
+			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+
+			const TMap<EUpscalerQualityMode, float> UpscalerQualityModeToScreenPercentage = {
+				{EUpscalerQualityMode::Quality, .77f},
+				{EUpscalerQualityMode::Balanced, .67f},
+				{EUpscalerQualityMode::Performance, .59f},
+				{EUpscalerQualityMode::UltraPerformance, .5f}
+			};
+
+			const float FSRScreenPercentage = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
+			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(FSRScreenPercentage, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			break;
 		}
+
+		case EUpscalerType::FSR2:
+		{
+			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+
+			const int QualityMode = ((int)this->GetUpscalerQualityMode()) + 1;
+			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			break;
+		}
+
+		case EUpscalerType::DLSS3:
+		{
+			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Enable"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality.Auto"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+
+			const int QualityMode = (((int)this->GetUpscalerQualityMode()) - 1) * -1;
+			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			break;
+		}
+
+		default:
+			checkNoEntry();
 	}
 }

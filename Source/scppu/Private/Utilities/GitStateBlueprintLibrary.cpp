@@ -3,13 +3,18 @@
 
 #include "Utilities/GitStateBlueprintLibrary.h"
 
+#ifndef PROJECT_GIT_COMMIT_HASH
+    #define PROJECT_GIT_COMMIT_HASH "INVALID"
+#endif
+
+#ifndef PROJECT_GIT_HAS_COMMIT_LOCAL_CHANGES
+    #define PROJECT_GIT_HAS_COMMIT_LOCAL_CHANGES 0
+#endif
+
+
 FString UGitStateBlueprintLibrary::GetActiveGitCommitHash()
 {
-#if defined PROJECT_GIT_COMMIT_HASH
     return FString(PROJECT_GIT_COMMIT_HASH);
-#else
-    return FString("UNKNOWN");
-#endif
 }
 
 bool UGitStateBlueprintLibrary::HasActiveGitCommitLocalChanges()
