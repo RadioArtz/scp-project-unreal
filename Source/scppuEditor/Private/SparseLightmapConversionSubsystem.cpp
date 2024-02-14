@@ -204,7 +204,6 @@ bool USparseLightmapConversionSubsystem::IsPointAboveFloor(FVector Point)
 	const float HalfMaxHeightAboveFloor = WorldSettings->SparseLightmapConversionSettings.MaxHeightAboveFloor / 2.f;
 	this->GetWorld()->OverlapMultiByChannel(OverlapResults, Point - FVector(0, 0, HalfMaxHeightAboveFloor), FQuat::Identity, ECollisionChannel::ECC_Visibility, FCollisionShape::MakeCapsule(1.f, HalfMaxHeightAboveFloor), CollisionParams);
 
-	bool bStaticOverlapOccurred = false;
 	for (FOverlapResult Result : OverlapResults)
 	{
 		if (Result.Actor->GetRootComponent()->Mobility == EComponentMobility::Static)

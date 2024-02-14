@@ -5,8 +5,6 @@
 #include "Engine/Level.h"
 #include "Engine/MapBuildDataRegistry.h"
 #include "Engine/LevelStreaming.h"
-#include "PrecomputedVolumetricLightmap.h"
-#include "Utilities/VolumetricLightmapDataAccessHelper.h"
 #include "Engine/LevelBounds.h" 
 
 DEFINE_LOG_CATEGORY(LogSparseLightmapTransformSubsystem);
@@ -147,7 +145,7 @@ FPrecomputedLightVolumeData* USparseLightmapTransformSubsystem::CopyAndTransform
 	// We do this to read otherwise private members of FPrecomputedLightVolumeData to be able to properly copy and transform the light samples for transformed levels.
 	// The use of memcpy leads to failed assertions further down the call line. We may check it out later again.
 	// For now, it seems to do fine.
-	const FPunnedPrecomputedLightVolumeData* DataExposed = reinterpret_cast<FPunnedPrecomputedLightVolumeData*>(Data);
+	FPunnedPrecomputedLightVolumeData* DataExposed = reinterpret_cast<FPunnedPrecomputedLightVolumeData*>(Data);
 
 	DataExposed->HighQualityLightmapOctree.FindAllElements([TransformedData, Transform](const FVolumeLightingSample& OriginalSample)
 		{
@@ -172,7 +170,6 @@ FPrecomputedLightVolumeData* USparseLightmapTransformSubsystem::CopyAndTransform
 		});
 
 	TransformedData->FinalizeSamples();
-	delete DataExposed;
 	return TransformedData;
 }
 
