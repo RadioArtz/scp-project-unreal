@@ -228,14 +228,14 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 		{
 			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
-			const TMap<EUpscalerQualityMode, float> UpscalerQualityModeToScreenPercentage = {
+			const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToScreenPercentage = {
 				{EUpscalerQualityMode::Quality, 77},
 				{EUpscalerQualityMode::Balanced, 67},
 				{EUpscalerQualityMode::Performance, 59},
 				{EUpscalerQualityMode::UltraPerformance, 50}
 			};
 
-			const float FSRScreenPercentage = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
+			const int FSRScreenPercentage = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
 			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(FSRScreenPercentage, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			break;
 		}

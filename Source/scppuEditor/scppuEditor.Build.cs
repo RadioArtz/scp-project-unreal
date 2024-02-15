@@ -11,5 +11,6 @@ public class scppuEditor : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 		PublicDependencyModuleNames.AddRange(new string[] { "scppu", "Core", "CoreUObject", "Engine", "InputCore", "UMG", "DeveloperSettings", "RenderCore", "Renderer", "RHI", "Http",  "Slate", "SlateCore", "EditorSubsystem", "UnrealEd", "GpuLightmass", "PropertyEditor", "EditorStyle"});
 		PrivateDependencyModuleNames.AddRange(new string[] { });
+		CppStandard = CppStandardVersion.Cpp17;
 	}
 }
