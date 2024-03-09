@@ -10,6 +10,16 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
+				"CoreUObject",
+				"scppuGit"
+			]
+		},
+		{
+			"Name": "scppuGit",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
 				"CoreUObject"
 			]
 		},

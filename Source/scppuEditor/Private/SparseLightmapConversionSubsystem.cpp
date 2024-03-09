@@ -1,8 +1,8 @@
 
 #include "SparseLightmapConversionSubsystem.h"
-
 #include "Utilities/ExtendedWorldSettings.h"
 #include "Utilities/VolumetricLightmapDataAccessHelper.h"
+#include "SparseLightmapConversionSampleVolume.h"
 #include "PrecomputedVolumetricLightmap.h"
 #include "PrecomputedLightVolume.h"
 #include "Editor.h"
@@ -217,32 +217,65 @@ bool USparseLightmapConversionSubsystem::IsPointAboveFloor(FVector Point)
 
 FPrecomputedLightVolumeData* USparseLightmapConversionSubsystem::CreateLightVolumeDataFromVolumetricLightmapData(FPrecomputedVolumetricLightmapData* VolumetricLightmapData)
 {
-	check(VolumetricLightmapData)
-	AExtendedWorldSettings* WorldSettings = this->GetActiveWorldSettingsChecked();
-	FPrecomputedLightVolumeData* LightVolumeData = new FPrecomputedLightVolumeData();
-
-	FBox LightVolumeBounds;
-	if (WorldSettings->SparseLightmapConversionSettings.bOverrideLightmapBounds)
+	check(VolumetricLightmapData);
+	
+	TArray<AVolume*> AllRelevantSampleBoundsVolumes;
+	const TArray<AActor*> LevelActors = this->GetActivePersistentLevel()->Actors;
+	for (const AActor* Actor : LevelActors)
 	{
-		LightVolumeBounds = WorldSettings->SparseLightmapConversionSettings.LightmapBounds;
+		if (!IsValid(Actor))
+		{
+			continue;
+		}
+
+		if (!Actor->IsA<ASparseLightmapConversionSampleVolume>())
+		{
+			continue;
+		}
+
+		AllRelevantSampleBoundsVolumes.Add((AVolume*)Actor);
+	}
+	
+	if (AllRelevantSampleBoundsVolumes.Num() > 0)
+	{
+		UE_LOG(LogSparseLightmapConversionSubsystem, Log, TEXT("%s: Using %i placed sample bounds volumes as relevant bounds"), *this->GetName(), AllRelevantSampleBoundsVolumes.Num());
 	}
 	else
 	{
-		LightVolumeBounds = ALevelBounds::CalculateLevelBounds(this->GetActivePersistentLevel());
+		UE_LOG(LogSparseLightmapConversionSubsystem, Log, TEXT("%s: Using level bounds as relevant bounds"), *this->GetName());
 	}
 
-	LightVolumeData->Initialize(LightVolumeBounds.ShiftBy(WorldSettings->SparseLightmapConversionSettings.SampleOffset));
-	FVolumetricLightmapDataAccessHelper AccessHelper = FVolumetricLightmapDataAccessHelper(VolumetricLightmapData);
+	const FBox LevelBounds = ALevelBounds::CalculateLevelBounds(this->GetActivePersistentLevel());
+	AExtendedWorldSettings* WorldSettings = this->GetActiveWorldSettingsChecked();
+	FPrecomputedLightVolumeData* LightVolumeData = new FPrecomputedLightVolumeData();
+	LightVolumeData->Initialize(LevelBounds.ShiftBy(WorldSettings->SparseLightmapConversionSettings.SampleOffset));
 
+	const FVolumetricLightmapDataAccessHelper AccessHelper = FVolumetricLightmapDataAccessHelper(VolumetricLightmapData);
 	const float SampleStepSize = WorldSettings->SparseLightmapConversionSettings.SampleInterval;
-	for (float x = LightVolumeBounds.Min.X; x < LightVolumeBounds.Max.X; x += SampleStepSize)
+	for (float x = LevelBounds.Min.X; x < LevelBounds.Max.X; x += SampleStepSize)
 	{
-		for (float y = LightVolumeBounds.Min.Y; y < LightVolumeBounds.Max.Y; y += SampleStepSize)
+		for (float y = LevelBounds.Min.Y; y < LevelBounds.Max.Y; y += SampleStepSize)
 		{
-			for (float z = LightVolumeBounds.Min.Z; z < LightVolumeBounds.Max.Z; z += SampleStepSize)
+			for (float z = LevelBounds.Min.Z; z < LevelBounds.Max.Z; z += SampleStepSize)
 			{
 				const FVector Position = FVector(x, y, z) + WorldSettings->SparseLightmapConversionSettings.SampleOffset;
 				if (!VolumetricLightmapData->GetBounds().IsInsideOrOn(Position))
+				{
+					continue;
+				}
+
+				if (!LevelBounds.IsInsideOrOn(Position))
+				{
+					continue;
+				}
+
+				bool bIsInRelevantSampleBoundsVolume = false;
+				for (const AVolume* RelevantBoundsVolume : AllRelevantSampleBoundsVolumes)
+				{
+					bIsInRelevantSampleBoundsVolume = bIsInRelevantSampleBoundsVolume || RelevantBoundsVolume->EncompassesPoint(Position);
+				}
+
+				if (AllRelevantSampleBoundsVolumes.Num() > 0 && !bIsInRelevantSampleBoundsVolume)
 				{
 					continue;
 				}

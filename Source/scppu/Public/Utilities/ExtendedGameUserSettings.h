@@ -9,20 +9,20 @@
 UENUM(BlueprintType)
 enum class EUpscalerType : uint8
 {
-	None = 0,
-	//TAAU = 1,
-	FSR1 = 2,
-	FSR2 = 3,
-	DLSS3 = 4
+	None = 0 UMETA(DisplayName = "None"),
+	//TAAU = 1 UMETA(DisplayName = "TAAU"),
+	FSR1 = 2 UMETA(DisplayName = "FSR 1"),
+	FSR2 = 3 UMETA(DisplayName = "FSR 2"),
+	DLSS3 = 4 UMETA(DisplayName = "DLSS 3.5")
 };
 
 UENUM(BlueprintType)
 enum class EUpscalerQualityMode : uint8
 {
-	Quality = 0,
-	Balanced = 1,
-	Performance = 2,
-	UltraPerformance = 3
+	Quality = 0 UMETA(DisplayName = "Quality"),
+	Balanced = 1 UMETA(DisplayName = "Balanced"),
+	Performance = 2 UMETA(DisplayName = "Performance"),
+	UltraPerformance = 3 UMETA(DisplayName = "Ultra Performance")
 };
 
 UCLASS()
@@ -90,7 +90,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		void SetScreenPercentage(int Value);
 
-	// Returns the user setting for screen percentage as a 0.25f..2.0f value
+	// Returns the user setting for screen percentage as a 25..200 value
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		int GetScreenPercentage() const;
 
@@ -111,10 +111,10 @@ public:
 		bool IsTextureStreamingEnabled() const;
 
 	// Sets the user setting for tessellation
-	UFUNCTION(BlueprintCallable, Category = Settings)
+	UFUNCTION(BlueprintCallable, Category = Settings, meta = (ToolTip = "!!! Disabling tessellation currently doesn't work and the option may be removed in the future !!!"))
 		void SetTessellationEnabled(bool bEnabled);
 
-	UFUNCTION(BlueprintCallable, Category = Settings)
+	UFUNCTION(BlueprintCallable, Category = Settings, meta = (ToolTip = "!!! Disabling tessellation currently doesn't work and the option may be removed in the future !!!"))
 		bool IsTessellationEnabled() const;
 
 	// Sets if Camera shake such as from Elevators is enabled.

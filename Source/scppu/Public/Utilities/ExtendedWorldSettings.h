@@ -6,6 +6,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "ExtendedWorldSettings.generated.h"
 
+
 USTRUCT()
 struct SCPPU_API FSparseLightmapConversionSettings
 {
@@ -26,12 +27,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = SampleFiltering, AdvancedDisplay, meta = (ClampMin = 100.f, EditCondition = bOnlySamplePointsAboveFloor))
 		float MaxHeightAboveFloor = 500.f;
-
-	UPROPERTY(EditAnywhere, Category = LightmapBounds, AdvancedDisplay)
-		bool bOverrideLightmapBounds = false;
-
-	UPROPERTY(EditAnywhere, Category = LightmapBounds, AdvancedDisplay, meta = (EditCondition = bOverrideLightmapBounds))
-		FBox LightmapBounds;
 };
 
 UCLASS()
