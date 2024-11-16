@@ -45,6 +45,10 @@ protected:
 	UPROPERTY(config)
 		float ScreenGammaLevel = 2.2f;
 
+	// If true, Volumetric Fog will be used
+	UPROPERTY(config)
+	bool bUseVolumetric = true;
+
 	// If true, texture streaming will be used
 	UPROPERTY(config)
 		bool bUseTextureStreaming = true;
@@ -101,6 +105,14 @@ public:
 	// Returns the user setting for screen gamma as a 0.5f..5.0f value
 	UFUNCTION(BlueprintCallable, Category = Settings)
 		float GetScreenGamma() const;
+
+	// Returns the user setting for volumetric fog
+	UFUNCTION(BlueprintCallable, Category = Settings)
+	bool IsVolumetricFogEnabled() const;
+
+	// Sets the user setting for Volumetric Fog
+	UFUNCTION(BlueprintCallable, Category = Settings)
+	void SetVolumetricFogEnabled(bool bEnabled);
 
 	// Sets the user setting for texture streaming
 	UFUNCTION(BlueprintCallable, Category = Settings)

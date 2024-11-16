@@ -76,6 +76,16 @@ float UExtendedGameUserSettings::GetScreenGamma() const
 	return FMath::Clamp(this->ScreenGammaLevel, .5f, 5.f);
 }
 
+void UExtendedGameUserSettings::SetVolumetricFogEnabled(bool bEnabled)
+{
+	this->bUseVolumetric = bEnabled;
+}
+
+bool UExtendedGameUserSettings::IsVolumetricFogEnabled() const 
+{
+	return this->bUseVolumetric;
+}
+
 void UExtendedGameUserSettings::SetTextureStreamingEnabled(bool bEnabled)
 {
 	this->bUseTextureStreaming = bEnabled;
