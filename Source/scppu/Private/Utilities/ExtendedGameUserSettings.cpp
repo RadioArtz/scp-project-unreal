@@ -1,5 +1,6 @@
 #include "Utilities/ExtendedGameUserSettings.h"
 #include "Engine/RendererSettings.h" 
+#include "CustomStaticScreenPercentage.h"
 
 UExtendedGameUserSettings* UExtendedGameUserSettings::GetExtendedGameUserSettings()
 {
@@ -214,6 +215,9 @@ void UExtendedGameUserSettings::DisableAllUpscalers()
 				checkNoEntry();
 		}
 	}
+
+	// Hopefully this does not cause a memory leak
+	GCustomStaticScreenPercentage = nullptr;
 }
 
 void UExtendedGameUserSettings::EnableActiveUpscaler()
@@ -228,17 +232,13 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 	}
 #endif
 
-	// sanity check
 	switch (this->GetActiveUpscaler())
 	{
 		case EUpscalerType::None:
 			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(this->GetScreenPercentage(), EConsoleVariableFlags::ECVF_SetByGameSetting);
 			break;
-
 		case EUpscalerType::FSR1:
 		{
-			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
-
 			const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToScreenPercentage = {
 				{EUpscalerQualityMode::Native, 100},
 				{EUpscalerQualityMode::Quality, 77},
@@ -248,15 +248,12 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 			};
 
 			const int ResolutionScale = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
-
 			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(ResolutionScale, EConsoleVariableFlags::ECVF_SetByGameSetting);
-
+			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			break;
 		}
-
 		case EUpscalerType::FSR2:
 		{
-			
 			   const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToFSRQualityMode = {
 				   {EUpscalerQualityMode::Native, -1},
 				   {EUpscalerQualityMode::Quality, 3},
@@ -266,7 +263,6 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 			   };
 
 			   const int QualityMode = (UpscalerQualityModeToFSRQualityMode[this->GetUpscalerQualityMode()]);
-
 			   if (QualityMode == -1)
 			   {
 				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(3, EConsoleVariableFlags::ECVF_SetByGameSetting);
@@ -277,10 +273,9 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			   }
-			   break;
-				break;
-		}
 
+			   break;
+		}
 		case EUpscalerType::DLSS3:
 		{
 			const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToDLSSQualityMode = {
@@ -293,20 +288,19 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 
 			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Enable"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality.Auto"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
-			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
 			const int QualityMode = (UpscalerQualityModeToDLSSQualityMode[this->GetUpscalerQualityMode()]);
-
 			if (QualityMode == -1)
 			{
-				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			}
 			else
 			{
 				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			}
+
 			break;	
 		}
 		default:
