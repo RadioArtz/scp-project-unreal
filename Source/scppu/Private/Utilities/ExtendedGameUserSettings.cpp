@@ -239,7 +239,7 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 		{
 			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
-			const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToScreenPercentage = {
+			const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToScreenPercentage = {
 				{EUpscalerQualityMode::Native, 100},
 				{EUpscalerQualityMode::Quality, 77},
 				{EUpscalerQualityMode::Balanced, 67},
@@ -247,9 +247,9 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 				{EUpscalerQualityMode::UltraPerformance, 50}
 			};
 
-			const int QualityMode = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
+			const int ResolutionScale = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
 
-			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(ResolutionScale, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
 			break;
 		}
@@ -257,7 +257,7 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 		case EUpscalerType::FSR2:
 		{
 			
-			   const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToFSRQualityMode = {
+			   const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToFSRQualityMode = {
 				   {EUpscalerQualityMode::Native, -1},
 				   {EUpscalerQualityMode::Quality, 3},
 				   {EUpscalerQualityMode::Balanced, 2},
@@ -283,7 +283,7 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 
 		case EUpscalerType::DLSS3:
 		{
-			const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToDLSSQualityMode = {
+			const static TMap<EUpscalerQualityMode, int> UpscalerQualityModeToDLSSQualityMode = {
 				{EUpscalerQualityMode::Native, -1},
 				{EUpscalerQualityMode::Quality, 4},
 				{EUpscalerQualityMode::Balanced, 3},
