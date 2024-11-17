@@ -206,6 +206,7 @@ void UExtendedGameUserSettings::DisableAllUpscalers()
 				break;
 
 			case EUpscalerType::DLSS3:
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 				break;
 
@@ -239,36 +240,75 @@ void UExtendedGameUserSettings::EnableActiveUpscaler()
 			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
 			const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToScreenPercentage = {
+				{EUpscalerQualityMode::Native, 100},
 				{EUpscalerQualityMode::Quality, 77},
 				{EUpscalerQualityMode::Balanced, 67},
 				{EUpscalerQualityMode::Performance, 59},
 				{EUpscalerQualityMode::UltraPerformance, 50}
 			};
 
-			const int FSRScreenPercentage = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
-			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(FSRScreenPercentage, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			const int QualityMode = UpscalerQualityModeToScreenPercentage[this->GetUpscalerQualityMode()];
+
+			ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+
 			break;
 		}
 
 		case EUpscalerType::FSR2:
 		{
-			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			
+			   const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToFSRQualityMode = {
+				   {EUpscalerQualityMode::Native, -1},
+				   {EUpscalerQualityMode::Quality, 3},
+				   {EUpscalerQualityMode::Balanced, 2},
+				   {EUpscalerQualityMode::Performance, 1},
+				   {EUpscalerQualityMode::UltraPerformance, 0}
+			   };
 
-			const int QualityMode = ((int)this->GetUpscalerQualityMode()) + 1;
-			ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
-			break;
+			   const int QualityMode = (UpscalerQualityModeToFSRQualityMode[this->GetUpscalerQualityMode()]);
+
+			   if (QualityMode == -1)
+			   {
+				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(3, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				   ConsoleManager.FindConsoleVariable(TEXT("r.ScreenPercentage"))->Set(100, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			   }
+			   else
+			   {
+				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.Enabled"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				   ConsoleManager.FindConsoleVariable(TEXT("r.FidelityFX.FSR2.QualityMode"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			   }
+			   break;
+				break;
 		}
 
 		case EUpscalerType::DLSS3:
 		{
+			const TMap<EUpscalerQualityMode, int> UpscalerQualityModeToDLSSQualityMode = {
+				{EUpscalerQualityMode::Native, -1},
+				{EUpscalerQualityMode::Quality, 4},
+				{EUpscalerQualityMode::Balanced, 3},
+				{EUpscalerQualityMode::Performance, 2},
+				{EUpscalerQualityMode::UltraPerformance, 1}
+			};
+
 			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Enable"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
 			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality.Auto"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
 
-			const int QualityMode = (((int)this->GetUpscalerQualityMode()) - 1) * -1;
-			ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
-			break;
+			const int QualityMode = (UpscalerQualityModeToDLSSQualityMode[this->GetUpscalerQualityMode()]);
+
+			if (QualityMode == -1)
+			{
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(1, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			}
+			else
+			{
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLAA.Enable"))->Set(0, EConsoleVariableFlags::ECVF_SetByGameSetting);
+				ConsoleManager.FindConsoleVariable(TEXT("r.NGX.DLSS.Quality"))->Set(QualityMode, EConsoleVariableFlags::ECVF_SetByGameSetting);
+			}
+			break;	
 		}
-
 		default:
 			checkNoEntry();
 	}
