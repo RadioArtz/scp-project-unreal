@@ -3,6 +3,7 @@
 
 #include "Attributes/PlayerAttributeComponent.h"
 #include "Attributes/FloatAttribute.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UPlayerAttributeComponent::UPlayerAttributeComponent()
@@ -11,11 +12,18 @@ UPlayerAttributeComponent::UPlayerAttributeComponent()
 	// off to improve performance if you don't need them.
 	this->PrimaryComponentTick.bCanEverTick = true;
 	this->SetComponentTickInterval(0.1f);
+	this->SetIsReplicatedByDefault(true);
 
 	this->MinValue = FFloatAttribute();
 	this->MaxValue = FFloatAttribute();
 	this->RegenerationRate = FFloatAttribute();
 	this->RegenerationDelay = FFloatAttribute();
+}
+
+void UPlayerAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const 
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UPlayerAttributeComponent, CurrentValue);
 }
 
 void UPlayerAttributeComponent::SetCurrentValue(float NewValue, bool bSkipRegenerationDelay)
@@ -35,6 +43,10 @@ void UPlayerAttributeComponent::SetCurrentValue(float NewValue, bool bSkipRegene
 	}
 
 	this->CurrentValue = FMath::Clamp(NewValue, this->MinValue.GetFinalValue(), this->MaxValue.GetFinalValue());
+
+	//make sure to run OnRep locally in case we are the server in a multiplayer scenario.
+	if (GetOwner()->HasAuthority()) 
+		OnRep_CurrentValue();
 }
 
 // Called when the game starts
@@ -54,6 +66,11 @@ void UPlayerAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		this->SetCurrentValue(this->CurrentValue + (this->RegenerationRate.GetFinalValue() * DeltaTime), true);
 	}
 
+	BroadcastDelegates();
+}
+
+void UPlayerAttributeComponent::BroadcastDelegates() 
+{
 	if (this->CurrentValue <= this->MinValue.GetFinalValue() && !this->bMinValueReached)
 	{
 		this->bMinValueReached = true;
@@ -77,3 +94,7 @@ void UPlayerAttributeComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	}
 }
 
+void UPlayerAttributeComponent::OnRep_CurrentValue()
+{
+	BroadcastDelegates();
+}

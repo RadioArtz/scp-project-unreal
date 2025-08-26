@@ -17,7 +17,7 @@ class SCPPU_API UPlayerAttributeComponent : public UActorComponent
 
 	//// Properties ////
 public:	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_CurrentValue)
 		float CurrentValue; // get private set
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -56,7 +56,7 @@ private:
 	//// Functions ////	
 public:
 	UFUNCTION(BlueprintCallable)
-		void SetCurrentValue(float NewValue, bool bSkipRegenrationDelay = false);
+	void SetCurrentValue(float NewValue, bool bSkipRegenrationDelay = false);
 
 	// Sets default values for this component's properties
 	UPlayerAttributeComponent();
@@ -64,8 +64,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void BroadcastDelegates();
+
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	
+	UFUNCTION()
+	void OnRep_CurrentValue();
 };
