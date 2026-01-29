@@ -153,6 +153,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Settings | Gameplay")
 		int GetFOV() const;
 
+	UFUNCTION(BlueprintCallable, meta = (DisplayName = "GetAppVersion"), Category = "Game Config")
+	static FString GetAppVersion();
+
 	virtual void ApplyNonResolutionSettings() override;
 
 protected:
