@@ -34,6 +34,9 @@ public:
 
 	// Periodic Events //
 	UPROPERTY(BlueprintReadWrite)
+		bool bAutoActivate = false;
+
+	UPROPERTY(BlueprintReadWrite)
 		float MinTimeSeconds = 10.f;
 	
 	UPROPERTY(BlueprintReadWrite)
